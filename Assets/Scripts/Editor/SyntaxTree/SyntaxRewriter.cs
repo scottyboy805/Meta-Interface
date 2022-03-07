@@ -64,7 +64,7 @@ namespace MetaInterface.SyntaxTree
                 return null;
 
             // Field should remain in the syntax tree
-            return base.VisitFieldDeclaration(node);
+            return SyntaxPatcher.PatchFieldInitializer(node); //base.VisitFieldDeclaration(node);
         }
 
         public override SyntaxNode VisitPropertyDeclaration(PropertyDeclarationSyntax node)
@@ -94,7 +94,7 @@ namespace MetaInterface.SyntaxTree
                 return null;
 
             // Method should remain in the syntax tree
-            return SyntaxPatcher.PatchMethodBody(node);
+            return SyntaxPatcher.PatchMethodBodyLambda(node);
         }
     }
 }
