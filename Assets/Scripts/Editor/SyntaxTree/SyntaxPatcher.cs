@@ -8,32 +8,6 @@ namespace MetaInterface.SyntaxTree
     public class SyntaxPatcher
     {
         // Methods
-        //public static bool IsDeclarationExposed(SyntaxNode syntax)//, SemanticModel model)
-        //{
-        //    // Get symbol for node
-        //    ISymbol symbol = model.GetDeclaredSymbol(syntax);
-
-        //    // Check for public or protcted
-        //    if(symbol != null)
-        //    {
-        //        // Get accessibility
-        //        Accessibility access = symbol.DeclaredAccessibility;
-
-        //        switch(access)
-        //        {
-        //            case Accessibility.Public:
-        //            case Accessibility.Protected:
-        //            case Accessibility.ProtectedAndFriend:
-        //            case Accessibility.ProtectedOrFriend:
-        //                {
-        //                    // Declaration is exposed
-        //                    return true;
-        //                }
-        //        }
-        //    }
-        //    return false;
-        //}
-
         public static bool IsClassDeclarationExposed(ClassDeclarationSyntax syntax)
         {
             return IsModifierListExposed(syntax.Modifiers);
@@ -74,11 +48,26 @@ namespace MetaInterface.SyntaxTree
             return IsModifierListExposed(syntax.Modifiers);
         }
 
+        public static bool IsAccessorDeclarationHidden(AccessorDeclarationSyntax syntax)
+        {
+            return IsModifierListHidden(syntax.Modifiers);
+        }
+
         private static bool IsModifierListExposed(SyntaxTokenList modifiers)
         {
             return modifiers
                 .Where(m => m.Kind() == SyntaxKind.PublicKeyword
                 || m.Kind() == SyntaxKind.ProtectedKeyword)
+                .Any();
+        }
+
+        private static bool IsModifierListHidden(SyntaxTokenList modifiers)
+        {
+            return modifiers
+                .Where(m => m.Kind() == SyntaxKind.PrivateKeyword
+                || m.Kind() == SyntaxKind.InternalKeyword)
+                .Where(m => m.Kind() != SyntaxKind.PublicKeyword 
+                && m.Kind() != SyntaxKind.ProtectedKeyword)
                 .Any();
         }
 
