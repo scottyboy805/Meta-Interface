@@ -72,9 +72,9 @@ namespace MetaInterface.SyntaxTree
             // Check if property is exposed
             if (SyntaxPatcher.IsPropertyDeclarationExposed(node) == false)
                 return null;
-            
+
             // Property should remain in the syntax tree
-            return base.VisitPropertyDeclaration(node);
+            return base.VisitPropertyDeclaration(SyntaxPatcher.PatchPropertyAccessorsLambda(node)); //base.VisitPropertyDeclaration(node);
         }
 
         public override SyntaxNode VisitAccessorDeclaration(AccessorDeclarationSyntax node)

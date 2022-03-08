@@ -38,6 +38,8 @@ namespace MetaInterface
                 // Rewrite and patch declarations
                 SyntaxNode patchedRoot = rewriter.Visit(syntaxTree.GetRoot());
 
+                patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
+
                 // Overwrite source
                 sourceFile.OverwriteSource(patchedRoot);
             }
