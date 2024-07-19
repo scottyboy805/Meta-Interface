@@ -1,0 +1,10 @@
+D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\Ultimate Replay\Assets\Ultimate Replay 3.0\Scripts\Runtime\obj\Debug\net5.0\TestCompilationSuccess.csproj.AssemblyReference.cache
+D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\Ultimate Replay\Assets\Ultimate Replay 3.0\Scripts\Runtime\obj\Debug\net5.0\TestCompilationSuccess.GeneratedMSBuildEditorConfig.editorconfig
+D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\Ultimate Replay\Assets\Ultimate Replay 3.0\Scripts\Runtime\obj\Debug\net5.0\TestCompilationSuccess.AssemblyInfoInputs.cache
+D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\Ultimate Replay\Assets\Ultimate Replay 3.0\Scripts\Runtime\obj\Debug\net5.0\TestCompilationSuccess.AssemblyInfo.cs
+D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\Ultimate Replay\Assets\Ultimate Replay 3.0\Scripts\Runtime\obj\Debug\net5.0\TestCompilationSuccess.csproj.CoreCompileInputs.cache
+D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\Ultimate Replay\obj\Debug\net5.0\TestCompilationSuccess.csproj.AssemblyReference.cache
+D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\Ultimate Replay\obj\Debug\net5.0\TestCompilationSuccess.GeneratedMSBuildEditorConfig.editorconfig
+D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\Ultimate Replay\obj\Debug\net5.0\TestCompilationSuccess.AssemblyInfoInputs.cache
+D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\Ultimate Replay\obj\Debug\net5.0\TestCompilationSuccess.AssemblyInfo.cs
+D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\Ultimate Replay\obj\Debug\net5.0\TestCompilationSuccess.csproj.CoreCompileInputs.cache

@@ -1,0 +1,16 @@
+{
+    "name": "UltimateReplay.KillcamDemo",
+    "rootNamespace": "",
+    "references": [
+        "GUID:b8513b157e0fdbb459ce64e40736d74c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -97,6 +97,28 @@ public    class         Test
 {
     internal void Method(){}
 }", DisplayName = "Internal Method")]
+
+        // Protected method
+        [DataRow(
+@"public class Test
+{
+    protected void Method() => throw new System.NotImplementedException();
+}",
+@"public class Test
+{
+    protected void Method(){}
+}", DisplayName = "Protected Method")]
+
+        // Protected internal method
+        [DataRow(
+@"public class Test
+{
+    protected internal void Method() => throw new System.NotImplementedException();
+}",
+@"public class Test
+{
+    protected internal void Method(){}
+}", DisplayName = "Protected Internal Method")]
         public void TestExcludeMethodMeta(string expectedSource, string inputSource)
         {
             // Convert to meta

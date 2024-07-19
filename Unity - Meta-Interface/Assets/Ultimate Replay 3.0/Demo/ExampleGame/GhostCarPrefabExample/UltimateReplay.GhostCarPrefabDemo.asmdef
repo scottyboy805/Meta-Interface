@@ -1,0 +1,17 @@
+{
+    "name": "UltimateReplay.GhostCarPrefabDemo",
+    "rootNamespace": "",
+    "references": [
+        "GUID:b8513b157e0fdbb459ce64e40736d74c",
+        "GUID:5e1a0b1ad8f4e984a89f5f1ce60f6f1c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

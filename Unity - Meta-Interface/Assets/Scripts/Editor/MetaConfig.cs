@@ -9,6 +9,9 @@ namespace MetaInterface
         // Public
         public static readonly MetaConfig Default = new MetaConfig();
 
+        public bool DiscardTypeComments = false;
+        public bool DiscardMemberComments = false;
+
         // Properties
         public bool HasIgnoreAttribute
         {

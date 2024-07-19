@@ -197,11 +197,21 @@ namespace MetaInterface.Syntax
 
         public static PropertyDeclarationSyntax PatchPropertyAccessorsLambda(PropertyDeclarationSyntax syntax)
         {
+            // Check for expression body
+            if (syntax.ExpressionBody != null)
+                return PatchPropertyAccessorBodyLambda(syntax);
+
+
             AccessorListSyntax accessors = syntax.AccessorList;
 
             foreach (AccessorDeclarationSyntax accessor in accessors.Accessors)
             {
+                // Check for accessor body
+                if (accessor.Body == null && accessor.ExpressionBody == null)
+                    continue;
+
                 syntax = syntax.ReplaceNode(accessor, PatchPropertyAccessorBodyLambda(accessor));
+                //syntax = syntax.ReplaceNode(accessor, PatchPropertyAccessorBody(accessor));
             }
 
             return syntax;
@@ -219,13 +229,31 @@ namespace MetaInterface.Syntax
 
         public static AccessorDeclarationSyntax PatchPropertyAccessorBodyLambda(AccessorDeclarationSyntax syntax)
         {
+            // Remove body
+            if (syntax.Body != null)
+                syntax = syntax.RemoveNode(syntax.Body, SyntaxRemoveOptions.KeepNoTrivia);
+
+            // Remove expression body
+            if(syntax.ExpressionBody != null)
+                syntax = syntax.RemoveNode(syntax.ExpressionBody, SyntaxRemoveOptions.KeepNoTrivia);
+
+            // Build patched body
+            return syntax.WithExpressionBody(GetMethodBodyLambdaReplacementSyntax())
+                .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        }
+
+        public static PropertyDeclarationSyntax PatchPropertyAccessorBodyLambda(PropertyDeclarationSyntax syntax)
+        {
             // Strip accessor body - check for no body provided too
-            if (StripPropertyBody(ref syntax) == false)
+            if (StripPropertyExpressionBody(ref syntax) == false)
                 return syntax;
 
             // Replace the accessor body
-            return syntax.WithExpressionBody(GetMethodBodyLambdaReplacementSyntax());
+            return syntax.WithExpressionBody(GetMethodBodyLambdaReplacementSyntax())
+                .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         }
+
+
 
         public static MethodDeclarationSyntax PatchMethodBody(MethodDeclarationSyntax syntax)
         {
@@ -271,14 +299,14 @@ namespace MetaInterface.Syntax
             // Remove current accessor body
             if (syntax.Body != null)
             {
-                syntax = syntax.RemoveNode(syntax.Body, SyntaxRemoveOptions.KeepNoTrivia);
+                syntax = syntax.RemoveNode(syntax.Body, SyntaxRemoveOptions.KeepUnbalancedDirectives);
                 hasBody = true;
             }
 
             // Remove current expression
             if (syntax.ExpressionBody != null)
             {
-                syntax = syntax.RemoveNode(syntax.ExpressionBody, SyntaxRemoveOptions.KeepNoTrivia);
+                syntax = syntax.RemoveNode(syntax.ExpressionBody, SyntaxRemoveOptions.KeepUnbalancedDirectives);
                 hasBody = true;
             }
 
@@ -288,6 +316,22 @@ namespace MetaInterface.Syntax
 
             // Strip was successful
             return true;
+        }
+
+        private static bool StripPropertyExpressionBody(ref PropertyDeclarationSyntax syntax)
+        {
+            // Check for trailing semicolon
+            if (syntax.SemicolonToken != null)
+                syntax = syntax.ReplaceToken(syntax.SemicolonToken, SyntaxFactory.Token(SyntaxKind.None));
+
+            // Remove current expression body
+            if (syntax.ExpressionBody != null)
+            {
+                syntax = syntax.RemoveNode(syntax.ExpressionBody, SyntaxRemoveOptions.KeepUnbalancedDirectives);
+                return true;
+            }
+            else
+                return false;
         }
 
         private static bool StripMethodBody(ref MethodDeclarationSyntax syntax, out SyntaxTriviaList trailingTrivia)
@@ -304,14 +348,14 @@ namespace MetaInterface.Syntax
             // Remove current method body
             if (syntax.Body != null)
             {
-                syntax = syntax.RemoveNode(syntax.Body, SyntaxRemoveOptions.KeepNoTrivia);
+                syntax = syntax.RemoveNode(syntax.Body, SyntaxRemoveOptions.KeepUnbalancedDirectives);
                 hasBody = true;
             }
 
             // Remove current expression
             if (syntax.ExpressionBody != null)
             {
-                syntax = syntax.RemoveNode(syntax.ExpressionBody, SyntaxRemoveOptions.KeepNoTrivia);
+                syntax = syntax.RemoveNode(syntax.ExpressionBody, SyntaxRemoveOptions.KeepUnbalancedDirectives);
                 hasBody = true;
             }
 
@@ -325,6 +369,10 @@ namespace MetaInterface.Syntax
 
         public static BlockSyntax GetMethodBodyReplacementSyntax()
         {
+            SyntaxTrivia closingTrivia = default;
+
+
+
             return SyntaxFactory.Block(
                 SyntaxFactory.ParseStatement(
                     methodImplementationString));

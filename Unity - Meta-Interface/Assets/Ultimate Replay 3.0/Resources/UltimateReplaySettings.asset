@@ -1,0 +1,96 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8355817699083088304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6433425ae01a1245b39532acd227ae5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  replayPrefab: {fileID: 3356913688958925935, guid: 741cfdf586e750946ab04d7702444a51, type: 3}
+  allowPooling: 1
+--- !u!114 &-5619535358319885942
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6433425ae01a1245b39532acd227ae5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  replayPrefab: {fileID: 4253647433789861586, guid: d0579203b68a7904a8215afc8f429274, type: 3}
+  allowPooling: 1
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b72ff0dcd2bee64c986e5d74e58037c, type: 3}
+  m_Name: UltimateReplaySettings
+  m_EditorClassIdentifier: 
+  recordOptions:
+    recordFPS: 12
+    recordUpdateMode: 1
+  playbackOptions:
+    playbackFPS: -1
+    playbackEndBehaviour: 0
+    playbackUpdateMode: 1
+  sceneDiscovery: 0
+  prefabProviders:
+  - {fileID: -5619535358319885942}
+  - {fileID: -8355817699083088304}
+  defaultReplayPreparer:
+    skipTypes:
+    - assemblyQualifiedTypeName: UltimateReplay.ReplayObject, UltimateReplay, Version=0.0.0.0,
+        Culture=neutral, PublicKeyToken=null
+    - assemblyQualifiedTypeName: UltimateReplay.ReplayBehaviour, UltimateReplay,
+        Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    - assemblyQualifiedTypeName: UnityEngine.Camera, UnityEngine.CoreModule, Version=0.0.0.0,
+        Culture=neutral, PublicKeyToken=null
+    - assemblyQualifiedTypeName: UnityEngine.AudioSource, UnityEngine.AudioModule,
+        Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    - assemblyQualifiedTypeName: UnityEngine.ParticleSystem, UnityEngine.ParticleSystemModule,
+        Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    - assemblyQualifiedTypeName: UnityEngine.Canvas, UnityEngine.UIModule, Version=0.0.0.0,
+        Culture=neutral, PublicKeyToken=null
+    preparerSettings:
+    - componentPreparerType:
+        assemblyQualifiedTypeName: UnityEngine.EventSystems.UIBehaviour, UnityEngine.UI,
+          Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+      enabled: 1
+    - componentPreparerType:
+        assemblyQualifiedTypeName: UnityEngine.Animator, UnityEngine.AnimationModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+      enabled: 1
+    - componentPreparerType:
+        assemblyQualifiedTypeName: UnityEngine.Behaviour, UnityEngine.CoreModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+      enabled: 1
+    - componentPreparerType:
+        assemblyQualifiedTypeName: UnityEngine.Collider, UnityEngine.PhysicsModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+      enabled: 1
+    - componentPreparerType:
+        assemblyQualifiedTypeName: UnityEngine.Collider2D, UnityEngine.Physics2DModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+      enabled: 1
+    - componentPreparerType:
+        assemblyQualifiedTypeName: UnityEngine.Rigidbody, UnityEngine.PhysicsModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+      enabled: 1
+    - componentPreparerType:
+        assemblyQualifiedTypeName: UnityEngine.Rigidbody2D, UnityEngine.Physics2DModule,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+      enabled: 1

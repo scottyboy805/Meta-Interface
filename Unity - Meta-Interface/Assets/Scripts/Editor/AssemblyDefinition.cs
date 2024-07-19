@@ -72,7 +72,7 @@ namespace MetaInterface
 
         public bool GenerateSource(string outputFolder)
         {
-            try
+            //try
             {
                 UnityEngine.Debug.Log("Output meta source folder: " + outputFolder);
 
@@ -110,10 +110,10 @@ namespace MetaInterface
                     }
                 }
             }
-            catch
-            {
-                return false;
-            }
+            //catch
+            //{
+            //    return false;
+            //}
 
             return true;
         }
