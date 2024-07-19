@@ -11,14 +11,29 @@ namespace Meta_Interface_UnitTest
 {
     public int Property
     {
-        get;
-        set;
+        get => throw new System.NotImplementedException();
+        set => throw new System.NotImplementedException();
     }
 }", @"
 public class Test
 {
     public int Property{get;set;}
 }", DisplayName = "Auto Property")]
+
+        // Auto property assignment
+        [DataRow(
+@"public class Test
+{
+    public int Property
+    {
+        get => throw new System.NotImplementedException();
+        set => throw new System.NotImplementedException();
+    }
+}", @"
+public class Test
+{
+    public int Property{get;set;} = 5
+}", DisplayName = "Auto Property Assignment")]
 
         // Lambda property
         [DataRow(
@@ -58,6 +73,21 @@ public class Test
 {
     public int Property { set{ val = 5;}}
 }", DisplayName = "Set Property")]
+
+        // Get Set property
+        [DataRow(
+@"public class Test
+{
+    public int Property
+    {
+        get => throw new System.NotImplementedException();
+        set => throw new System.NotImplementedException();
+    }
+}", @"
+public class Test
+{
+    public int Property { get => 5; set{ val = 5;}}
+}", DisplayName = "Get Set Property")]
         public void TestPropertyMeta(string expectedSource, string inputSource)
         {
             // Convert to meta

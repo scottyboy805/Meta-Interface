@@ -175,7 +175,7 @@ namespace MetaInterface.Syntax
 
         public static bool IsVariableInitializerAllowed(VariableDeclaratorSyntax syntax)
         {
-            // No assigmnent is a valid case
+            // No assignment is a valid case
             if (syntax == null || syntax.Initializer == null)
                 return true;
 
@@ -201,18 +201,19 @@ namespace MetaInterface.Syntax
             if (syntax.ExpressionBody != null)
                 return PatchPropertyAccessorBodyLambda(syntax);
 
+            // Get all accessors
+            SyntaxList<AccessorDeclarationSyntax> accessors = syntax.AccessorList.Accessors;
 
-            AccessorListSyntax accessors = syntax.AccessorList;
-
-            foreach (AccessorDeclarationSyntax accessor in accessors.Accessors)
+            for(int i = 0; i < accessors.Count; i++)
             {
-                // Check for accessor body
-                if (accessor.Body == null && accessor.ExpressionBody == null)
-                    continue;
-
-                syntax = syntax.ReplaceNode(accessor, PatchPropertyAccessorBodyLambda(accessor));
-                //syntax = syntax.ReplaceNode(accessor, PatchPropertyAccessorBody(accessor));
+                // Patch accessor body
+                syntax = syntax.ReplaceNode(accessors[i], PatchPropertyAccessorBodyLambda(accessors[i]));
+                accessors = syntax.AccessorList.Accessors;
             }
+
+            // Check for initializer
+            if (syntax.Initializer != null)
+                syntax = syntax.RemoveNode(syntax.Initializer, SyntaxRemoveOptions.KeepNoTrivia);
 
             return syntax;
         }
