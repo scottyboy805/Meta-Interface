@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "w9oX1xR7Dl7AgT6TE32VF5VIXpGKKrOav4xnMzi/GftFK63tP1Oqd0tsXm2GzIP/jeSo6HCHYl+28D0LL4FXHA==",
+  "success": true,
+  "projectFilePath": "D:\\Unity\\Meta-Interface\\Meta-Interface-Standalone\\Meta-Interface-Standalone.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\scott\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\scott\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

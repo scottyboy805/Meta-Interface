@@ -1,0 +1,18 @@
+{
+    "name": "MetaInterface.Tests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:6965aaeb55e66af46bb63fe365f42169"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

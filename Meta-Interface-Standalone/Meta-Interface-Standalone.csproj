@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>Meta_Interface_Standalone</RootNamespace>
+    <AssemblyName>Meta-Interface</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Assets\Scripts\Editor\AssemblyDefinition.cs" Link="AssemblyDefinition.cs" />
+    <Compile Include="..\Assets\Scripts\Editor\MetaConfig.cs" Link="MetaConfig.cs" />
+    <Compile Include="..\Assets\Scripts\Editor\MetaSourceFile.cs" Link="MetaSourceFile.cs" />
+    <Compile Include="..\Assets\Scripts\Editor\SyntaxTree\SyntaxPatcher.cs" Link="SyntaxTree\SyntaxPatcher.cs" />
+    <Compile Include="..\Assets\Scripts\Editor\SyntaxTree\SyntaxRewriter.cs" Link="SyntaxTree\SyntaxRewriter.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="SyntaxTree\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis">
+      <HintPath>.dependencies\Microsoft.CodeAnalysis.CSharp\Microsoft.CodeAnalysis.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp">
+      <HintPath>.dependencies\Microsoft.CodeAnalysis.CSharp\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor">
+      <HintPath>.dependencies\Unity 2018.3\UnityEditor.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>.dependencies\Unity 2018.3\UnityEngine.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
