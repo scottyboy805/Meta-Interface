@@ -13,6 +13,12 @@ namespace UltimateReplay.Lifecycle
     /// </summary>
     public interface IReplayReusable
     {
+        // Methods
+        /// <summary>
+        /// Called when an existing instance is about to be returned from the pool. 
+        /// This method should reset any field members to default or safe values.
+        /// </summary>
+        void Initialize();
     }
 
     /// <summary>
@@ -22,11 +28,7 @@ namespace UltimateReplay.Lifecycle
     public sealed class ReplayInstancePool<T>
     {
         // Constructor
-        internal ReplayInstancePool(Func<T> newT)
-        {
-            this.newT = newT;
-        }
-
+        internal ReplayInstancePool(Func<T> newT) => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// Get an existing recycled instance or create a new instance if required.

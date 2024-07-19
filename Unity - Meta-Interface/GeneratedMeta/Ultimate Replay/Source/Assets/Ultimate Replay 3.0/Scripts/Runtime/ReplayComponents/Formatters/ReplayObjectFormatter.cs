@@ -17,20 +17,8 @@ namespace UltimateReplay.Formatters
         /// </summary>
         public ReplayIdentity PrefabIdentity
         {
-            get
-            {
-                return prefabIdentity;
-            }
-
-            set
-            {
-                prefabIdentity = value;
-                // Clear bits
-                serializeFlags &= ~ReplayObjectSerializeFlags.Prefab;
-                // Add flag if id is valid
-                if (prefabIdentity.IsValid == true)
-                    serializeFlags |= ReplayObjectSerializeFlags.Prefab;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -38,10 +26,7 @@ namespace UltimateReplay.Formatters
         /// </summary>
         public IList<ReplayComponentData> ComponentStates
         {
-            get
-            {
-                return componentStates;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -49,10 +34,7 @@ namespace UltimateReplay.Formatters
         /// </summary>
         public IList<ReplayVariableData> VariableStates
         {
-            get
-            {
-                return variableStates;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -60,10 +42,7 @@ namespace UltimateReplay.Formatters
         /// </summary>
         public IList<ReplayEventData> EventStates
         {
-            get
-            {
-                return eventStates;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -71,10 +50,7 @@ namespace UltimateReplay.Formatters
         /// </summary>
         public IList<ReplayMethodData> MethodStates
         {
-            get
-            {
-                return methodStates;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

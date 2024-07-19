@@ -49,26 +49,17 @@ namespace UltimateReplay
         // Properties
         public bool IsRecording
         {
-            get
-            {
-                return record != null && record.IsRecordingOrPaused;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsReplaying
         {
-            get
-            {
-                return playback != null && playback.IsReplayingOrPaused;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsLive
         {
-            get
-            {
-                return IsRecording == false && IsReplaying == false;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

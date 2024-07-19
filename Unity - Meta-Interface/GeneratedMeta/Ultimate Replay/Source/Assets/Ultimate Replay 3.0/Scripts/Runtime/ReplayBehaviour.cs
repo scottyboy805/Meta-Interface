@@ -35,19 +35,8 @@ namespace UltimateReplay
         /// </summary>
         public ReplayIdentity ReplayIdentity
         {
-            get
-            {
-                // Check for awake
-                //CheckAwakeCalled();
-                return replayIdentity;
-            }
-
-            set
-            {
-                // Check for awake
-                //CheckAwakeCalled();
-                replayIdentity = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -55,36 +44,17 @@ namespace UltimateReplay
         /// </summary>
         public ReplayObject ReplayObject
         {
-            get
-            {
-                // Check for awake
-                //CheckAwakeCalled();
-                return replayObject.reference;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool HasPersistentData
         {
-            get
-            {
-                // Check for awake
-                CheckAwakeCalled();
-                return replayPersistentData != null && replayPersistentData.Size > 0;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public ReplayState ReplayPersistentData
         {
-            get
-            {
-                // Check for awake
-                CheckAwakeCalled();
-                // Create if required
-                if (replayPersistentData == null)
-                    replayPersistentData = ReplayState.pool.GetReusable();
-                // Get instance
-                return replayPersistentData;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -92,37 +62,7 @@ namespace UltimateReplay
         /// </summary>
         public IList<ReplayVariable> Variables
         {
-            get
-            {
-                // Check for awake
-                CheckAwakeCalled();
-                if (variablesCount == -1)
-                {
-                    foreach (FieldInfo field in GetType().GetFields())
-                    {
-                        // Check for replay var attribute
-                        if (field.IsDefined(typeof(ReplayVarAttribute), false) == true)
-                        {
-                            // Get the attribute
-                            ReplayVarAttribute attribute = (ReplayVarAttribute)field.GetCustomAttributes(typeof(ReplayVarAttribute), false)[0];
-                            // Create a new variable
-                            ReplayVariable variable = new ReplayVariable(this, field, attribute);
-                            // Add to collection
-                            if (variables == null)
-                                variables = new List<ReplayVariable>();
-                            // Register the variable
-                            variables.Add(variable);
-                        }
-                    }
-
-                    // Cache item count
-                    variablesCount = 0;
-                    if (variables != null)
-                        variablesCount = variables.Count;
-                }
-
-                return variables;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -130,16 +70,7 @@ namespace UltimateReplay
         /// </summary>
         public bool HasVariables
         {
-            get
-            {
-                // Check for awake
-                CheckAwakeCalled();
-                // Check fi variables have been initialized
-                if (variablesCount != -1)
-                    return variablesCount > 0;
-                // Initialize by accessing the collection
-                return Variables != null;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -148,26 +79,17 @@ namespace UltimateReplay
         /// </summary>
         public bool IsRecording
         {
-            get
-            {
-                return ReplayObject.IsRecording;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsRecordingPaused
         {
-            get
-            {
-                return ReplayObject.IsRecordingPaused;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsRecordingOrPaused
         {
-            get
-            {
-                return ReplayObject.IsRecordingOrPaused;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -176,26 +98,17 @@ namespace UltimateReplay
         /// </summary>
         public bool IsReplaying
         {
-            get
-            {
-                return ReplayObject.IsReplaying;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsPlaybackPaused
         {
-            get
-            {
-                return ReplayObject.IsPlaybackPaused;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsReplayingOrPaused
         {
-            get
-            {
-                return ReplayObject.IsReplayingOrPaused;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -204,35 +117,17 @@ namespace UltimateReplay
         /// </summary>
         public float PlaybackTime
         {
-            get
-            {
-                // Check for replaying
-                if (ReplayObject.IsRecordingOrPaused == true)
-                    return ReplayObject.PlaybackOperation.PlaybackTime;
-                return 0f;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public float PlaybackTimeNormalized
         {
-            get
-            {
-                // Check for replaying
-                if (ReplayObject.IsRecordingOrPaused == true)
-                    return ReplayObject.PlaybackOperation.PlaybackTimeNormalized;
-                return 0f;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public float PlaybackTimeScale
         {
-            get
-            {
-                // Check for replaying
-                if (ReplayObject.IsReplayingOrPaused == true)
-                    return ReplayObject.PlaybackOperation.PlaybackTimeScale;
-                return 1f;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -240,13 +135,7 @@ namespace UltimateReplay
         /// </summary>
         public PlaybackDirection PlaybackDirection
         {
-            get
-            {
-                // Check for replaying
-                if (ReplayObject.IsRecordingOrPaused == true)
-                    return ReplayObject.PlaybackOperation.PlaybackDirection;
-                return PlaybackDirection.Forward;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

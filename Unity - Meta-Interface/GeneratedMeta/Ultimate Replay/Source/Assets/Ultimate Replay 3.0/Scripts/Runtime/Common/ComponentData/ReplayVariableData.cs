@@ -19,10 +19,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public ReplayIdentity BehaviourIdentity
         {
-            get
-            {
-                return behaviourIdentity;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -30,10 +27,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public int VariableFieldOffset
         {
-            get
-            {
-                return variableFieldOffset;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -41,10 +35,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public ReplayState VariableStateData
         {
-            get
-            {
-                return variableStateData;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
@@ -53,15 +44,9 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         /// <param name = "behaviourIdentity">The <see cref = "ReplayIdentity"/> of the owning behaviour</param>
         /// <param name = "variable">The <see cref = "ReplayVariable"/> instance</param>
-        public ReplayVariableData(ReplayIdentity behaviourIdentity, ReplayVariable variable)
-        {
-            this.behaviourIdentity = behaviourIdentity;
-            this.variableFieldOffset = variable.FieldOffset;
-            // Serialize variable
-            this.variableStateData = ReplayState.pool.GetReusable();
-            variable.OnReplaySerialize(variableStateData);
-        }
-
+        public ReplayVariableData(ReplayIdentity behaviourIdentity, ReplayVariable variable) => throw new System.NotImplementedException();
+        // Methods
+        IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
         /// <summary>
         /// Serialize the variable data to the specified <see cref = "ReplayState"/>.
         /// </summary>

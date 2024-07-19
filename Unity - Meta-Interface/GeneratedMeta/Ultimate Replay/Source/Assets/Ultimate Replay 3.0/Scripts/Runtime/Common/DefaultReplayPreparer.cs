@@ -27,28 +27,12 @@ namespace UltimateReplay.StatePreparation
         // Properties
         public IList<SerializableType> SkipTypes
         {
-            get
-            {
-                return skipTypes;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public IList<ComponentPreparerSettings> PreparerSettings
         {
-            get
-            {
-                return preparerSettings;
-            }
-        }
-
-        // Constructor
-        /// <summary>
-        /// Create a new instance.
-        /// </summary>
-        static DefaultReplayPreparer()
-        {
-            // Load all preparers
-            ComponentPreparer.InitializePreparers();
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

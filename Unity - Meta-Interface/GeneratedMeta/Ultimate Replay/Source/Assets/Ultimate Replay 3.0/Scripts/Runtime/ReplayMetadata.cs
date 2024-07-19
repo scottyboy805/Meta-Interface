@@ -29,10 +29,7 @@ namespace UltimateReplay
         /// </summary>
         public string TypeName
         {
-            get
-            {
-                return GetType().AssemblyQualifiedName;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -40,15 +37,8 @@ namespace UltimateReplay
         /// </summary>
         public string ReplayName
         {
-            get
-            {
-                return replayName;
-            }
-
-            set
-            {
-                replayName = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -57,10 +47,7 @@ namespace UltimateReplay
         /// </summary>
         public int SceneId
         {
-            get
-            {
-                return sceneId;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -69,10 +56,7 @@ namespace UltimateReplay
         /// </summary>
         public string SceneName
         {
-            get
-            {
-                return sceneName;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -81,10 +65,7 @@ namespace UltimateReplay
         /// </summary>
         public string ScenePath
         {
-            get
-            {
-                return scenePath;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -93,15 +74,8 @@ namespace UltimateReplay
         /// </summary>
         public string AppName
         {
-            get
-            {
-                return appName;
-            }
-
-            set
-            {
-                appName = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -110,15 +84,8 @@ namespace UltimateReplay
         /// </summary>
         public string DeveloperName
         {
-            get
-            {
-                return developerName;
-            }
-
-            set
-            {
-                developerName = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -127,37 +94,22 @@ namespace UltimateReplay
         /// </summary>
         public string UserName
         {
-            get
-            {
-                return userName;
-            }
-
-            set
-            {
-                userName = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Constructor
         /// <summary>
         /// Create a new instance.
         /// </summary>
-        public ReplayMetadata()
-        {
-        }
-
+        public ReplayMetadata() => throw new System.NotImplementedException();
         /// <summary>
         /// Create a new instance with the specified metadata replay name.
         /// </summary>
         /// <param name = "replayName">The name of the replay</param>
-        public ReplayMetadata(string replayName = null)
-        {
-            // Check for empty
-            if (string.IsNullOrEmpty(replayName) == true)
-                replayName = "Untitled";
-            this.replayName = replayName;
-        }
-
+        public ReplayMetadata(string replayName = null) => throw new System.NotImplementedException();
+        // Methods
+        IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
         /// <summary>
         /// Update all metadata from default sources.
         /// Scene information will be updated from <see cref = "SceneManager.GetActiveScene"/> and company and product info will be updated based on Unity player settings.
@@ -182,5 +134,7 @@ namespace UltimateReplay
         /// <param name = "typeName">The type name</param>
         /// <returns></returns>
         public static ReplayMetadata CreateFromType(string typeName) => throw new System.NotImplementedException();
+        void IReplayStreamSerialize.OnReplayStreamSerialize(BinaryWriter writer) => throw new System.NotImplementedException();
+        void IReplayStreamSerialize.OnReplayStreamDeserialize(BinaryReader reader) => throw new System.NotImplementedException();
     }
 }

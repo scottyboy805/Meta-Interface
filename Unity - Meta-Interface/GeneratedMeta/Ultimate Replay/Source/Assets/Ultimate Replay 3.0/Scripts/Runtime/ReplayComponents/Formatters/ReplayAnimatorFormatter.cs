@@ -118,36 +118,14 @@ namespace UltimateReplay.Formatters
         public const int IKLimbCount = 4;
         public bool ReplayParameters
         {
-            get
-            {
-                return (serializeFlags & ReplayAnimatorSerializeFlags.Parameters) != 0;
-            }
-
-            set
-            {
-                // Clear bit
-                serializeFlags &= ~ReplayAnimatorSerializeFlags.Parameters;
-                // Set bit
-                if (value == true)
-                    serializeFlags |= ReplayAnimatorSerializeFlags.Parameters;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public bool LowPrecision
         {
-            get
-            {
-                return (serializeFlags & ReplayAnimatorSerializeFlags.LowPrecision) != 0;
-            }
-
-            set
-            {
-                // Clear bit
-                serializeFlags &= ~ReplayAnimatorSerializeFlags.LowPrecision;
-                // Set bit
-                if (value == true)
-                    serializeFlags |= ReplayAnimatorSerializeFlags.LowPrecision;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -155,19 +133,8 @@ namespace UltimateReplay.Formatters
         /// </summary>
         public ReplayAnimatorState MainState
         {
-            get
-            {
-                if (states.Length == 0)
-                    return new ReplayAnimatorState();
-                return states[0];
-            }
-
-            set
-            {
-                if (states.Length == 0)
-                    states = new ReplayAnimatorState[1];
-                states[0] = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -175,17 +142,8 @@ namespace UltimateReplay.Formatters
         /// </summary>
         public ReplayAnimatorState[] States
         {
-            get
-            {
-                return states;
-            }
-
-            set
-            {
-                states = value;
-                if (states == null)
-                    states = new ReplayAnimatorState[0];
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -193,17 +151,8 @@ namespace UltimateReplay.Formatters
         /// </summary>
         public ReplayAnimatorParameter[] Parameters
         {
-            get
-            {
-                return parameters;
-            }
-
-            set
-            {
-                parameters = value;
-                if (parameters == null)
-                    parameters = new ReplayAnimatorParameter[0];
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -211,29 +160,12 @@ namespace UltimateReplay.Formatters
         /// </summary>
         public ReplayAnimatorIKTarget[] IKTargets
         {
-            get
-            {
-                return ikTargets;
-            }
-
-            set
-            {
-                ikTargets = value;
-                if (ikTargets == null || ikTargets.Length != IKLimbCount)
-                    ikTargets = new ReplayAnimatorIKTarget[IKLimbCount];
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Constructor
-        public ReplayAnimatorFormatter()
-        {
-            for (int i = 0; i < ikTargets.Length; i++)
-            {
-                // Set to identity to avoid scalar assertion
-                ikTargets[i].targetRotation = Quaternion.identity;
-            }
-        }
-
+        public ReplayAnimatorFormatter() => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// Invoke this method to serialize the animator data to the specified <see cref = "ReplayState"/>.

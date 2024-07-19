@@ -13,23 +13,13 @@ namespace UltimateReplay.Formatters
         // Properties
         public ReplayIdentity ParentIdentity
         {
-            get
-            {
-                return parentIdentity;
-            }
-
-            set
-            {
-                parentIdentity = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public bool HasParent
         {
-            get
-            {
-                return parentIdentity.ID != 0;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

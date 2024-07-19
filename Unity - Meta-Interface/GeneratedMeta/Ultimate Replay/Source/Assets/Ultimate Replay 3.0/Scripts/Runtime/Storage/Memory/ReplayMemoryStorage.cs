@@ -14,80 +14,41 @@ namespace UltimateReplay.Storage
         // Properties
         public override bool CanRead
         {
-            get
-            {
-                CheckDisposed();
-                return true;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override bool CanWrite
         {
-            get
-            {
-                CheckDisposed();
-                return true;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override float Duration
         {
-            get
-            {
-                CheckDisposed();
-                return duration;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override int MemorySize
         {
-            get
-            {
-                CheckDisposed();
-                return memorySize;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override int SnapshotSize
         {
-            get
-            {
-                CheckDisposed();
-                // Check for none
-                if (segments.Count == 0)
-                    return 0;
-                // Get total
-                return segments[segments.Count - 1].EndSequenceID;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override int IdentitySize
         {
-            get
-            {
-                CheckDisposed();
-                return identitySize;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public float RollingBufferDuration
         {
-            get
-            {
-                CheckDisposed();
-                return rollingBufferDuration;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        public ReplayMemoryStorage(string replayName = null, float rollingBufferDuration = -1f): base(replayName)
-        {
-            // Get size of identity
-            identitySize = ReplayIdentity.byteSize;
-            // Store buffer size
-            this.rollingBufferDuration = rollingBufferDuration;
-        }
-
+        public ReplayMemoryStorage(string replayName = null, float rollingBufferDuration = -1f): base(default) => throw new System.NotImplementedException();
         // Methods
         public override ReplaySnapshot FetchSnapshot(float timeStamp) => throw new System.NotImplementedException();
         public override ReplaySnapshot FetchSnapshot(int sequenceID) => throw new System.NotImplementedException();

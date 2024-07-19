@@ -122,7 +122,8 @@ namespace MetaInterface.Syntax
                 return null;
 
             // Interface should remain in the syntax tree
-            return base.VisitInterfaceDeclaration(node);
+            return node;
+            //return base.VisitInterfaceDeclaration(node);
         }
 
         public override SyntaxNode VisitEnumDeclaration(EnumDeclarationSyntax node)
@@ -173,6 +174,16 @@ namespace MetaInterface.Syntax
 
             // Accessor should remain in the syntax tree
             return base.VisitAccessorDeclaration(node);
+        }
+
+        public override SyntaxNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
+        {
+            // Check if constructor is exposed
+            if (SyntaxPatcher.IsConstructorDeclarationExposed(node) == false)
+                return null;
+
+            // Constructor should remain in the syntax tree
+            return SyntaxPatcher.PatchConstructorBodyLambda(node);
         }
 
         public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)

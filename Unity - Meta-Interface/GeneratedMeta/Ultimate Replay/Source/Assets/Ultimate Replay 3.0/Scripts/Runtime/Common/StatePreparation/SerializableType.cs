@@ -16,24 +16,12 @@ namespace UltimateReplay.StatePreparation
         // Properties
         public Type SystemType
         {
-            get
-            {
-                ResolveType();
-                return systemTypeInstance;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        public SerializableType()
-        {
-        }
-
-        public SerializableType(Type systemType)
-        {
-            this.assemblyQualifiedTypeName = systemType.AssemblyQualifiedName;
-            this.systemTypeInstance = systemType;
-        }
-
+        public SerializableType() => throw new System.NotImplementedException();
+        public SerializableType(Type systemType) => throw new System.NotImplementedException();
         // Methods
         public bool ResolveType() => throw new System.NotImplementedException();
         public static implicit operator SerializableType(Type systemType)

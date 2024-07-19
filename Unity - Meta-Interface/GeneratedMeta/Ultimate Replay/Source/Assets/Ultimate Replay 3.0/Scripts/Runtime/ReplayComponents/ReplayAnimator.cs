@@ -28,115 +28,49 @@ namespace UltimateReplay
         // Properties
         public override ReplayFormatter Formatter
         {
-            get
-            {
-                return formatter;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool ReplayParameters
         {
-            get
-            {
-                return replayParameters;
-            }
-
-            set
-            {
-                replayParameters = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public bool ReplayIKPositionTargets
         {
-            get
-            {
-                return (replayIK & ReplayIKFlags.Position) != 0;
-            }
-
-            set
-            {
-                // Clear bit
-                replayIK &= ~ReplayIKFlags.Position;
-                // Set bit
-                if (value == true)
-                    replayIK |= ReplayIKFlags.Position;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public bool ReplayIKRotationTargets
         {
-            get
-            {
-                return (replayIK & ReplayIKFlags.Rotation) != 0;
-            }
-
-            set
-            {
-                // Clear bit
-                replayIK &= ~ReplayIKFlags.Rotation;
-                // Set bit
-                if (value == true)
-                    replayIK |= ReplayIKFlags.Rotation;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public bool ReplayIKWeights
         {
-            get
-            {
-                return (replayIK & ReplayIKFlags.Weights) != 0;
-            }
-
-            set
-            {
-                // Clear bit
-                replayIK &= ~ReplayIKFlags.Weights;
-                // Set bit
-                if (value == true)
-                    replayIK |= ReplayIKFlags.Weights;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision RecordPrecision
         {
-            get
-            {
-                return recordPrecision;
-            }
-
-            set
-            {
-                recordPrecision = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public bool Interpolate
         {
-            get
-            {
-                return interpolate;
-            }
-
-            set
-            {
-                interpolate = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public bool InterpolateParameters
         {
-            get
-            {
-                return interpolateParameters;
-            }
-
-            set
-            {
-                interpolateParameters = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Methods

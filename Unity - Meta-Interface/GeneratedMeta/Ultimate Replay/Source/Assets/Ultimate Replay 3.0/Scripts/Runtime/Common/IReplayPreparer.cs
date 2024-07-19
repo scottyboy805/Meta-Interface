@@ -12,5 +12,20 @@ namespace UltimateReplay.StatePreparation
     /// </summary>
     public interface IReplayPreparer
     {
+        // Methods
+        /// <summary>
+        /// Prepares the specified replay object for playback.
+        /// The implementing type should ensure that all game systems likley to affect the replay object during playback are suitable disabled in order to avoid glitching or unpredicted behaviour.
+        /// This method will be called for each replay object that must be prepared.
+        /// </summary>
+        /// <param name = "replayObject">The replay object that should be prepared</param>
+        void PrepareForPlayback(ReplayObject replayObject);
+        /// <summary>
+        /// Prepares the specified replay object for gameplay.
+        /// The implementing type should restore all game systems that affect the replay object so that the object is in its original state.
+        /// This method will be called for each replay object that must be prepared.
+        /// </summary>
+        /// <param name = "replayObject">The replay object to prepare</param>
+        void PrepareForGameplay(ReplayObject replayObject);
     }
 }

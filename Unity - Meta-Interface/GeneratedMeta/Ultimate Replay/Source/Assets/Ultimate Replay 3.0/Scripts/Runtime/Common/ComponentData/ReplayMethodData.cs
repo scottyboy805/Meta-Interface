@@ -20,10 +20,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public ReplayIdentity BehaviourIdentity
         {
-            get
-            {
-                return behaviourIdentity;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -33,10 +30,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public int TargetMethodHash
         {
-            get
-            {
-                return methodHash;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -44,10 +38,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public MethodInfo TargetMethod
         {
-            get
-            {
-                return targetMethod;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -56,10 +47,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public object[] MethodArguments
         {
-            get
-            {
-                return methodArguments;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
@@ -69,14 +57,9 @@ namespace UltimateReplay.ComponentData
         /// <param name = "behaviourIdentity">The identity of the behaviour component that recorded the method call</param>
         /// <param name = "targetMethod">The target method information</param>
         /// <param name = "methodArguments">The argument list for the target method</param>
-        public ReplayMethodData(ReplayIdentity behaviourIdentity, MethodInfo targetMethod, params object[] methodArguments)
-        {
-            this.behaviourIdentity = behaviourIdentity;
-            this.methodHash = ReplayMethods.GetReplayMethodHash(targetMethod);
-            this.targetMethod = targetMethod;
-            this.methodArguments = methodArguments;
-        }
-
+        public ReplayMethodData(ReplayIdentity behaviourIdentity, MethodInfo targetMethod, params object[] methodArguments) => throw new System.NotImplementedException();
+        // Methods
+        IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
         /// <summary>
         /// Serialize the method data to the specified <see cref = "ReplayState"/>.
         /// </summary>

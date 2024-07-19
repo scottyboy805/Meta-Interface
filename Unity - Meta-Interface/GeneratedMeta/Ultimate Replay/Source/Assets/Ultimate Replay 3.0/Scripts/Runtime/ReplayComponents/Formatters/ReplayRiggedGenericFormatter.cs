@@ -13,285 +13,78 @@ namespace UltimateReplay.Formatters
 {
     public sealed class ReplayRiggedGenericFormatter : ReplayFormatter
     {
-        public Vector3 RootPosition => throw new System.NotImplementedException()public RecordAxisFlags RootPositionAxis
+        public Vector3 RootPosition => throw new System.NotImplementedException();
+        public RecordAxisFlags RootPositionAxis
         {
-            get
-            {
-                RecordAxisFlags flags = RecordAxisFlags.None;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RootPosX) != 0)
-                    flags |= RecordAxisFlags.X;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RootPosY) != 0)
-                    flags |= RecordAxisFlags.Y;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RootPosZ) != 0)
-                    flags |= RecordAxisFlags.Z;
-                return flags;
-            }
-
-            set
-            {
-                // Clear bits
-                serializeFlags &= ~(ReplayRiggedGenericSerializeFlags.RootPosX | ReplayRiggedGenericSerializeFlags.RootPosY | ReplayRiggedGenericSerializeFlags.RootPosZ);
-                // Set
-                if ((value & RecordAxisFlags.X) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RootPosX;
-                if ((value & RecordAxisFlags.Y) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RootPosY;
-                if ((value & RecordAxisFlags.Z) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RootPosZ;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision RootPositionPrecision
         {
-            get
-            {
-                RecordPrecision precision = RecordPrecision.FullPrecision32Bit;
-                // Check for low prescision set
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RootLowPrecisionPos) != 0)
-                    precision = RecordPrecision.HalfPrecision16Bit;
-                return precision;
-            }
-
-            set
-            {
-                // Clear bit
-                serializeFlags &= ~ReplayRiggedGenericSerializeFlags.RootLowPrecisionPos;
-                // Set
-                if (value == RecordPrecision.HalfPrecision16Bit)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RootLowPrecisionPos;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
-        public Quaternion RootRotation => throw new System.NotImplementedException()public RecordAxisFlags RootRotationAxis
+        public Quaternion RootRotation => throw new System.NotImplementedException();
+        public RecordAxisFlags RootRotationAxis
         {
-            get
-            {
-                RecordAxisFlags flags = RecordAxisFlags.None;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RootRotX) != 0)
-                    flags |= RecordAxisFlags.X;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RootRotY) != 0)
-                    flags |= RecordAxisFlags.Y;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RootRotZ) != 0)
-                    flags |= RecordAxisFlags.Z;
-                return flags;
-            }
-
-            set
-            {
-                // Clear bits
-                serializeFlags &= ~(ReplayRiggedGenericSerializeFlags.RootPosX | ReplayRiggedGenericSerializeFlags.RootPosY | ReplayRiggedGenericSerializeFlags.RootPosZ);
-                // Set
-                if ((value & RecordAxisFlags.X) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RootRotX;
-                if ((value & RecordAxisFlags.Y) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RootRotY;
-                if ((value & RecordAxisFlags.Z) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RootRotZ;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision RootRotationPrecision
         {
-            get
-            {
-                RecordPrecision precision = RecordPrecision.FullPrecision32Bit;
-                // Check for low prescision set
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RootLowPrecisionRot) != 0)
-                    precision = RecordPrecision.HalfPrecision16Bit;
-                return precision;
-            }
-
-            set
-            {
-                // Clear bit
-                serializeFlags &= ~ReplayRiggedGenericSerializeFlags.RootLowPrecisionRot;
-                // Set
-                if (value == RecordPrecision.HalfPrecision16Bit)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RootLowPrecisionRot;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
-        public Vector3 RootScale => throw new System.NotImplementedException()public RecordAxisFlags RootScaleAxis
+        public Vector3 RootScale => throw new System.NotImplementedException();
+        public RecordAxisFlags RootScaleAxis
         {
-            get
-            {
-                RecordAxisFlags flags = RecordAxisFlags.None;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RootScaX) != 0)
-                    flags |= RecordAxisFlags.X;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RootScaY) != 0)
-                    flags |= RecordAxisFlags.Y;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RootScaZ) != 0)
-                    flags |= RecordAxisFlags.Z;
-                return flags;
-            }
-
-            set
-            {
-                // Clear bits
-                serializeFlags &= ~(ReplayRiggedGenericSerializeFlags.RootPosX | ReplayRiggedGenericSerializeFlags.RootPosY | ReplayRiggedGenericSerializeFlags.RootPosZ);
-                // Set
-                if ((value & RecordAxisFlags.X) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RootScaX;
-                if ((value & RecordAxisFlags.Y) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RootScaY;
-                if ((value & RecordAxisFlags.Z) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RootScaZ;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public int BoneCount
         {
-            get
-            {
-                return boneTransforms.Count;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public RecordAxisFlags BonePositionAxis
         {
-            get
-            {
-                RecordAxisFlags flags = RecordAxisFlags.None;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.PosX) != 0)
-                    flags |= RecordAxisFlags.X;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.PosY) != 0)
-                    flags |= RecordAxisFlags.Y;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.PosZ) != 0)
-                    flags |= RecordAxisFlags.Z;
-                return flags;
-            }
-
-            set
-            {
-                // Clear bits
-                serializeFlags &= ~(ReplayRiggedGenericSerializeFlags.PosX | ReplayRiggedGenericSerializeFlags.PosY | ReplayRiggedGenericSerializeFlags.PosZ);
-                // Set
-                if ((value & RecordAxisFlags.X) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.PosX;
-                if ((value & RecordAxisFlags.Y) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.PosY;
-                if ((value & RecordAxisFlags.Z) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.PosZ;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision BonePositionPrecision
         {
-            get
-            {
-                RecordPrecision precision = RecordPrecision.FullPrecision32Bit;
-                // Check for low prescision set
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.LowPrecisionPos) != 0)
-                    precision = RecordPrecision.HalfPrecision16Bit;
-                return precision;
-            }
-
-            set
-            {
-                // Clear bit
-                serializeFlags &= ~ReplayRiggedGenericSerializeFlags.LowPrecisionPos;
-                // Set
-                if (value == RecordPrecision.HalfPrecision16Bit)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.LowPrecisionPos;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordAxisFlags BoneRotationAxis
         {
-            get
-            {
-                RecordAxisFlags flags = RecordAxisFlags.None;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RotX) != 0)
-                    flags |= RecordAxisFlags.X;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RotY) != 0)
-                    flags |= RecordAxisFlags.Y;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.RotZ) != 0)
-                    flags |= RecordAxisFlags.Z;
-                return flags;
-            }
-
-            set
-            {
-                // Clear bits
-                serializeFlags &= ~(ReplayRiggedGenericSerializeFlags.PosX | ReplayRiggedGenericSerializeFlags.PosY | ReplayRiggedGenericSerializeFlags.PosZ);
-                // Set
-                if ((value & RecordAxisFlags.X) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RotX;
-                if ((value & RecordAxisFlags.Y) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RotY;
-                if ((value & RecordAxisFlags.Z) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.RotZ;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision BoneRotationPrecision
         {
-            get
-            {
-                RecordPrecision precision = RecordPrecision.FullPrecision32Bit;
-                // Check for low prescision set
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.LowPrecisionRot) != 0)
-                    precision = RecordPrecision.HalfPrecision16Bit;
-                return precision;
-            }
-
-            set
-            {
-                // Clear bit
-                serializeFlags &= ~ReplayRiggedGenericSerializeFlags.LowPrecisionRot;
-                // Set
-                if (value == RecordPrecision.HalfPrecision16Bit)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.LowPrecisionRot;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordAxisFlags BoneScaleAxis
         {
-            get
-            {
-                RecordAxisFlags flags = RecordAxisFlags.None;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.ScaX) != 0)
-                    flags |= RecordAxisFlags.X;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.ScaY) != 0)
-                    flags |= RecordAxisFlags.Y;
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.ScaZ) != 0)
-                    flags |= RecordAxisFlags.Z;
-                return flags;
-            }
-
-            set
-            {
-                // Clear bits
-                serializeFlags &= ~(ReplayRiggedGenericSerializeFlags.PosX | ReplayRiggedGenericSerializeFlags.PosY | ReplayRiggedGenericSerializeFlags.PosZ);
-                // Set
-                if ((value & RecordAxisFlags.X) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.ScaX;
-                if ((value & RecordAxisFlags.Y) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.ScaY;
-                if ((value & RecordAxisFlags.Z) != 0)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.ScaZ;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision BoneScalePrecision
         {
-            get
-            {
-                RecordPrecision precision = RecordPrecision.FullPrecision32Bit;
-                // Check for low prescision set
-                if ((serializeFlags & ReplayRiggedGenericSerializeFlags.LowPrecisionSca) != 0)
-                    precision = RecordPrecision.HalfPrecision16Bit;
-                return precision;
-            }
-
-            set
-            {
-                // Clear bit
-                serializeFlags &= ~ReplayRiggedGenericSerializeFlags.LowPrecisionSca;
-                // Set
-                if (value == RecordPrecision.HalfPrecision16Bit)
-                    serializeFlags |= ReplayRiggedGenericSerializeFlags.LowPrecisionSca;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Methods

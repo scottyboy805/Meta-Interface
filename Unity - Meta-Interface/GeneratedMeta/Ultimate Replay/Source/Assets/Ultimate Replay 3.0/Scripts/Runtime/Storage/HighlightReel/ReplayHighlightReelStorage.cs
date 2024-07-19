@@ -20,11 +20,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override bool CanRead
         {
-            get
-            {
-                CheckDisposed();
-                return true;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -32,11 +28,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override bool CanWrite
         {
-            get
-            {
-                CheckDisposed();
-                return false;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -44,11 +36,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override float Duration
         {
-            get
-            {
-                CheckDisposed();
-                return duration;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -57,11 +45,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override int MemorySize
         {
-            get
-            {
-                CheckDisposed();
-                return memorySize;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -69,11 +53,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override int SnapshotSize
         {
-            get
-            {
-                CheckDisposed();
-                return snapshotCount;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -82,11 +62,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override int IdentitySize
         {
-            get
-            {
-                CheckDisposed();
-                return identitySize;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
@@ -96,24 +72,7 @@ namespace UltimateReplay.Storage
         /// <param name = "highlights">A number of storage targets used to form a montage in the order specified</param>
         /// <param name = "disposeHighlights">True if all provided storage targets should also be disposed when this <see cref = "ReplayHighlightReelStorage"/> is disposed</param>
         /// <exception cref = "ArgumentNullException">One or more storage targets in the specified <see cref = "IEnumerable{T}"/> are null</exception>
-        public ReplayHighlightReelStorage(IEnumerable<ReplayStorage> highlights, bool disposeHighlights = true)
-        {
-            identitySize = ReplayIdentity.byteSize;
-            this.highlights.AddRange(highlights);
-            this.disposeHighlights = disposeHighlights;
-            // Update values
-            foreach (ReplayStorage storage in highlights)
-            {
-                // Check for null
-                if (storage == null)
-                    throw new ArgumentNullException("highlights", "One or more elements in the collection are null");
-                // Update info
-                duration += storage.Duration;
-                memorySize += storage.MemorySize;
-                snapshotCount += storage.SnapshotSize;
-            }
-        }
-
+        public ReplayHighlightReelStorage(IEnumerable<ReplayStorage> highlights, bool disposeHighlights = true) => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// Called by the replay system when a lock should be created on this storage target, typically when a record or playback operation is started.

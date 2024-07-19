@@ -16,7 +16,7 @@ namespace UltimateReplay.Storage
         protected internal class ReplayStreamHeader : IReplayStreamSerialize, IReplayTokenSerialize
         {
             // Public
-            public const int replayIdentifier;
+            public const int replayIdentifier = ((byte)'U' | ((byte)'R' << 8) | ((byte)'3' << 16) | ((byte)'0' << 24));
             public const int replayVersion = 120;
             /// <summary>
             /// Unique id so that we know we are working with UR3.0 files.
@@ -61,86 +61,49 @@ namespace UltimateReplay.Storage
             [ReplayTokenSerialize("Memory Size")]
             public string MemorySizeFixedLengthString
             {
-                get
-                {
-                    return HexConverter.ToHexString(memorySize);
-                }
-
-                set
-                {
-                    memorySize = HexConverter.FromHexStringInt32(value);
-                }
+                get => throw new System.NotImplementedException();
+                set => throw new System.NotImplementedException();
             }
 
             [ReplayTokenSerialize("Duration")]
             public string DurationFixedLengthString
             {
-                get
-                {
-                    return HexConverter.ToHexString(duration);
-                }
-
-                set
-                {
-                    duration = HexConverter.FromHexStringSingle(value);
-                }
+                get => throw new System.NotImplementedException();
+                set => throw new System.NotImplementedException();
             }
 
             [ReplayTokenSerialize("Snapshot Count")]
             public string SnapshotCountFixedLengthString
             {
-                get
-                {
-                    return HexConverter.ToHexString(snapshotCount);
-                }
-
-                set
-                {
-                    snapshotCount = HexConverter.FromHexStringInt32(value);
-                }
+                get => throw new System.NotImplementedException();
+                set => throw new System.NotImplementedException();
             }
 
             [ReplayTokenSerialize("Segment Table Offset")]
             public string SegmentTableOffsetFixedLengthString
             {
-                get
-                {
-                    return HexConverter.ToHexString(segmentTableOffset);
-                }
-
-                set
-                {
-                    segmentTableOffset = HexConverter.FromHexStringInt32(value);
-                }
+                get => throw new System.NotImplementedException();
+                set => throw new System.NotImplementedException();
             }
 
             [ReplayTokenSerialize("Persistent Data Offset")]
             public string PersistentDataOffsetString
             {
-                get
-                {
-                    return HexConverter.ToHexString(persistentDataOffset);
-                }
-
-                set
-                {
-                    persistentDataOffset = HexConverter.FromHexStringInt32(value);
-                }
+                get => throw new System.NotImplementedException();
+                set => throw new System.NotImplementedException();
             }
 
             [ReplayTokenSerialize("Metadata Offset")]
             public string MetadataOffsetFixedLengthString
             {
-                get
-                {
-                    return HexConverter.ToHexString(metadataOffset);
-                }
-
-                set
-                {
-                    metadataOffset = HexConverter.FromHexStringInt32(value);
-                }
+                get => throw new System.NotImplementedException();
+                set => throw new System.NotImplementedException();
             }
+
+            // Methods
+            IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
+            void IReplayStreamSerialize.OnReplayStreamSerialize(BinaryWriter writer) => throw new System.NotImplementedException();
+            void IReplayStreamSerialize.OnReplayStreamDeserialize(BinaryReader reader) => throw new System.NotImplementedException();
         }
 
         protected struct ReplaySegmentEntry : IReplayTokenSerialize
@@ -176,14 +139,20 @@ namespace UltimateReplay.Storage
             /// </summary>
             [ReplayTokenSerialize("Stream Offset")]
             public int streamOffset;
+            // Methods
+            IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
         }
 
         protected class ReplaySegmentTable : IReplayStreamSerialize, IReplayTokenSerialize
         {
+            // Methods
+            IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
             public void AddSegment(ReplaySegmentEntry segment) => throw new System.NotImplementedException();
             public int GetSegmentDataOffset(int segmentId) => throw new System.NotImplementedException();
             public int GetSegmentId(int sequenceId) => throw new System.NotImplementedException();
             public int GetSegmentId(float timestamp, float duration) => throw new System.NotImplementedException();
+            void IReplayStreamSerialize.OnReplayStreamSerialize(BinaryWriter writer) => throw new System.NotImplementedException();
+            void IReplayStreamSerialize.OnReplayStreamDeserialize(BinaryReader reader) => throw new System.NotImplementedException();
         }
     }
 }

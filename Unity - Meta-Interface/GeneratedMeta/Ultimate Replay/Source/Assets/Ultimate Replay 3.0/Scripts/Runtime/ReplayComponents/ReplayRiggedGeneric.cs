@@ -20,94 +20,43 @@ namespace UltimateReplay
         // Properties
         public override ReplayFormatter Formatter
         {
-            get
-            {
-                return formatter;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public RecordAxisFlags ReplayBonePosition
         {
-            get
-            {
-                return replayBonePosition;
-            }
-
-            set
-            {
-                replayBonePosition = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision BonePositionPrecision
         {
-            get
-            {
-                return bonePositionPrecision;
-            }
-
-            set
-            {
-                bonePositionPrecision = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordAxisFlags ReplayBoneRotation
         {
-            get
-            {
-                return replayBoneRotation;
-            }
-
-            set
-            {
-                replayBoneRotation = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision BoneRotationPrecision
         {
-            get
-            {
-                return boneRotationPrecision;
-            }
-
-            set
-            {
-                boneRotationPrecision = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordAxisFlags ReplayBoneScale
         {
-            get
-            {
-                return replayBoneScale;
-            }
-
-            set
-            {
-                replayBoneScale = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision BoneScalePrecision
         {
-            get
-            {
-                return boneScalePrecision;
-            }
-
-            set
-            {
-                boneScalePrecision = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Methods

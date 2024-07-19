@@ -31,11 +31,7 @@ namespace UltimateReplay.Storage
         }
 
         // Constructor
-        protected ReplayStreamSource(bool keepStreamOpen)
-        {
-            this.keepStreamOpen = keepStreamOpen;
-        }
-
+        protected ReplayStreamSource(bool keepStreamOpen) => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// In derived types, should return an opened stream ready to receive read operations, or null if the stream could not be initialized.

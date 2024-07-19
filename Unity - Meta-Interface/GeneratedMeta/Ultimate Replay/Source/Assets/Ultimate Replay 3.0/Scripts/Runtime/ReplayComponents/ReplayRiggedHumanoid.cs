@@ -16,80 +16,37 @@ namespace UltimateReplay
         // Properties
         public override ReplayFormatter Formatter
         {
-            get
-            {
-                return formatter;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public RecordFullAxisFlags ReplayBodyPosition
         {
-            get
-            {
-                return replayBodyPosition;
-            }
-
-            set
-            {
-                replayBodyPosition = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision BodyPositionPrecision
         {
-            get
-            {
-                return bodyPositionPrecision;
-            }
-
-            set
-            {
-                bodyPositionPrecision = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordFullAxisFlags ReplayBodyRotation
         {
-            get
-            {
-                return replayBodyRotation;
-            }
-
-            set
-            {
-                replayBodyRotation = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision BodyRotationPrecision
         {
-            get
-            {
-                return bodyRotationPrecision;
-            }
-
-            set
-            {
-                bodyRotationPrecision = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision MuslceValuesPrecision
         {
-            get
-            {
-                return muscleValuePrecision;
-            }
-
-            set
-            {
-                muscleValuePrecision = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Methods

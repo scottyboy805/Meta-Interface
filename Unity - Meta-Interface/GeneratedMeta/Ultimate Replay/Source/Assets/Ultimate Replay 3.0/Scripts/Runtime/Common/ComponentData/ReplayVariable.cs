@@ -21,10 +21,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public GameObject gameObject
         {
-            get
-            {
-                return owner.gameObject;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -32,10 +29,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public ReplayBehaviour Behaviour
         {
-            get
-            {
-                return owner;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -43,17 +37,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public int FieldOffset
         {
-            get
-            {
-                if (cachedOffset == -1)
-                {
-                    FieldInfo[] fields = field.DeclaringType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
-                    cachedOffset = Array.IndexOf(fields, field);
-                }
-
-                return cachedOffset;
-            //return Marshal.ReadInt32(field.FieldHandle.Value); 
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -61,15 +45,8 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public object Value
         {
-            get
-            {
-                return field.GetValue(owner);
-            }
-
-            set
-            {
-                field.SetValue(owner, value);
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -77,10 +54,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public ReplayVarAttribute Attribute
         {
-            get
-            {
-                return attribute;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -88,10 +62,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public string Name
         {
-            get
-            {
-                return field.Name;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -99,10 +70,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public bool IsInterpolated
         {
-            get
-            {
-                return attribute.interpolate;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -111,10 +79,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public bool IsInterpolationSupported
         {
-            get
-            {
-                return isInterpolationSupported;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
@@ -124,19 +89,7 @@ namespace UltimateReplay.ComponentData
         /// <param name = "owner">The <see cref = "ReplayBehaviour"/> that this <see cref = "ReplayVariable"/> is defined in</param>
         /// <param name = "field">The field info for the variable field</param>
         /// <param name = "attribute">The <see cref = "ReplayVarAttribute"/> for the field</param>
-        public ReplayVariable(ReplayBehaviour owner, FieldInfo field, ReplayVarAttribute attribute)
-        {
-            this.owner = owner;
-            this.field = field;
-            this.attribute = attribute;
-            // Check if interpolation is supported
-            this.isInterpolationSupported = CanInterpolate(field.FieldType);
-            this.serializeMethod = ReplayState.GetSerializeMethod(field.FieldType);
-            this.deserializeMethod = ReplayState.GetDeserializeMethod(field.FieldType);
-            if (serializeMethod == null || deserializeMethod == null)
-                throw new NotSupportedException("The replay variable references a field which has a type that cannot be serialized");
-        }
-
+        public ReplayVariable(ReplayBehaviour owner, FieldInfo field, ReplayVarAttribute attribute) => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// Called by the replay system when the variable should be serialized.

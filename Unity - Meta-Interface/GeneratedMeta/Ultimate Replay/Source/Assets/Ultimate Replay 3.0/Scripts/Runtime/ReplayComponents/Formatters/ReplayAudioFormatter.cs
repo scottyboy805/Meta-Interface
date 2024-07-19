@@ -12,22 +12,17 @@ namespace UltimateReplay.Formatters
     {
         public bool IsPlaying
         {
-            get
-            {
-                return (serializeFlags & ReplayAudioSerializeFlags.IsPlaying) != 0;
-            }
-
-            set
-            {
-                // Clear bit
-                serializeFlags &= ~ReplayAudioSerializeFlags.IsPlaying;
-                // Set bit
-                if (value == true)
-                    serializeFlags |= ReplayAudioSerializeFlags.IsPlaying;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
-        public int TimeSample => throw new System.NotImplementedException()public float Pitch => throw new System.NotImplementedException()public float Volume => throw new System.NotImplementedException()public float StereoPan => throw new System.NotImplementedException()public float SpatialBlend => throw new System.NotImplementedException()public float ReverbZoneMix => throw new System.NotImplementedException()// Methods
+        public int TimeSample => throw new System.NotImplementedException();
+        public float Pitch => throw new System.NotImplementedException();
+        public float Volume => throw new System.NotImplementedException();
+        public float StereoPan => throw new System.NotImplementedException();
+        public float SpatialBlend => throw new System.NotImplementedException();
+        public float ReverbZoneMix => throw new System.NotImplementedException();
+        // Methods
         public override void OnReplaySerialize(ReplayState state) => throw new System.NotImplementedException();
         public override void OnReplayDeserialize(ReplayState state) => throw new System.NotImplementedException();
     }

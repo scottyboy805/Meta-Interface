@@ -26,5 +26,13 @@ namespace UltimateReplay.Storage
     /// </summary>
     public interface IReplaySnapshotStorable : IReplayStreamSerialize
     {
+        // Properties
+        /// <summary>
+        /// Get the <see cref = "ReplaySnapshotStorableType"/> of this replay data stream.
+        /// </summary>
+        ReplaySnapshotStorableType StorageType
+        {
+            get;
+        }
     }
 }

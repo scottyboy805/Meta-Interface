@@ -16,20 +16,16 @@ namespace UltimateReplay.Storage
         // Properties
         public IEnumerable<ReplayIdentity> PersistentIdentitiesByTimestamp
         {
-            get
-            {
-                return persistentDataByTimestamp != null ? persistentDataByTimestamp.Keys : Enumerable.Empty<ReplayIdentity>();
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public IEnumerable<ReplayIdentity> PersistentIdentities
         {
-            get
-            {
-                return persistentData != null ? persistentData.Keys : Enumerable.Empty<ReplayIdentity>();
-            }
+            get => throw new System.NotImplementedException();
         }
 
+        // Methods
+        IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
         public bool HasPersistentDataByTimestamp(ReplayIdentity id) => throw new System.NotImplementedException();
         public void StorePersistentDataByTimestamp(ReplayIdentity id, float timestamp, ReplayState state) => throw new System.NotImplementedException();
         public ReplayState FetchPersistentDataByTimestamp(ReplayIdentity id, float timestamp) => throw new System.NotImplementedException();
@@ -37,5 +33,7 @@ namespace UltimateReplay.Storage
         public ReplayState FetchPersistentData(ReplayIdentity id) => throw new System.NotImplementedException();
         public void StorePersistentData(ReplayIdentity id, ReplayState state) => throw new System.NotImplementedException();
         public bool CopyTo(ReplayPersistentData destination) => throw new System.NotImplementedException();
+        void IReplayStreamSerialize.OnReplayStreamSerialize(BinaryWriter writer) => throw new System.NotImplementedException();
+        void IReplayStreamSerialize.OnReplayStreamDeserialize(BinaryReader reader) => throw new System.NotImplementedException();
     }
 }

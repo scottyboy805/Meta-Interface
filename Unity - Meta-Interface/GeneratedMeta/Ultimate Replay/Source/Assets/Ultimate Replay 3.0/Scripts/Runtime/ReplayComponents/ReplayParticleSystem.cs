@@ -22,37 +22,19 @@ namespace UltimateReplay
         // Properties
         public override ReplayFormatter Formatter
         {
-            get
-            {
-                return formatter;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool LowPrecision
         {
-            get
-            {
-                return lowPrecision;
-            }
-
-            set
-            {
-                lowPrecision = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public bool Interpolate
         {
-            get
-            {
-                return interpolate;
-            }
-
-            set
-            {
-                interpolate = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Methods

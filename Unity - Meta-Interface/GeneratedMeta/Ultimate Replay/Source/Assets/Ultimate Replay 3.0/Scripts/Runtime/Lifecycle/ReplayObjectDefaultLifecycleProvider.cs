@@ -17,26 +17,17 @@ namespace UltimateReplay.Lifecycle
         // Properties
         public override bool IsAssigned
         {
-            get
-            {
-                return replayPrefab != null;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override string ItemName
         {
-            get
-            {
-                return replayPrefab != null ? replayPrefab.name : string.Empty;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override ReplayIdentity ItemPrefabIdentity
         {
-            get
-            {
-                return replayPrefab != null ? replayPrefab.PrefabIdentity : ReplayIdentity.invalid;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override ReplayObject InstantiateReplayInstance(Vector3 position, Quaternion rotation) => throw new System.NotImplementedException();

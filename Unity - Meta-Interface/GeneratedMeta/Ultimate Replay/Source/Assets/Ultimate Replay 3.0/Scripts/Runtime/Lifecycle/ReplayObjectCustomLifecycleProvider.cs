@@ -14,26 +14,17 @@ namespace UltimateReplay.Lifecycle
         // Properties
         public override bool IsAssigned
         {
-            get
-            {
-                return customProvider != null ? customProvider.IsAssigned : false;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override string ItemName
         {
-            get
-            {
-                return customProvider != null ? customProvider.ItemName : "None";
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override ReplayIdentity ItemPrefabIdentity
         {
-            get
-            {
-                return customProvider != null ? customProvider.ItemPrefabIdentity : ReplayIdentity.invalid;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

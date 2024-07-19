@@ -23,23 +23,13 @@ namespace UltimateReplay.Serializers
         // Properties
         public ReplayPointRendererSerializeFlags SerializeFlags
         {
-            get
-            {
-                return serializeFlags;
-            }
-
-            set
-            {
-                serializeFlags = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public IList<Vector3> Points
         {
-            get
-            {
-                return points;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

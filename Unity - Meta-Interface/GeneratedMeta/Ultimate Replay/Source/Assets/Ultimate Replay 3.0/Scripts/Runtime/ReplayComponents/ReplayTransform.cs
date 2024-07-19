@@ -15,122 +15,55 @@ namespace UltimateReplay
         // Properties
         public override ReplayFormatter Formatter
         {
-            get
-            {
-                return formatter;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public RecordAxisFlags ReplayPosition
         {
-            get
-            {
-                return replayPosition;
-            }
-
-            set
-            {
-                replayPosition = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordSpace PositionSpace
         {
-            get
-            {
-                return positionSpace;
-            }
-
-            set
-            {
-                positionSpace = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision PositionPrecision
         {
-            get
-            {
-                return positionPrecision;
-            }
-
-            set
-            {
-                positionPrecision = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordAxisFlags ReplayRotation
         {
-            get
-            {
-                return replayRotation;
-            }
-
-            set
-            {
-                replayRotation = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordSpace RotationSpace
         {
-            get
-            {
-                return rotationSpace;
-            }
-
-            set
-            {
-                rotationSpace = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision RotationPrecision
         {
-            get
-            {
-                return rotationPrecision;
-            }
-
-            set
-            {
-                rotationPrecision = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordAxisFlags ReplayScale
         {
-            get
-            {
-                return replayScale;
-            }
-
-            set
-            {
-                replayScale = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public RecordPrecision ScalePrecision
         {
-            get
-            {
-                return scalePrecision;
-            }
-
-            set
-            {
-                scalePrecision = value;
-                UpdateSerializeFlags();
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Methods 

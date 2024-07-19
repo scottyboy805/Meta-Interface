@@ -41,10 +41,7 @@ namespace UltimateReplay
             // Public
             public ReplayObject reference;
             // Constructor
-            public ReplayObjectReference(ReplayObject obj)
-            {
-                this.reference = obj;
-            }
+            public ReplayObjectReference(ReplayObject obj) => throw new System.NotImplementedException();
         }
 
         // Properties
@@ -53,10 +50,7 @@ namespace UltimateReplay
         /// </summary>
         public static HashSet<ReplayObject> AllReplayObjects
         {
-            get
-            {
-                return allReplayObjects;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -64,15 +58,8 @@ namespace UltimateReplay
         /// </summary>
         public ReplayIdentity ReplayIdentity
         {
-            get
-            {
-                return replayIdentity;
-            }
-
-            set
-            {
-                replayIdentity = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -80,15 +67,8 @@ namespace UltimateReplay
         /// </summary>
         public ReplayIdentity PrefabIdentity
         {
-            get
-            {
-                return prefabIdentity;
-            }
-
-            set
-            {
-                prefabIdentity = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -96,10 +76,7 @@ namespace UltimateReplay
         /// </summary>
         public ReplayObjectLifecycleProvider LifecycleProvider
         {
-            get
-            {
-                return lifecycleProvider;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -108,18 +85,12 @@ namespace UltimateReplay
         /// </summary>
         public bool IsPrefab
         {
-            get
-            {
-                return isPrefab;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsPrefabAsset
         {
-            get
-            {
-                return prefabType == ReplayPrefabType.PrefabAsset;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -128,10 +99,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsReplaying
         {
-            get
-            {
-                return playbackOperation != null && playbackOperation.IsReplaying == true;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -139,10 +107,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsReplayingOrPaused
         {
-            get
-            {
-                return playbackOperation != null && (playbackOperation.IsReplaying == true || playbackOperation.IsPlaybackPaused == true);
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -150,10 +115,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsPlaybackPaused
         {
-            get
-            {
-                return playbackOperation != null && playbackOperation.IsPlaybackPaused == true;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -162,19 +124,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsRecording
         {
-            get
-            {
-                if (recordOperations != null && recordOperations.Count > 0)
-                {
-                    foreach (ReplayRecordOperation operation in recordOperations)
-                    {
-                        if (operation.IsRecording == true)
-                            return true;
-                    }
-                }
-
-                return false;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -182,19 +132,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsRecordingPaused
         {
-            get
-            {
-                if (recordOperations != null && recordOperations.Count > 0)
-                {
-                    foreach (ReplayRecordOperation operation in recordOperations)
-                    {
-                        if (operation.IsRecordingPaused == true)
-                            return true;
-                    }
-                }
-
-                return false;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -202,19 +140,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsRecordingOrPaused
         {
-            get
-            {
-                if (recordOperations != null && recordOperations.Count > 0)
-                {
-                    foreach (ReplayRecordOperation operation in recordOperations)
-                    {
-                        if (operation.IsRecording == true || operation.IsRecordingPaused == true)
-                            return true;
-                    }
-                }
-
-                return false;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -223,10 +149,7 @@ namespace UltimateReplay
         /// </summary>
         public ReplayPlaybackOperation PlaybackOperation
         {
-            get
-            {
-                return playbackOperation;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -235,13 +158,7 @@ namespace UltimateReplay
         /// </summary>
         public IReadOnlyList<ReplayRecordOperation> RecordOperations
         {
-            get
-            {
-                // Create collection if required
-                if (recordOperations == null)
-                    recordOperations = new List<ReplayRecordOperation>(4);
-                return recordOperations;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -249,10 +166,7 @@ namespace UltimateReplay
         /// </summary>
         public IReadOnlyList<ReplayBehaviour> ObservedComponents
         {
-            get
-            {
-                return observedComponents;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -260,10 +174,7 @@ namespace UltimateReplay
         /// </summary>
         public IReadOnlyList<ReplayBehaviour> Behaviours
         {
-            get
-            {
-                return runtimeComponents;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -281,6 +192,8 @@ namespace UltimateReplay
         /// Force the <see cref = "ReplayIdentity"/> and all observed component id's to be regenerated with unique values.
         /// </summary>
         public void ForceRegenerateIdentityWithObservedComponents() => throw new System.NotImplementedException();
+        void ISerializationCallbackReceiver.OnBeforeSerialize() => throw new System.NotImplementedException();
+        void ISerializationCallbackReceiver.OnAfterDeserialize() => throw new System.NotImplementedException();
         /// <summary>
         /// Called by the replay system when this <see cref = "ReplayObject"/> should serialize its replay data. 
         /// </summary>

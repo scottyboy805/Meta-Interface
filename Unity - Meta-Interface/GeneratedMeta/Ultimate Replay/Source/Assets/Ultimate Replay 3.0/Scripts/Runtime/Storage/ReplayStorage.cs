@@ -51,10 +51,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public static int DeserializeVersionContext
         {
-            get
-            {
-                return deserializeVersionContext;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -63,10 +60,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public bool IsLocked
         {
-            get
-            {
-                return lockOperation != null;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -75,17 +69,8 @@ namespace UltimateReplay.Storage
         /// </summary>
         public virtual ReplayMetadata Metadata
         {
-            get
-            {
-                CheckDisposed();
-                return metadata;
-            }
-
-            set
-            {
-                CheckDisposed();
-                metadata = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -94,17 +79,8 @@ namespace UltimateReplay.Storage
         /// </summary>
         public virtual ReplayPersistentData PersistentData
         {
-            get
-            {
-                CheckDisposed();
-                return persistentData;
-            }
-
-            set
-            {
-                CheckDisposed();
-                persistentData = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Properties
@@ -114,10 +90,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public bool IsDisposed
         {
-            get
-            {
-                return isDisposed;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -173,15 +146,7 @@ namespace UltimateReplay.Storage
         /// Create a new instance.
         /// </summary>
         /// <param name = "replayName">Optional name for the replay</param>
-        protected ReplayStorage(string replayName = null)
-        {
-            // Check for replay name
-            if (string.IsNullOrEmpty(replayName) == false)
-                this.metadata = new ReplayMetadata(replayName);
-            // Register storage target
-            ReplayStorageTargetStatistics.AddStorageTarget(this);
-        }
-
+        protected ReplayStorage(string replayName = null) => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// Store a replay snapshot in the replay target.

@@ -12,21 +12,12 @@ namespace UltimateReplay
         // Properties
         public T Result
         {
-            get
-            {
-                return result;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        internal ReplayAsyncOperation()
-        {
-        }
-
-        internal ReplayAsyncOperation(T result)
-        {
-            this.result = result;
-        }
+        internal ReplayAsyncOperation() => throw new System.NotImplementedException();
+        internal ReplayAsyncOperation(T result) => throw new System.NotImplementedException();
     }
 
     /// <summary>
@@ -40,10 +31,7 @@ namespace UltimateReplay
         /// </summary>
         public override bool keepWaiting
         {
-            get
-            {
-                return isDone == false;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -51,10 +39,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsDone
         {
-            get
-            {
-                return isDone;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -62,31 +47,20 @@ namespace UltimateReplay
         /// </summary>
         public bool Success
         {
-            get
-            {
-                return success;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public float Progress
         {
-            get
-            {
-                return progress;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public string Error
         {
-            get
-            {
-                return error;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        internal ReplayAsyncOperation()
-        {
-        }
+        internal ReplayAsyncOperation() => throw new System.NotImplementedException();
     }
 }

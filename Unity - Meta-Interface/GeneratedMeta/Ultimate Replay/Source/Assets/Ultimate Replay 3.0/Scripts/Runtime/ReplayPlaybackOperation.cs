@@ -119,10 +119,7 @@ namespace UltimateReplay
         /// </summary>
         public override bool IsDisposed
         {
-            get
-            {
-                return isDisposed;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -131,10 +128,7 @@ namespace UltimateReplay
         /// </summary>
         public override ReplayUpdateMode UpdateMode
         {
-            get
-            {
-                return options.playbackUpdateMode;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -142,11 +136,7 @@ namespace UltimateReplay
         /// </summary>
         public ReplayPlaybackOptions Options
         {
-            get
-            {
-                CheckDisposed();
-                return options;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -154,11 +144,7 @@ namespace UltimateReplay
         /// </summary>
         public float Duration
         {
-            get
-            {
-                CheckDisposed();
-                return Storage.Duration;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -168,11 +154,7 @@ namespace UltimateReplay
         /// </summary>
         public float PlaybackTime
         {
-            get
-            {
-                CheckDisposed();
-                return time;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -182,11 +164,7 @@ namespace UltimateReplay
         /// </summary>
         public float PlaybackTimeNormalized
         {
-            get
-            {
-                CheckDisposed();
-                return Mathf.InverseLerp(0f, Duration, time);
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -195,17 +173,8 @@ namespace UltimateReplay
         /// </summary>
         public float PlaybackTimeScale
         {
-            get
-            {
-                CheckDisposed();
-                return timeScale;
-            }
-
-            set
-            {
-                CheckDisposed();
-                timeScale = Mathf.Abs(value);
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -214,19 +183,8 @@ namespace UltimateReplay
         /// </summary>
         public PlaybackDirection PlaybackDirection
         {
-            get
-            {
-                CheckDisposed();
-                return playbackDirection;
-            }
-
-            set
-            {
-                CheckDisposed();
-                // Reset cached
-                last = null;
-                playbackDirection = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -235,11 +193,7 @@ namespace UltimateReplay
         /// </summary>
         public PlaybackEndBehaviour EndBehaviour
         {
-            get
-            {
-                CheckDisposed();
-                return options.playbackEndBehaviour;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -250,17 +204,8 @@ namespace UltimateReplay
         /// </summary>
         public PlaybackSeekSnap SeekSnap
         {
-            get
-            {
-                CheckDisposed();
-                return playbackSeekSnap;
-            }
-
-            set
-            {
-                CheckDisposed();
-                playbackSeekSnap = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -270,17 +215,8 @@ namespace UltimateReplay
         /// </summary>
         public RestoreSceneMode RestoreSceneMode
         {
-            get
-            {
-                CheckDisposed();
-                return restoreMode;
-            }
-
-            set
-            {
-                CheckDisposed();
-                restoreMode = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -288,11 +224,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsReplaying
         {
-            get
-            {
-                CheckDisposed();
-                return isDisposed == false && paused == false;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -300,11 +232,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsPlaybackPaused
         {
-            get
-            {
-                CheckDisposed();
-                return paused;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -312,11 +240,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsReplayingOrPaused
         {
-            get
-            {
-                CheckDisposed();
-                return isDisposed == false;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -328,19 +252,11 @@ namespace UltimateReplay
         /// </summary>
         public float PlaybackRate
         {
-            get
-            {
-                CheckDisposed();
-                return options.playbackFPS;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        internal ReplayPlaybackOperation(ReplayManager manager, ReplayScene scene, ReplayStorage storage, ReplayPlaybackOptions options): base(manager, scene, storage)
-        {
-            this.options = options;
-        }
-
+        internal ReplayPlaybackOperation(ReplayManager manager, ReplayScene scene, ReplayStorage storage, ReplayPlaybackOptions options): base(default, default, default) => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// The main update call for this replay operation.

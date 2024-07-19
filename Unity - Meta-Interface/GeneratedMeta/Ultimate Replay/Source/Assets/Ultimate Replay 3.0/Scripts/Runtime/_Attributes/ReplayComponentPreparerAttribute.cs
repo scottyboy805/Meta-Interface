@@ -18,10 +18,6 @@ namespace UltimateReplay
         public Type componentType;
         public int priority = 100;
         // Constructor
-        public ReplayComponentPreparerAttribute(Type componentType, int priority = 100)
-        {
-            this.componentType = componentType;
-            this.priority = priority;
-        }
+        public ReplayComponentPreparerAttribute(Type componentType, int priority = 100) => throw new System.NotImplementedException();
     }
 }

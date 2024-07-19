@@ -18,141 +18,76 @@ namespace UltimateReplay.Storage
         // Properties
         public int SegmentID
         {
-            get
-            {
-                return segmentID;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public int SnapshotCapacity
         {
-            get
-            {
-                return snapshotCapacity;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public ReplaySnapshot StartSnapshot
         {
-            get
-            {
-                return start;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public ReplaySnapshot EndSnapshot
         {
-            get
-            {
-                return end;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public float StartTimeStamp
         {
-            get
-            {
-                // Get the time stamp
-                if (start != null)
-                    return start.TimeStamp;
-                // Error
-                return -1f;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public float EndTimeStamp
         {
-            get
-            {
-                // Get the time stamp
-                if (end != null)
-                    return end.TimeStamp;
-                // Error
-                return -1f;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public int StartSequenceID
         {
-            get
-            {
-                // Get the sequence id
-                if (start != null)
-                    return start.SequenceID;
-                // Error
-                return -1;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public int EndSequenceID
         {
-            get
-            {
-                // Get the sequence id
-                if (end != null)
-                    return end.SequenceID;
-                // Error
-                return -1;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public int SnapshotCount
         {
-            get
-            {
-                return snapshots.Count;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public IEnumerable<ReplaySnapshot> Snapshots
         {
-            get
-            {
-                return snapshots.Values;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsEmpty
         {
-            get
-            {
-                return snapshots.Count == 0;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsFull
         {
-            get
-            {
-                return snapshots.Count == snapshotCapacity;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsCompressed
         {
-            get
-            {
-                return isCompressed;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        public ReplaySegment()
-        {
-            snapshots = new Dictionary<int, ReplaySnapshot>();
-        }
-
-        public ReplaySegment(int segmentID, int snapshotCount)
-        {
-            // Check for count exceeded
-            if (snapshotCount > byte.MaxValue)
-                throw new ArgumentException("Snapshot count cannot exceed '255'");
-            this.segmentID = segmentID;
-            this.snapshotCapacity = snapshotCount;
-            this.snapshots = new Dictionary<int, ReplaySnapshot>(snapshotCount);
-        }
-
+        public ReplaySegment() => throw new System.NotImplementedException();
+        public ReplaySegment(int segmentID, int snapshotCount) => throw new System.NotImplementedException();
+        // Methods
+        IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
         public void Dispose() => throw new System.NotImplementedException();
+        void IReplayReusable.Initialize() => throw new System.NotImplementedException();
         public void AddSnapshot(ReplaySnapshot snapshot) => throw new System.NotImplementedException();
         public ReplaySnapshot FetchSnapshot(float timeStamp) => throw new System.NotImplementedException();
         public ReplaySnapshot FetchSnapshot(int sequenceId) => throw new System.NotImplementedException();
@@ -163,5 +98,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public void CompressSegment() => throw new System.NotImplementedException();
         public void DecompressSegment() => throw new System.NotImplementedException();
+        void IReplayStreamSerialize.OnReplayStreamSerialize(BinaryWriter writer) => throw new System.NotImplementedException();
+        void IReplayStreamSerialize.OnReplayStreamDeserialize(BinaryReader reader) => throw new System.NotImplementedException();
     }
 }

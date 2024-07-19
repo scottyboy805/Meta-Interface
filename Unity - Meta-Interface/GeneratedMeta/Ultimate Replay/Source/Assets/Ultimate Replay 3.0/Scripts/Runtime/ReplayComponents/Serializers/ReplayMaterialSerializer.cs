@@ -26,80 +26,38 @@ namespace UltimateReplay.Serializers
         // Properties
         public ReplayMaterialSerializeFlags SerializeFlags
         {
-            get
-            {
-                return serializeFlags;
-            }
-
-            set
-            {
-                serializeFlags = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public Color Color
         {
-            get
-            {
-                return color;
-            }
-
-            set
-            {
-                color = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public Vector2 MainTextureOffset
         {
-            get
-            {
-                return mainTextureOffset;
-            }
-
-            set
-            {
-                mainTextureOffset = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public Vector2 MainTextureScale
         {
-            get
-            {
-                return mainTextureScale;
-            }
-
-            set
-            {
-                mainTextureScale = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public bool DoubleSidedGlobalIllumination
         {
-            get
-            {
-                return doubleSidedGlobalIllumination;
-            }
-
-            set
-            {
-                doubleSidedGlobalIllumination = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public MaterialGlobalIlluminationFlags GlobalIlluminationFlags
         {
-            get
-            {
-                return globalIlluminationFlags;
-            }
-
-            set
-            {
-                globalIlluminationFlags = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Methods

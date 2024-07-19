@@ -66,6 +66,17 @@ public    class         Test
  void  Method() {   }   
 
 }", DisplayName = "Random Spaced Method")]
+
+        // Explicit interface method
+        [DataRow(
+@"public class Test : ITest
+{
+    void ITest.Method() => throw new System.NotImplementedException();
+}", @"
+public class Test : ITest
+{         
+    void ITest      . Method() {   }   
+}", DisplayName = "Explicit Interface Method")]
         public void TestMethodMeta(string expectedSource, string inputSource)
         {
             // Convert to meta

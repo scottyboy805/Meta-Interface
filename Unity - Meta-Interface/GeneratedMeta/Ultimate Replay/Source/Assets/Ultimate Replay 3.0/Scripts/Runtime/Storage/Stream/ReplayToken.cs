@@ -16,59 +16,27 @@ namespace UltimateReplay.Storage
         // Properties
         public bool IsValid
         {
-            get
-            {
-                return identifier != null && (field != null || property != null);
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public string Identifier
         {
-            get
-            {
-                return identifier;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsOptional
         {
-            get
-            {
-                return isOptional;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public Type ValueType
         {
-            get
-            {
-                // Get field type
-                if (field != null)
-                    return field.FieldType;
-                // Get property type
-                if (property != null)
-                    return property.PropertyType;
-                return null;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        internal ReplayToken(string identifier, FieldInfo field, bool isOptional)
-        {
-            this.identifier = identifier;
-            this.field = field;
-            this.property = null;
-            this.isOptional = isOptional;
-        }
-
-        internal ReplayToken(string identifier, PropertyInfo property, bool isOptional)
-        {
-            this.identifier = identifier;
-            this.property = property;
-            this.field = null;
-            this.isOptional = isOptional;
-        }
-
+        internal ReplayToken(string identifier, FieldInfo field, bool isOptional) => throw new System.NotImplementedException();
+        internal ReplayToken(string identifier, PropertyInfo property, bool isOptional) => throw new System.NotImplementedException();
         // Methods
         public object FetchValue(object instance) => throw new System.NotImplementedException();
         public void StoreValue(object instance, object value) => throw new System.NotImplementedException();

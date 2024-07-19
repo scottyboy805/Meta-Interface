@@ -28,10 +28,7 @@ namespace UltimateReplay
         /// </summary>
         public override bool IsDisposed
         {
-            get
-            {
-                return isDisposed;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -40,11 +37,7 @@ namespace UltimateReplay
         /// </summary>
         public override ReplayUpdateMode UpdateMode
         {
-            get
-            {
-                CheckDisposed();
-                return options.recordUpdateMode;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -52,11 +45,7 @@ namespace UltimateReplay
         /// </summary>
         public ReplayRecordOptions Options
         {
-            get
-            {
-                CheckDisposed();
-                return options;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -64,11 +53,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsRecording
         {
-            get
-            {
-                CheckDisposed();
-                return isDisposed == false && paused == false;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -76,11 +61,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsRecordingPaused
         {
-            get
-            {
-                CheckDisposed();
-                return paused;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -88,11 +69,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsRecordingOrPaused
         {
-            get
-            {
-                CheckDisposed();
-                return isDisposed == false;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -104,20 +81,11 @@ namespace UltimateReplay
         /// </summary>
         public float RecordRate
         {
-            get
-            {
-                CheckDisposed();
-                return options.recordFPS;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        internal ReplayRecordOperation(ReplayManager manager, ReplayScene scene, ReplayStorage storage, ReplayRecordOptions options): base(manager, scene, storage)
-        {
-            this.options = options;
-        // Update record rate
-        }
-
+        internal ReplayRecordOperation(ReplayManager manager, ReplayScene scene, ReplayStorage storage, ReplayRecordOptions options): base(default, default, default) => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// The main update call for this replay operation.

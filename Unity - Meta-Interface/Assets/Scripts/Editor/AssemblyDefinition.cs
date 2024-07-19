@@ -47,13 +47,14 @@ namespace MetaInterface
 
                     // Rewrite and patch declarations
                     SyntaxNode patchedRoot = sourceFile.ParseAndGenerateMeta(config);
-
-                    patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
-
+                    
 
                     // Check for any declarations - otherwise we can ignore the source file
                     if (SyntaxPatcher.HasAnyDeclarations(patchedRoot) == true)
                     {
+                        patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
+
+
                         // Overwrite source
                         sourceFile.OverwriteSource(patchedRoot);
 
@@ -94,12 +95,12 @@ namespace MetaInterface
                     // Rewrite and patch declarations
                     SyntaxNode patchedRoot = sourceFile.ParseAndGenerateMeta(config);
 
-                    patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
-
-
                     // Check for any declarations - otherwise we can ignore the source file
                     if (SyntaxPatcher.HasAnyDeclarations(patchedRoot) == true)
                     {
+                        patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
+
+
                         UnityEngine.Debug.Log("Generate meta source: " +  sourceOutputPath);
 
                         // Write new source

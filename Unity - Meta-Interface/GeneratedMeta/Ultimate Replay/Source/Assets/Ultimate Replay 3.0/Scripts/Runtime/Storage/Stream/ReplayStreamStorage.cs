@@ -36,7 +36,6 @@ namespace UltimateReplay.Storage
 
     public abstract partial class ReplayStreamStorage : ReplayStorage
     {
-#endif
         // Protected
         protected bool useSegmentCompression = true;
         protected int snapshotsPerSegment = 30;
@@ -50,81 +49,41 @@ namespace UltimateReplay.Storage
 
         public override bool CanRead
         {
-            get
-            {
-                CheckDisposed();
-                return StreamSource.CanRead;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override bool CanWrite
         {
-            get
-            {
-                CheckDisposed();
-                return StreamSource.CanWrite;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override float Duration
         {
-            get
-            {
-                CheckDisposed();
-                return header.duration;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override int MemorySize
         {
-            get
-            {
-                CheckDisposed();
-                return header.memorySize;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override int SnapshotSize
         {
-            get
-            {
-                CheckDisposed();
-                return header.snapshotCount;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public override int IdentitySize
         {
-            get
-            {
-                CheckDisposed();
-                return header.identityByteSize;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsBuffering
         {
-            get
-            {
-                CheckDisposed();
-#if !ULTIMATEREPLAY_DISABLE_THREADING
-                return threadTasks.Count > 0;
-#else
-                return false;
-#endif
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        protected ReplayStreamStorage(string replayName = null, bool useSegmentCompression = false): base(replayName)
-        {
-            this.useSegmentCompression = useSegmentCompression;
-#if !ULTIMATEREPLAY_DISABLE_THREADING
-            // Start running user task
-            ThreadPool.QueueUserWorkItem(StreamingThreadMain);
-#endif
-        }
-
+        protected ReplayStreamStorage(string replayName = null, bool useSegmentCompression = false): base(default) => throw new System.NotImplementedException();
         // Methods
         protected abstract void ThreadWriteReplayHeader(ReplayStreamHeader header);
         protected abstract void ThreadWriteReplaySegment(ReplaySegment segment);
@@ -147,7 +106,6 @@ namespace UltimateReplay.Storage
         public override void StoreSnapshot(ReplaySnapshot state) => throw new System.NotImplementedException();
         public override void Prepare(ReplayStorageAction mode) => throw new System.NotImplementedException();
         protected override void OnDispose() => throw new System.NotImplementedException();
-#endif
         public string ToJsonString(Encoding encoding = null) => throw new System.NotImplementedException();
         public byte[] ToBytes() => throw new System.NotImplementedException();
         //public ReplayAsyncOperation<byte[]> ToBytesAsync()

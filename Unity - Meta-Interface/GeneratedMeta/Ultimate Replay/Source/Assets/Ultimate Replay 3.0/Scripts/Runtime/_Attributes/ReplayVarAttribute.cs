@@ -27,9 +27,6 @@ namespace UltimateReplay
         /// Create a new <see cref = "ReplayVarAttribute"/> for a field.
         /// </summary>
         /// <param name = "interpolated">Should the field value be interpolated between frames</param>
-        public ReplayVarAttribute(bool interpolated = true)
-        {
-            this.interpolate = interpolated;
-        }
+        public ReplayVarAttribute(bool interpolated = true) => throw new System.NotImplementedException();
     }
 }

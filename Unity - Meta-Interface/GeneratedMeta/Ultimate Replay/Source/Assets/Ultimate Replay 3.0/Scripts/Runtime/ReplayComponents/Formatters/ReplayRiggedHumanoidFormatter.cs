@@ -11,7 +11,10 @@ namespace UltimateReplay.Formatters
 {
     public sealed class ReplayRiggedHumanoidFormatter : ReplayFormatter
     {
-        public Vector3 BodyPosition => throw new System.NotImplementedException()public Quaternion BodyRotation => throw new System.NotImplementedException()public IReadOnlyList<float> MuscleValues => throw new System.NotImplementedException()// Methods
+        public Vector3 BodyPosition => throw new System.NotImplementedException();
+        public Quaternion BodyRotation => throw new System.NotImplementedException();
+        public IReadOnlyList<float> MuscleValues => throw new System.NotImplementedException();
+        // Methods
         public override void OnReplaySerialize(ReplayState state) => throw new System.NotImplementedException();
         public override void OnReplayDeserialize(ReplayState state) => throw new System.NotImplementedException();
     }

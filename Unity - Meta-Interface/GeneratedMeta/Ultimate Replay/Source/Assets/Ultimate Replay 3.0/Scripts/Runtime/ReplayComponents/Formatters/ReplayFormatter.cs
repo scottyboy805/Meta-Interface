@@ -16,64 +16,13 @@ namespace UltimateReplay.Formatters
         // Properties        
         public byte FormatterId
         {
-            get
-            {
-                return formatterId;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        protected ReplayFormatter()
-        {
-            Type thisType = GetType();
-            // Get serialize tokens
-            tokens = ReplayToken.Tokenize(thisType);
-            // Get id for formatter
-            formatterId = GetFormatterId(thisType);
-        }
-
-        // Constructor
-        static ReplayFormatter()
-        {
-            // Register UR 3.0 assembly formatters first
-            RegisterAssemblyFormatters(typeof(ReplayFormatter).Assembly);
-            // Get this assembly
-            Assembly thisAsm = Assembly.GetExecutingAssembly();
-            AssemblyName thisAsmName = thisAsm.GetName();
-            // Check all loaded assemblies
-            foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                // Skip UR 3.0
-                if (asm == typeof(ReplayFormatter).Assembly)
-                    continue;
-                // Only check assemblies that reference Ultimate Replay 3.0 - since formatters must derive from ReplayFormatter which requires a reference to UR 3.0 - Saves a lot of unnecessary checks
-                bool checkAssembly = false;
-                if (asm != thisAsm)
-                {
-                    // Check for assembly references this assembly - If so, the assembly may define types which use the ReplaySerializer attribute
-                    foreach (AssemblyName nameInfo in asm.GetReferencedAssemblies())
-                    {
-                        if (nameInfo == thisAsmName)
-                        {
-                            checkAssembly = true;
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    // We are processing this assembly which does indeed have serializer types
-                    checkAssembly = true;
-                }
-
-                // Should the assembly be processed for serializers
-                if (checkAssembly == false)
-                    continue;
-                // Register the formatters
-                RegisterAssemblyFormatters(asm);
-            }
-        }
-
+        protected ReplayFormatter() => throw new System.NotImplementedException();
+        // Methods
+        IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
         public abstract void OnReplaySerialize(ReplayState state);
         public abstract void OnReplayDeserialize(ReplayState state);
         public static ReplayFormatter CreateFormatter(byte formatterId) => throw new System.NotImplementedException();

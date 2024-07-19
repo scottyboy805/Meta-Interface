@@ -11,5 +11,16 @@ namespace UltimateReplay
     /// </summary>
     public interface IReplaySerialize
     {
+        // Methods
+        /// <summary>
+        /// Called by the replay system when all replay state data should be serialized.
+        /// </summary>
+        /// <param name = "state">The <see cref = "ReplayState"/> to write the data to</param>
+        void OnReplaySerialize(ReplayState state);
+        /// <summary>
+        /// Called by the replay system when all replay state data should be deserialized.
+        /// </summary>
+        /// <param name = "state">The <see cref = "ReplayState"/> to read the data from</param>
+        void OnReplayDeserialize(ReplayState state);
     }
 }

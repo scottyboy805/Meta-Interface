@@ -33,23 +33,7 @@ namespace UltimateReplay
         /// </summary>
         public static ReplaySettings Settings
         {
-            get
-            {
-                // Load settings
-                if (settings == null)
-                {
-                    // Try to load
-                    settings = Resources.Load<ReplaySettings>("UltimateReplaySettings");
-                    // Check for error
-                    if (settings == null)
-                    {
-                        Debug.LogWarning("Ultimate Replay settings could not be loaded, using defaults!");
-                        settings = ScriptableObject.CreateInstance<ReplaySettings>();
-                    }
-                }
-
-                return settings;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -57,10 +41,7 @@ namespace UltimateReplay
         /// </summary>
         public static bool IsRecordingAny
         {
-            get
-            {
-                return recordOperations.Count > 0;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -68,10 +49,7 @@ namespace UltimateReplay
         /// </summary>
         public static bool IsReplayingAny
         {
-            get
-            {
-                return playbackOperations.Count > 0;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>

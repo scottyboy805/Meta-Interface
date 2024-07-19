@@ -20,15 +20,8 @@ namespace UltimateReplay
         /// </summary>
         public PlaybackEndBehaviour PlaybackEndBehaviour
         {
-            get
-            {
-                return playbackEndBehaviour;
-            }
-
-            set
-            {
-                playbackEndBehaviour = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -38,24 +31,8 @@ namespace UltimateReplay
         /// </summary>
         public float PlaybackFPS
         {
-            get
-            {
-                return playbackFPS;
-            }
-
-            set
-            {
-                playbackFPS = value;
-                if (playbackFPS > 0)
-                {
-                    // Convert fps to time interval in seconds
-                    playbackInterval = (1000f / playbackFPS) / 1000f;
-                }
-                else
-                {
-                    playbackInterval = -1;
-                }
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -63,10 +40,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsPlaybackFPSUnlimited
         {
-            get
-            {
-                return playbackFPS < 0f;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -75,34 +49,22 @@ namespace UltimateReplay
         /// </summary>
         public ReplayUpdateMode PlaybackUpdateMode
         {
-            get
-            {
-                return playbackUpdateMode;
-            }
-
-            set
-            {
-                playbackUpdateMode = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Constructor
         /// <summary>
         /// Create a new playback options instance with default settings.
         /// </summary>
-        public ReplayPlaybackOptions()
-        {
-        }
-
+        public ReplayPlaybackOptions() => throw new System.NotImplementedException();
         /// <summary>
         /// Create a new playback options instance with the specified end behaviour and frame rate.
         /// </summary>
         /// <param name = "endBehaviour">The end behaviour which indicates what should happen when the end of the replay is reached</param>
         /// <param name = "playbackFPS">The target playback frate rate or '-1' for unlimited frame rate</param>
-        public ReplayPlaybackOptions(PlaybackEndBehaviour endBehaviour, int playbackFPS = -1)
-        {
-            this.playbackEndBehaviour = endBehaviour;
-            this.playbackFPS = playbackFPS;
-        }
+        public ReplayPlaybackOptions(PlaybackEndBehaviour endBehaviour, int playbackFPS = -1) => throw new System.NotImplementedException();
+        void ISerializationCallbackReceiver.OnBeforeSerialize() => throw new System.NotImplementedException();
+        void ISerializationCallbackReceiver.OnAfterDeserialize() => throw new System.NotImplementedException();
     }
 }

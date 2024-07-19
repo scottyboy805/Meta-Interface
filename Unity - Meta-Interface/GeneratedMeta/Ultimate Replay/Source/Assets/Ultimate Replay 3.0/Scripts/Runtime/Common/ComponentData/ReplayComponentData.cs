@@ -21,10 +21,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public ReplayIdentity BehaviourIdentity
         {
-            get
-            {
-                return behaviourIdentity;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -32,10 +29,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public int ComponentSerializerID
         {
-            get
-            {
-                return formatterSerializerID;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -43,10 +37,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public ReplayState ComponentStateData
         {
-            get
-            {
-                return componentStateData;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
@@ -56,13 +47,9 @@ namespace UltimateReplay.ComponentData
         /// <param name = "behaviourIdentity">The identity of the behaviour component</param>
         /// <param name = "componentSerializerID">The id of the component serializer</param>
         /// <param name = "componentStateData">The data associated with the component</param>
-        public ReplayComponentData(ReplayIdentity behaviourIdentity, int componentSerializerID, ReplayState componentStateData)
-        {
-            this.behaviourIdentity = behaviourIdentity;
-            this.formatterSerializerID = componentSerializerID;
-            this.componentStateData = componentStateData;
-        }
-
+        public ReplayComponentData(ReplayIdentity behaviourIdentity, int componentSerializerID, ReplayState componentStateData) => throw new System.NotImplementedException();
+        // Methods
+        IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
         /// <summary>
         /// Release the component data.
         /// </summary>

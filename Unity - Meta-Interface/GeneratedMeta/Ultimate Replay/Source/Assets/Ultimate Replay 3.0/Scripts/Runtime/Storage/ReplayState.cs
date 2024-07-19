@@ -29,11 +29,7 @@ namespace UltimateReplay
         /// </summary>
         public bool CanRead
         {
-            get
-            {
-                CheckDisposed();
-                return dataSize > 0;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -41,11 +37,7 @@ namespace UltimateReplay
         /// </summary>
         public bool EndRead
         {
-            get
-            {
-                CheckDisposed();
-                return readPointer >= Size;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -53,11 +45,12 @@ namespace UltimateReplay
         /// </summary>
         public int Size
         {
-            get
-            {
-                CheckDisposed();
-                return dataSize;
-            }
+            get => throw new System.NotImplementedException();
+        }
+
+        ReplaySnapshotStorableType IReplaySnapshotStorable.StorageType
+        {
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -65,12 +58,7 @@ namespace UltimateReplay
         /// </summary>
         public long DataHash
         {
-            get
-            {
-                // Check for disposed
-                CheckDisposed();
-                return FastDataHash;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -79,77 +67,13 @@ namespace UltimateReplay
         [ReplayTokenSerialize("Raw Data")]
         public string AsHexString
         {
-            get
-            {
-                // Check for easy case
-                if (dataSize == 0)
-                    return string.Empty;
-                // Encode as hex string
-                return HexConverter.GetHexString(bytes, 0, dataSize);
-            }
-
-            set
-            {
-                // Clear and reset
-                dataSize = 0;
-                readPointer = 0;
-                dataHash = -1;
-                // Check for null of empty
-                if (string.IsNullOrEmpty(value) == true)
-                    return;
-                // Store data size
-                dataSize = value.Length / 2;
-                // Ensure capacity
-                EnsureCapacity(dataSize);
-                try
-                {
-                    // Convert string into data bytes
-                    HexConverter.GetHexBytes(value, bytes, 0);
-                }
-                catch
-                {
-                    dataSize = 0;
-                    readPointer = -1;
-                    throw;
-                }
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
-        // Constructor
-        static ReplayState()
-        {
-            foreach (MethodInfo declaredMethod in typeof(ReplayState).GetMethods(BindingFlags.Instance | BindingFlags.Public))
-            {
-                if (declaredMethod.Name == "Write")
-                {
-                    if (declaredMethod.GetParameters().Length == 1)
-                    {
-                        // Get param type
-                        Type paramType = declaredMethod.GetParameters()[0].ParameterType;
-                        // Check for by reference - get type without the by reference qualifier
-                        if (paramType.IsByRef == true)
-                            paramType = paramType.GetElementType();
-                        // Register the parameter type
-                        serializeMethods.Add(paramType, declaredMethod);
-                    }
-                }
-                else if (declaredMethod.Name.StartsWith("Read") == true)
-                {
-                    if (declaredMethod.ReturnType != typeof(void) && declaredMethod.GetParameters().Length == 0 && deserializeMethods.ContainsKey(declaredMethod.ReturnType) == false)
-                    {
-                        deserializeMethods.Add(declaredMethod.ReturnType, declaredMethod);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Create an empty <see cref = "ReplayState"/> that can be written to. 
-        /// </summary>
-        private ReplayState()
-        {
-        }
-
+        // Methods
+        IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
+        void IReplayReusable.Initialize() => throw new System.NotImplementedException();
         public void InitializeFromData(byte[] stateData) => throw new System.NotImplementedException();
         /// <summary>
         /// Release all data stored in this state and return this instance to the pool to be used by another operation.
@@ -204,6 +128,10 @@ namespace UltimateReplay
         /// </summary>
         /// <param name = "data">The target state to append</param>
         public void Append(ReplayState data) => throw new System.NotImplementedException();
+        void IReplaySerialize.OnReplaySerialize(ReplayState state) => throw new System.NotImplementedException();
+        void IReplaySerialize.OnReplayDeserialize(ReplayState state) => throw new System.NotImplementedException();
+        void IReplayStreamSerialize.OnReplayStreamSerialize(BinaryWriter writer) => throw new System.NotImplementedException();
+        void IReplayStreamSerialize.OnReplayStreamDeserialize(BinaryReader reader) => throw new System.NotImplementedException();
         /// <summary>
         /// Read an additional replay state from the internal stored data.
         /// </summary>

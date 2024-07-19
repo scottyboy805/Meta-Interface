@@ -25,31 +25,18 @@ namespace UltimateReplay.Serializers
         // Properties
         public int MaterialIndex
         {
-            get
-            {
-                return materialIndexes[0];
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public int[] MaterialIndexes
         {
-            get
-            {
-                return materialIndexes;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public ReplayMaterialChangeSerializeFlags SerializeFlags
         {
-            get
-            {
-                return serializeFlags;
-            }
-
-            set
-            {
-                serializeFlags = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Methods

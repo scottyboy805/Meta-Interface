@@ -14,10 +14,7 @@ namespace UltimateReplay.Formatters
     {
         public IList<float> BlendWeights
         {
-            get
-            {
-                return blendWeights;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

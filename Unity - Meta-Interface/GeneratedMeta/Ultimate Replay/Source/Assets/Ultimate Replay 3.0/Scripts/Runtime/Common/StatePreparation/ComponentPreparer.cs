@@ -17,23 +17,13 @@ namespace UltimateReplay.StatePreparation
         // Properties
         public static IReadOnlyList<ComponentPreparer> Preparers
         {
-            get
-            {
-                return preparers;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         protected internal ReplayComponentPreparerAttribute Attribute
         {
-            get
-            {
-                return attribute;
-            }
-
-            set
-            {
-                attribute = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         public static void InitializePreparers() => throw new System.NotImplementedException();

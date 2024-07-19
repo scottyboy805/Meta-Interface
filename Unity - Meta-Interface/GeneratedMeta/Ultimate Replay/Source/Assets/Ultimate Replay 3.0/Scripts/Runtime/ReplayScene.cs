@@ -75,10 +75,7 @@ namespace UltimateReplay
         /// </summary>
         public bool ReplayEnabled
         {
-            get
-            {
-                return isPlayback;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -86,10 +83,7 @@ namespace UltimateReplay
         /// </summary>
         public bool IsEmpty
         {
-            get
-            {
-                return replayObjects.Count == 0;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -97,10 +91,7 @@ namespace UltimateReplay
         /// </summary>
         public HashSet<ReplayObject> ActiveReplayObjects
         {
-            get
-            {
-                return replayObjects;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -108,79 +99,26 @@ namespace UltimateReplay
         /// </summary>
         public HashSet<ReplayBehaviour> ActiveReplayBehaviours
         {
-            get
-            {
-                return replayBehaviours;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
         /// Create a new replay scene with no <see cref = "ReplayObject"/> added.
         /// </summary>
         /// <param name = "replayPreparer">A <see cref = "IReplayPreparer"/> implementation used to prepare scene objects when switching between playback and live scene modes</param>
-        public ReplayScene(IReplayPreparer replayPreparer = null)
-        {
-            // Create shared default preparer instance
-            if (defaultReplayPreparer == null)
-            {
-                // Create instance
-                defaultReplayPreparer = ReplayManager.Settings.DefaultReplayPreparer;
-            }
-
-            if (replayPreparer == null)
-                replayPreparer = defaultReplayPreparer;
-            this.replayPreparer = replayPreparer;
-        }
-
+        public ReplayScene(IReplayPreparer replayPreparer = null) => throw new System.NotImplementedException();
         /// <summary>
         /// Create a new replay scene and add the specified replay object.
         /// </summary>
         /// <param name = "replayObject">The single <see cref = "ReplayObject"/> to add to the scene</param>
         /// <param name = "replayPreparer">A <see cref = "IReplayPreparer"/> implementation used to prepare scene objects when switching between playback and live scene modes</param>
-        public ReplayScene(ReplayObject replayObject, IReplayPreparer replayPreparer = null)
-        {
-            // Parameter was null
-            if (replayObject == null)
-                throw new ArgumentNullException("replayObject");
-            // Create shared default preparer instance
-            if (defaultReplayPreparer == null)
-            {
-                // Create instance
-                defaultReplayPreparer = ReplayManager.Settings.DefaultReplayPreparer;
-            }
-
-            if (replayPreparer == null)
-                replayPreparer = defaultReplayPreparer;
-            this.replayPreparer = replayPreparer;
-            // Add object to scene
-            AddReplayObject(replayObject);
-        }
-
+        public ReplayScene(ReplayObject replayObject, IReplayPreparer replayPreparer = null) => throw new System.NotImplementedException();
         /// <summary>
         /// Create a new replay scene from the specified collection or replay objects.
         /// </summary>
         /// <param name = "replayObjects">A collection of <see cref = "ReplayObject"/> that will be added to the scene</param>
         /// <param name = "replayPreparer">A <see cref = "IReplayPreparer"/> implementation used to prepare scene objects when switching between playback and live scene modes</param>
-        public ReplayScene(IEnumerable<ReplayObject> replayObjects, IReplayPreparer replayPreparer = null)
-        {
-            // Create shared default preparer instance
-            if (defaultReplayPreparer == null)
-            {
-                // Create instance
-                defaultReplayPreparer = ReplayManager.Settings.DefaultReplayPreparer;
-            }
-
-            if (replayPreparer == null)
-                replayPreparer = defaultReplayPreparer;
-            this.replayPreparer = replayPreparer;
-            foreach (ReplayObject obj in replayObjects)
-            {
-                // Only add if not null
-                if (obj != null)
-                    AddReplayObject(obj);
-            }
-        }
-
+        public ReplayScene(IEnumerable<ReplayObject> replayObjects, IReplayPreparer replayPreparer = null) => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// Add the specified game object to the replay scene. Only game objects with a <see cref = "ReplayObject"/> attached will be accepted.

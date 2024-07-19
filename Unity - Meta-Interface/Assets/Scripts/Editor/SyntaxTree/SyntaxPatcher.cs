@@ -1,7 +1,10 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using PlasticPipe.PlasticProtocol.Messages;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace MetaInterface.Syntax
 {
@@ -64,12 +67,41 @@ namespace MetaInterface.Syntax
 
         public static bool IsPropertyDeclarationExposed(PropertyDeclarationSyntax syntax)
         {
-            return IsModifierListExposed(syntax.Modifiers);
+            // Check for modifier list
+            if (IsModifierListExposed(syntax.Modifiers) == true)
+                return true;
+
+            // Check for explicit interface
+            if (syntax.ExplicitInterfaceSpecifier != null)
+                return true;
+
+            return false;
+        }
+
+        public static bool IsConstructorDeclarationExposed(ConstructorDeclarationSyntax syntax)
+        {
+            // Check modifier list
+            if (IsModifierListExposed(syntax.Modifiers) == true)
+                return true;
+
+            // Check for internally available ctor
+            if (syntax.Modifiers.Any(SyntaxKind.InternalKeyword) == true)
+                return true;
+
+            return false;
         }
 
         public static bool IsMethodDeclarationExposed(MethodDeclarationSyntax syntax)
         {
-            return IsModifierListExposed(syntax.Modifiers);
+            // Check for modifier list
+            if (IsModifierListExposed(syntax.Modifiers) == true)
+                return true;
+
+            // Check for explicit interface
+            if (syntax.ExplicitInterfaceSpecifier != null)
+                return true;
+
+            return false;
         }
 
         public static bool IsAccessorDeclarationHidden(AccessorDeclarationSyntax syntax)
@@ -111,12 +143,15 @@ namespace MetaInterface.Syntax
         public static FieldDeclarationSyntax PatchFieldInitializer(FieldDeclarationSyntax syntax)
         {
             VariableDeclarationSyntax declaration = syntax.Declaration;
+            
+            // Check for constant
+            bool isConst = syntax.Modifiers.Any(SyntaxKind.ConstKeyword);
 
             // Check for allowed declaration
             if (declaration != null && IsFieldInitializerAllowed(declaration) == false)
             {
                 // Get the new declaration
-                VariableDeclarationSyntax newDeclaration = PatchFieldInitializer(declaration);
+                VariableDeclarationSyntax newDeclaration = PatchFieldInitializer(declaration, isConst);
 
                 // Perform replacement
                 return syntax.ReplaceNode(declaration, newDeclaration);
@@ -126,18 +161,18 @@ namespace MetaInterface.Syntax
             return syntax;
         }
 
-        public static VariableDeclarationSyntax PatchFieldInitializer(VariableDeclarationSyntax syntax)
+        public static VariableDeclarationSyntax PatchFieldInitializer(VariableDeclarationSyntax syntax, bool isConst)
         {
             SeparatedSyntaxList<VariableDeclaratorSyntax> variables = syntax.Variables;
 
             // Variable will be replaced as needed
             VariableDeclarationSyntax newSyntax = syntax;
-
+            
             // Remove all assignments
             for (int i = 0; i < variables.Count; i++)
             {
                 // Get the new declarator
-                VariableDeclaratorSyntax newDeclarator = PatchFieldInitializer(variables[i]);
+                VariableDeclaratorSyntax newDeclarator = PatchFieldInitializer(variables[i], isConst);
 
                 // Perform replacement
                 newSyntax = newSyntax.ReplaceNode(variables[i], newDeclarator);
@@ -146,13 +181,13 @@ namespace MetaInterface.Syntax
             return newSyntax;
         }
 
-        public static VariableDeclaratorSyntax PatchFieldInitializer(VariableDeclaratorSyntax syntax)
+        public static VariableDeclaratorSyntax PatchFieldInitializer(VariableDeclaratorSyntax syntax, bool isConst)
         {
             // Get the initializer
             EqualsValueClauseSyntax init = syntax.Initializer;
 
             // Remove the assignment expression
-            if (init != null)
+            if (init != null && isConst == false)
                 return syntax.RemoveNode(init, SyntaxRemoveOptions.KeepEndOfLine);
 
             return syntax;
@@ -197,6 +232,10 @@ namespace MetaInterface.Syntax
 
         public static PropertyDeclarationSyntax PatchPropertyAccessorsLambda(PropertyDeclarationSyntax syntax)
         {
+            // Check for abstract
+            if(syntax.Modifiers.Any(SyntaxKind.AbstractKeyword) == true)
+                return syntax;
+
             // Check for expression body
             if (syntax.ExpressionBody != null)
                 return PatchPropertyAccessorBodyLambda(syntax);
@@ -255,21 +294,41 @@ namespace MetaInterface.Syntax
         }
 
 
-
-        public static MethodDeclarationSyntax PatchMethodBody(MethodDeclarationSyntax syntax)
+        public static ConstructorDeclarationSyntax PatchConstructorBodyLambda(ConstructorDeclarationSyntax syntax)
         {
-            // Check for no method body - No need to replace method body
+            // Check for no body - No need to replace constructor body
             if (syntax.Body == null && syntax.ExpressionBody == null)
                 return syntax;
 
             SyntaxTriviaList trailingTrivia;
 
             // Strip method body - check for no body provided too
-            if (StripMethodBody(ref syntax, out trailingTrivia) == false)
+            if (StripConstructorBody(ref syntax, out trailingTrivia) == false)
                 return syntax;
 
-            // Replace the method body
-            return syntax.WithBody(GetMethodBodyReplacementSyntax());
+            // Check for initializer
+            if (syntax.Initializer != null)
+                syntax = syntax.ReplaceNode(syntax.Initializer.ArgumentList, PatchArgumentListDefault(syntax.Initializer.ArgumentList));
+
+            // Create with expression
+            return syntax.WithExpressionBody(GetMethodBodyLambdaReplacementSyntax())
+                .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+        }
+
+        public static ArgumentListSyntax PatchArgumentListDefault(ArgumentListSyntax syntax)
+        {
+            // Check for empty arguments
+            if (syntax.Arguments == null || syntax.Arguments.Count == 0)
+                return syntax;
+
+            // Patch the syntax
+            for(int i = 0; i < syntax.Arguments.Count; i++)
+            {
+                syntax = syntax.ReplaceNode(syntax.Arguments[i], SyntaxFactory.Argument(
+                    SyntaxFactory.ParseExpression("default")));
+            }
+
+            return syntax;
         }
 
         public static MethodDeclarationSyntax PatchMethodBodyLambda(MethodDeclarationSyntax syntax)
@@ -335,6 +394,39 @@ namespace MetaInterface.Syntax
                 return false;
         }
 
+        private static bool StripConstructorBody(ref ConstructorDeclarationSyntax syntax, out SyntaxTriviaList trailingTrivia)
+        {
+            // Get trailing trivia
+            trailingTrivia = syntax.GetTrailingTrivia();
+
+            // Check for trailing semicolon
+            if (syntax.SemicolonToken != null)
+                syntax = syntax.ReplaceToken(syntax.SemicolonToken, SyntaxFactory.Token(SyntaxKind.None));
+
+            bool hasBody = false;
+
+            // Remove current method body
+            if (syntax.Body != null)
+            {
+                syntax = syntax.RemoveNode(syntax.Body, SyntaxRemoveOptions.KeepUnbalancedDirectives);
+                hasBody = true;
+            }
+
+            // Remove current expression
+            if (syntax.ExpressionBody != null)
+            {
+                syntax = syntax.RemoveNode(syntax.ExpressionBody, SyntaxRemoveOptions.KeepUnbalancedDirectives);
+                hasBody = true;
+            }
+
+            // Check for no body (abstract)
+            if (hasBody == false)
+                return false;
+
+            // Strip was successful
+            return true;
+        }
+
         private static bool StripMethodBody(ref MethodDeclarationSyntax syntax, out SyntaxTriviaList trailingTrivia)
         {
             // Get trailing trivia
@@ -370,10 +462,6 @@ namespace MetaInterface.Syntax
 
         public static BlockSyntax GetMethodBodyReplacementSyntax()
         {
-            SyntaxTrivia closingTrivia = default;
-
-
-
             return SyntaxFactory.Block(
                 SyntaxFactory.ParseStatement(
                     methodImplementationString));
@@ -402,7 +490,21 @@ namespace MetaInterface.Syntax
                         return true;
                 }
                 return false;
-            }).Any();
+            }).Where(n => IsIgnorableNode(n) == false).Any();
+        }
+
+        private static bool IsIgnorableNode(SyntaxNode node)
+        {
+            // Check for using
+            if (node is UsingDirectiveSyntax || node is UsingStatementSyntax)
+                return true;
+
+            // Check for empty namespace
+            if ((node is NamespaceDeclarationSyntax ns) &&
+                ns.DescendantNodes().Any() == true)
+                return true;
+
+            return false;
         }
     }
 }

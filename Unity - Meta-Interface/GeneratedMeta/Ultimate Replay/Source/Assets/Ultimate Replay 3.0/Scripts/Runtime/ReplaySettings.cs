@@ -30,10 +30,7 @@ namespace UltimateReplay
         /// </summary>
         public ReplayPlaybackOptions PlaybackOptions
         {
-            get
-            {
-                return playbackOptions;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -41,10 +38,7 @@ namespace UltimateReplay
         /// </summary>
         public ReplayRecordOptions RecordOptions
         {
-            get
-            {
-                return recordOptions;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -52,10 +46,7 @@ namespace UltimateReplay
         /// </summary>
         public ReplaySceneDiscovery SceneDiscovery
         {
-            get
-            {
-                return sceneDiscovery;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -63,10 +54,7 @@ namespace UltimateReplay
         /// </summary>
         public IReadOnlyList<ReplayObjectLifecycleProvider> PrefabProviders
         {
-            get
-            {
-                return prefabProviders;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -74,10 +62,7 @@ namespace UltimateReplay
         /// </summary>
         public DefaultReplayPreparer DefaultReplayPreparer
         {
-            get
-            {
-                return defaultReplayPreparer;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

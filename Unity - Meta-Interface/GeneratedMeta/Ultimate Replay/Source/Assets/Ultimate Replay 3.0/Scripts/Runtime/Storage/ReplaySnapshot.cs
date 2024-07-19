@@ -93,10 +93,7 @@ namespace UltimateReplay.Storage
             // Properties
             public ReplaySerializeFlags InitialFlags
             {
-                get
-                {
-                    return flags;
-                }
+                get => throw new System.NotImplementedException();
             }
 
             // Methods
@@ -123,10 +120,7 @@ namespace UltimateReplay.Storage
         /// </summary>        
         public float TimeStamp
         {
-            get
-            {
-                return timeStamp;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -136,10 +130,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public int SequenceID
         {
-            get
-            {
-                return sequenceID;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -147,56 +138,24 @@ namespace UltimateReplay.Storage
         /// </summary>        
         public int Size
         {
-            get
-            {
-                if (storageSize == -1)
-                {
-                    storageSize = 0;
-                    // Calcualte the size of each object
-                    foreach (ReplayStateEntry storable in states.Values)
-                    {
-                        // Snapshot storable type
-                        storageSize += sizeof(byte);
-                        if (storable.state.StorageType == ReplaySnapshotStorableType.StatePointer)
-                        {
-                            // Snapshot pointer value
-                            storageSize += sizeof(ushort);
-                        }
-                        else
-                        {
-                            ReplayState state = storable.state as ReplayState;
-                            storageSize += state.Size;
-                        }
-                    }
-                }
-
-                return storageSize;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public IEnumerable<ReplayIdentity> Identities
         {
-            get
-            {
-                return states.Keys;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        internal ReplaySnapshot()
-        {
-        }
-
+        internal ReplaySnapshot() => throw new System.NotImplementedException();
         /// <summary>
         /// Create a new snapshot with the specified time stamp.
         /// </summary>
         /// <param name = "timeStamp">The time stamp to give to this snapshot</param>
-        public ReplaySnapshot(float timeStamp, int sequenceID)
-        {
-            this.timeStamp = timeStamp;
-            this.sequenceID = sequenceID;
-        }
-
+        public ReplaySnapshot(float timeStamp, int sequenceID) => throw new System.NotImplementedException();
+        // Methods
+        IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
+        void IReplayReusable.Initialize() => throw new System.NotImplementedException();
         public void Dispose() => throw new System.NotImplementedException();
         public override string ToString() => throw new System.NotImplementedException();
         /// <summary>

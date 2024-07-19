@@ -18,26 +18,17 @@ namespace UltimateReplay.Formatters
 
         public uint RandomSeed
         {
-            get
-            {
-                return randomSeed;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public float SimulationTime
         {
-            get
-            {
-                return simulationTime;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsPlaying
         {
-            get
-            {
-                return isPlaying;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

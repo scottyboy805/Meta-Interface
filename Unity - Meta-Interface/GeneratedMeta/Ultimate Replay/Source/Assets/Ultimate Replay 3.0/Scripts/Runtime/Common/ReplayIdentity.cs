@@ -40,47 +40,20 @@ namespace UltimateReplay
         /// </summary>
         public bool IsValid
         {
-            get
-            {
-                return id != unassignedID;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public int ID
         {
-            get
-            {
-                return (int)id;
-            }
-        }
-
-        // Constructor
-        /// <summary>
-        /// Clear any old data on domain reload.
-        /// </summary>
-        static ReplayIdentity()
-        {
-            // Clear the set - it will be repopulated when each identity is initialized
-            usedIds.Clear();
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
         /// Create a new instance with the specified id value.
         /// </summary>
         /// <param name = "id">The id value to give this identity</param>
-        public ReplayIdentity(uint id)
-        {
-            this.id = id;
-            // Check for out of bounds
-            if (id > maxValue)
-                throw new InvalidOperationException("Id value `" + id + "` exceeds the maximum allowed value: " + maxValue);
-        }
-
-        public ReplayIdentity(ReplayIdentity other)
-        {
-            this.id = other.id;
-        }
-
+        public ReplayIdentity(uint id) => throw new System.NotImplementedException();
+        public ReplayIdentity(ReplayIdentity other) => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// Override implementation.
@@ -127,6 +100,10 @@ namespace UltimateReplay
             return a.Equals(b) == false;
         }
 
+        void IReplaySerialize.OnReplaySerialize(ReplayState state) => throw new System.NotImplementedException();
+        void IReplaySerialize.OnReplayDeserialize(ReplayState state) => throw new System.NotImplementedException();
+        void IReplayStreamSerialize.OnReplayStreamSerialize(BinaryWriter writer) => throw new System.NotImplementedException();
+        void IReplayStreamSerialize.OnReplayStreamDeserialize(BinaryReader reader) => throw new System.NotImplementedException();
         public static void RegisterIdentity(ReplayIdentity identity) => throw new System.NotImplementedException();
         public static void UnregisterIdentity(ReplayIdentity identity) => throw new System.NotImplementedException();
         public static bool IsIdentityUnique(in ReplayIdentity identity) => throw new System.NotImplementedException();

@@ -17,27 +17,16 @@ namespace UltimateReplay
         // Properties
         public string OverrideName
         {
-            get
-            {
-                return overrideName;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         public bool IsOptional
         {
-            get
-            {
-                return isOptional;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
-        public ReplayTokenSerializeAttribute(string overrideName = null, bool isOptional = false)
-        {
-            this.overrideName = overrideName;
-            this.isOptional = isOptional;
-        }
-
+        public ReplayTokenSerializeAttribute(string overrideName = null, bool isOptional = false) => throw new System.NotImplementedException();
         // Methods
         public string GetSerializeName(string fallback) => throw new System.NotImplementedException();
     }

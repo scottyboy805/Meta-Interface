@@ -46,11 +46,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public string FilePath
         {
-            get
-            {
-                CheckDisposed();
-                return filePath;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -58,11 +54,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public string FileName
         {
-            get
-            {
-                CheckDisposed();
-                return Path.GetFileName(filePath);
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -70,10 +62,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override float Duration
         {
-            get
-            {
-                return stream.Duration;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -81,10 +70,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override int MemorySize
         {
-            get
-            {
-                return stream.MemorySize;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -92,10 +78,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override int SnapshotSize
         {
-            get
-            {
-                return stream.SnapshotSize;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -104,10 +87,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override int IdentitySize
         {
-            get
-            {
-                return stream.IdentitySize;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -115,10 +95,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public bool IsBuffering
         {
-            get
-            {
-                return stream.IsBuffering;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -127,10 +104,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override bool CanRead
         {
-            get
-            {
-                return stream.CanRead;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -139,10 +113,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override bool CanWrite
         {
-            get
-            {
-                return stream.CanWrite;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -150,15 +121,8 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override ReplayMetadata Metadata
         {
-            get
-            {
-                return stream.Metadata;
-            }
-
-            set
-            {
-                stream.Metadata = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -166,15 +130,8 @@ namespace UltimateReplay.Storage
         /// </summary>
         public override ReplayPersistentData PersistentData
         {
-            get
-            {
-                return stream.PersistentData;
-            }
-
-            set
-            {
-                stream.PersistentData = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Constructor
@@ -183,18 +140,7 @@ namespace UltimateReplay.Storage
         /// </summary>
         /// <param name = "filePath">The path of the replay file to create or read</param>
         /// <param name = "stream">The stream storage encapsulated by this file storage</param>
-        protected ReplayFileStorage(string filePath, ReplayStreamStorage stream): base(Path.GetFileNameWithoutExtension(filePath))
-        {
-            this.filePath = filePath;
-            this.stream = stream;
-            // Check for not supported
-#if UNITY_WEBGL && !UNITY_EDITOR
-            throw new NotSupportedException("File streaming is not supported on this platform");
-#endif
-            // Register stream resource for dispose if user does not dispose manually - avoid file handle leaks
-            ReplayCleanupUtility.RegisterUnreleasedResource(this);
-        }
-
+        protected ReplayFileStorage(string filePath, ReplayStreamStorage stream): base(default) => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// Force all replay data to be fetched from the file and loaded into memory ready for quick access.

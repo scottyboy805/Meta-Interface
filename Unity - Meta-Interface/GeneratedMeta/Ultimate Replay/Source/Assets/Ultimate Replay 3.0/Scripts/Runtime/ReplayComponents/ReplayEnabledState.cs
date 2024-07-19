@@ -21,10 +21,7 @@ namespace UltimateReplay
         /// </summary>
         public override ReplayFormatter Formatter
         {
-            get
-            {
-                return formatter;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

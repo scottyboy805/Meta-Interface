@@ -19,7 +19,7 @@ namespace UltimateReplay
         /// </summary>
         public virtual ReplayFormatter Formatter
         {
-            get => null;
+            get => throw new System.NotImplementedException();
         }
 
         // Methods

@@ -20,15 +20,8 @@ namespace UltimateReplay.Formatters
         /// </summary>
         public bool Enabled
         {
-            get
-            {
-                return enabled;
-            }
-
-            set
-            {
-                enabled = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         // Methods

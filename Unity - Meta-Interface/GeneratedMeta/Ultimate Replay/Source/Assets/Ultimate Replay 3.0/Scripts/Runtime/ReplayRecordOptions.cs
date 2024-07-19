@@ -34,30 +34,8 @@ namespace UltimateReplay
         /// </summary>
         public float RecordFPS
         {
-            get
-            {
-                return recordFPS;
-            }
-
-            set
-            {
-                recordFPS = value;
-                if (recordFPS > 0)
-                {
-                    // Check for too low
-                    if (recordFPS < MinRecordFPS)
-                        recordFPS = MinRecordFPS;
-                    // Check for too high
-                    if (recordFPS > MaxRecordFPS)
-                        Debug.LogWarning("Record FPS is set higher than the recommended maximum. This is allowable but may lead to performance issues in some cases. Record FPS: " + recordFPS);
-                    // Convert fps to time interval in seconds
-                    recordInterval = (1000f / recordFPS) / 1000f;
-                }
-                else
-                {
-                    recordInterval = (1000f / DefaultRecordFPS) / 1000f;
-                }
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -66,15 +44,12 @@ namespace UltimateReplay
         /// </summary>
         public ReplayUpdateMode RecordUpdateMode
         {
-            get
-            {
-                return recordUpdateMode;
-            }
-
-            set
-            {
-                recordUpdateMode = value;
-            }
+            get => throw new System.NotImplementedException();
+            set => throw new System.NotImplementedException();
         }
+
+        // Methods
+        void ISerializationCallbackReceiver.OnBeforeSerialize() => throw new System.NotImplementedException();
+        void ISerializationCallbackReceiver.OnAfterDeserialize() => throw new System.NotImplementedException();
     }
 }

@@ -19,10 +19,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public ReplayIdentity BehaviourIdentity
         {
-            get
-            {
-                return behaviourIdentity;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -30,10 +27,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public ushort EventID
         {
-            get
-            {
-                return eventID;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -41,10 +35,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public ReplayState EventState
         {
-            get
-            {
-                return eventState;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -52,10 +43,7 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         public bool HasEventState
         {
-            get
-            {
-                return eventState != null;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
@@ -64,26 +52,16 @@ namespace UltimateReplay.ComponentData
         /// </summary>
         /// <param name = "behaviourIdentity">The identity of the behaviour component that recorded the event</param>
         /// <param name = "eventID">The unique id used to identify the event</param>
-        public ReplayEventData(ReplayIdentity behaviourIdentity, ushort eventID)
-        {
-            this.behaviourIdentity = behaviourIdentity;
-            this.eventID = eventID;
-            this.eventState = null;
-        }
-
+        public ReplayEventData(ReplayIdentity behaviourIdentity, ushort eventID) => throw new System.NotImplementedException();
         /// <summary>
         /// Create a new instance.
         /// </summary>
         /// <param name = "behaviourIdentity">The identity of the behaviour component that recorded the event</param>
         /// <param name = "eventID">The unique id used to identify the event</param>
         /// <param name = "eventState">The optional event state data</param>
-        public ReplayEventData(ReplayIdentity behaviourIdentity, ushort eventID, ReplayState eventState)
-        {
-            this.behaviourIdentity = behaviourIdentity;
-            this.eventID = eventID;
-            this.eventState = eventState;
-        }
-
+        public ReplayEventData(ReplayIdentity behaviourIdentity, ushort eventID, ReplayState eventState) => throw new System.NotImplementedException();
+        // Methods
+        IEnumerable<ReplayToken> IReplayTokenSerialize.GetSerializeTokens(bool includeOptional) => throw new System.NotImplementedException();
         /// <summary>
         /// Serialize the event information to the specified <see cref = "ReplayState"/>.
         /// </summary>

@@ -76,11 +76,7 @@ namespace UltimateReplay
         /// </summary>
         public ReplayScene Scene
         {
-            get
-            {
-                CheckDisposed();
-                return scene;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         /// <summary>
@@ -88,11 +84,7 @@ namespace UltimateReplay
         /// </summary>
         public ReplayStorage Storage
         {
-            get
-            {
-                CheckDisposed();
-                return storage;
-            }
+            get => throw new System.NotImplementedException();
         }
 
         // Constructor
@@ -103,22 +95,7 @@ namespace UltimateReplay
         /// <param name = "scene">The replay scene associated with this replay operation</param>
         /// <param name = "storage">The replay storage associated with this replay operation</param>
         /// <exception cref = "ArgumentNullException">The specified replay manager is null</exception>
-        protected ReplayOperation(ReplayManager manager, ReplayScene scene, ReplayStorage storage)
-        {
-            // Check for null manager
-            if (manager == null && Application.isPlaying == true)
-                throw new ArgumentNullException(nameof(manager));
-            // Check for null scene
-            if (scene == null)
-                throw new ArgumentNullException(nameof(scene));
-            // Check for null storage
-            if (storage == null)
-                throw new ArgumentNullException(nameof(storage));
-            this.manager = manager;
-            this.scene = scene;
-            this.storage = storage;
-        }
-
+        protected ReplayOperation(ReplayManager manager, ReplayScene scene, ReplayStorage storage) => throw new System.NotImplementedException();
         // Methods
         /// <summary>
         /// Should be called with a delta time value to update the replay operation manually.
