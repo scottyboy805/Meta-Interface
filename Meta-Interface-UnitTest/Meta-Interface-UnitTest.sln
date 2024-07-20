@@ -5,7 +5,7 @@ VisualStudioVersion = 17.10.34916.146
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meta-Interface-UnitTest", "Meta-Interface-UnitTest.csproj", "{A5478926-307A-4E22-8A01-6663F184710E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MetaInterface", "..\Unity - Meta-Interface\MetaInterface.csproj", "{6E30AC40-9318-699C-1599-9B8163D2A6E9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meta-Interface", "..\Unity - Meta-Interface\Meta-Interface.csproj", "{6E30AC40-9318-699C-1599-9B8163D2A6E9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
