@@ -58,6 +58,9 @@ namespace MetaInterface.Syntax
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
+            //var directive = node.GetFirstDirective();
+            //var a = directive.DescendantNodes().OfType<MemberDeclarationSyntax>().ToArray();
+
             // Class should remain in the syntax tree
             return base.VisitClassDeclaration(node);
         }
@@ -181,9 +184,16 @@ namespace MetaInterface.Syntax
             var leadingTrivia = node.GetLeadingTrivia();
             return leadingTrivia.Any(trivia =>
                 trivia.IsKind(SyntaxKind.IfDirectiveTrivia) ||
-                trivia.IsKind(SyntaxKind.EndIfDirectiveTrivia) ||
+                trivia.IsKind(SyntaxKind.ElseDirectiveTrivia) ||
                 trivia.IsKind(SyntaxKind.ElifDirectiveTrivia) ||
-                trivia.IsKind(SyntaxKind.ElseDirectiveTrivia));
+                trivia.IsKind(SyntaxKind.EndIfDirectiveTrivia) ||
+                trivia.IsKind(SyntaxKind.RegionDirectiveTrivia) ||
+                trivia.IsKind(SyntaxKind.EndRegionDirectiveTrivia) ||
+                trivia.IsKind(SyntaxKind.DefineDirectiveTrivia) ||
+                trivia.IsKind(SyntaxKind.UndefDirectiveTrivia) ||
+                trivia.IsKind(SyntaxKind.ErrorDirectiveTrivia) ||
+                trivia.IsKind(SyntaxKind.WarningDirectiveTrivia) ||
+                trivia.IsKind(SyntaxKind.PragmaWarningDirectiveTrivia));
         }
     }
 }

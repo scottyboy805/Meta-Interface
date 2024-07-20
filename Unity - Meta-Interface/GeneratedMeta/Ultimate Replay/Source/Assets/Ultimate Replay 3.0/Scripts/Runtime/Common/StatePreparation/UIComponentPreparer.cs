@@ -5,6 +5,9 @@
 /// </summary>
 using UnityEngine.EventSystems;
 
+/// <summary>
+/// Declarations have been stripped because they were part of the internal implementation
+/// </summary>
 namespace UltimateReplay.StatePreparation
 {
 }

@@ -1,9 +1,7 @@
 ﻿using MetaInterface.Syntax;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using UnityEditor.Compilation;
 
@@ -49,18 +47,14 @@ namespace MetaInterface
                     SyntaxNode patchedRoot = sourceFile.ParseAndGenerateMeta(config);
                     
 
-                    // Check for any declarations - otherwise we can ignore the source file
-                    if (SyntaxPatcher.HasAnyDeclarations(patchedRoot) == true)
-                    {
-                        patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
+                    // Insert a comment about the changes made to this source file
+                    patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
 
+                    // Overwrite source
+                    sourceFile.OverwriteSource(patchedRoot);
 
-                        // Overwrite source
-                        sourceFile.OverwriteSource(patchedRoot);
-
-                        // Mark as modified
-                        modifiedSourceFileGuids.Add(sourceFile.Guid);
-                    }
+                    // Mark as modified
+                    modifiedSourceFileGuids.Add(sourceFile.Guid);
                 }
             }
             catch
@@ -95,20 +89,16 @@ namespace MetaInterface
                     // Rewrite and patch declarations
                     SyntaxNode patchedRoot = sourceFile.ParseAndGenerateMeta(config);
 
-                    // Check for any declarations - otherwise we can ignore the source file
-                    if (SyntaxPatcher.HasAnyDeclarations(patchedRoot) == true)
-                    {
-                        patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
+                    // Insert a comment about the changes made to this source file
+                    patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
 
+                    UnityEngine.Debug.Log("Generate meta source: " +  sourceOutputPath);
 
-                        UnityEngine.Debug.Log("Generate meta source: " +  sourceOutputPath);
+                    // Write new source
+                    MetaSourceFile.WriteSource(sourceOutputPath, patchedRoot);
 
-                        // Write new source
-                        MetaSourceFile.WriteSource(sourceOutputPath, patchedRoot);
-
-                        // Mark as modified
-                        modifiedSourceFileGuids.Add(sourceFile.Guid);
-                    }
+                    // Mark as modified
+                    modifiedSourceFileGuids.Add(sourceFile.Guid);
                 }
             }
             //catch

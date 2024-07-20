@@ -14,4 +14,23 @@ using UnityEditor;
 #endif
 namespace UltimateReplay
 {
+#if UNITY_EDITOR
+    [InitializeOnLoad]
+#endif
+    internal sealed class ReplayMethods
+    {
+        // Methods
+        public static bool SerializeMethodInfo(MethodInfo method, ReplayState state, object[] args) => throw new System.NotImplementedException();
+        public static bool DeserializeMethodInfo(ReplayState state, out MethodInfo method, out object[] args) => throw new System.NotImplementedException();
+        public static MethodInfo GetReplayMethod(int hash) => throw new System.NotImplementedException();
+        public static int GetReplayMethodHash(MethodInfo method) => throw new System.NotImplementedException();
+        /// <summary>
+        /// Calculate a fixed hash that will be stable between sessions for a given method signature.
+        /// Value will remain the same unless the method signature changes in any way.
+        /// Signature includes assembly name and version, type namespace and name, method name, method return type and method parameter types.
+        /// </summary>
+        /// <param name = "replayMethod">The method to generate the hash for</param>
+        /// <returns>An almost certainly unique hash that will be deterministic between sessions</returns>
+        public static int CalculateReplayMethodSignatureHash(MethodInfo replayMethod) => throw new System.NotImplementedException();
+    }
 }

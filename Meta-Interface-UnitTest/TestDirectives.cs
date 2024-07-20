@@ -4,7 +4,7 @@ namespace Meta_Interface_UnitTest
     [TestClass]
     public class TestDirectives
     {
-        // Explicit interface method
+        // Condition true directive
         [DataTestMethod]
         [DataRow(
 @"#define Test
@@ -20,9 +20,23 @@ public class Test
 public class Test
 {         
 #if Test && Other
-    private int field;
+    private int field = expr;
 #endif  
-}", DisplayName = "Condition Directive")]
+}", DisplayName = "Condition True Directive")]
+
+        // Condition false directive
+        [DataRow(
+@"public class Test
+{
+#if Test && Other
+    private int field;
+#endif
+}", @"public class Test
+{         
+#if Test && Other
+    private int field = expr;
+#endif  
+}", DisplayName = "Condition false Directive")]
         public void TestDirectivesMeta(string expectedSource, string inputSource)
         {
             // Convert to meta

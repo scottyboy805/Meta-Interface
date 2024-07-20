@@ -7,6 +7,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Declarations have been stripped because they were part of the internal implementation
+/// </summary>
 namespace UltimateReplay
 {
 }

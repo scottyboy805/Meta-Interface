@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis.Text;
 using System;
 using System.IO;
 using UnityEditor;
-using UnityEngine.Networking.Types;
 
 namespace MetaInterface
 {
@@ -36,13 +35,21 @@ namespace MetaInterface
         private MetaSourceFile() { }
 
         // Methods
-        public CSharpSyntaxTree Parse()
+        public CSharpSyntaxTree Parse(MetaConfig config = null)
         {
+            // Check for config
+            if (config == null)
+                config = MetaConfig.Default;
+
+            // Get parsed tree
             if (syntaxTree != null)
                 return syntaxTree;
 
+            // Create parse options
+            CSharpParseOptions options = new CSharpParseOptions(preprocessorSymbols: config.PreprocessorDefineSymbols);
+
             // Parse from source
-            syntaxTree = CSharpSyntaxTree.ParseText(sourceText) as CSharpSyntaxTree;
+            syntaxTree = CSharpSyntaxTree.ParseText(sourceText, options) as CSharpSyntaxTree;
 
             return syntaxTree;
         }
@@ -54,14 +61,21 @@ namespace MetaInterface
                 config = MetaConfig.Default;
 
             // Get syntax tree
-            CSharpSyntaxTree syntaxTree = Parse();
+            CSharpSyntaxTree syntaxTree = Parse(config);
 
             // Path source file
             SyntaxRewriter rewriter = new SyntaxRewriter(config);
 
             // Rewrite and patch declarations
             SyntaxNode patchedRoot = rewriter.Visit(syntaxTree.GetRoot());
-            
+
+            // Fix whitespace
+            //patchedRoot = patchedRoot.NormalizeWhitespace();
+
+            // Patch for comments
+            SyntaxCommenter commenter = new SyntaxCommenter();
+            patchedRoot = commenter.Visit(patchedRoot);
+
             return patchedRoot.NormalizeWhitespace();
         }
 

@@ -1,10 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using PlasticPipe.PlasticProtocol.Messages;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace MetaInterface.Syntax
 {
@@ -469,37 +466,6 @@ namespace MetaInterface.Syntax
                     methodImplementationString)
                 .WithLeadingTrivia(SyntaxFactory.Space))
                 .WithLeadingTrivia(SyntaxFactory.Space);
-        }
-
-        internal static bool HasAnyDeclarations(SyntaxNode syntax)
-        {
-            return syntax.DescendantNodesAndSelf((SyntaxNode child) =>
-            {
-                switch (child.Kind())
-                {
-                    case SyntaxKind.ClassDeclaration:
-                    case SyntaxKind.StructDeclaration:
-                    case SyntaxKind.EnumDeclaration:
-                    case SyntaxKind.InterfaceDeclaration:
-                    case SyntaxKind.DelegateDeclaration:
-                        return true;
-                }
-                return false;
-            }).Where(n => IsIgnorableNode(n) == false).Any();
-        }
-
-        private static bool IsIgnorableNode(SyntaxNode node)
-        {
-            // Check for using
-            if (node is UsingDirectiveSyntax || node is UsingStatementSyntax)
-                return true;
-
-            // Check for empty namespace
-            if ((node is NamespaceDeclarationSyntax ns) &&
-                ns.DescendantNodes().Any() == true)
-                return true;
-
-            return false;
         }
     }
 }

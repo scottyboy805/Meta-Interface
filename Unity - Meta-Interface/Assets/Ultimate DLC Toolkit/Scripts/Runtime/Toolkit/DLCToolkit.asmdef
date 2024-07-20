@@ -1,0 +1,17 @@
+{
+    "name": "DLCToolkit",
+    "rootNamespace": "",
+    "references": [
+        "GUID:68bd7fdb68ef2684e982e8a9825b18a5",
+        "GUID:ed29bc96eb0091e4ab75fff8c7494bda"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

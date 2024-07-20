@@ -1,10 +1,13 @@
 
+using System.Collections.Generic;
+
 namespace MetaInterface
 {
     public class MetaConfig
     {
         // Private
         private string ignoreMembersWithAttribute = null;
+        private readonly List<string> preprocessorDefineSymbols = new List<string>();
 
         // Public
         public static readonly MetaConfig Default = new MetaConfig();
@@ -22,6 +25,11 @@ namespace MetaInterface
         {
             get { return ignoreMembersWithAttribute; }
             set { ignoreMembersWithAttribute = value; }
+        }
+
+        public IList<string> PreprocessorDefineSymbols
+        {
+            get { return preprocessorDefineSymbols; }
         }
     }
 }

@@ -6,6 +6,9 @@
 using System;
 using System.IO;
 
+/// <summary>
+/// Declarations have been stripped because they were part of the internal implementation
+/// </summary>
 namespace UltimateReplay.Storage
 {
 }

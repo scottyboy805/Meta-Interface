@@ -109,6 +109,8 @@ namespace UltimateReplay.Storage
         public override void StoreSnapshot(ReplaySnapshot state) => throw new System.NotImplementedException();
         public override void Prepare(ReplayStorageAction mode) => throw new System.NotImplementedException();
         protected override void OnDispose() => throw new System.NotImplementedException();
+#if !ULTIMATEREPLAY_DISABLE_THREADING
+        private void StreamingThreadMain(object state) => throw new System.NotImplementedException();
 #endif
         public string ToJsonString(Encoding encoding = null) => throw new System.NotImplementedException();
         public byte[] ToBytes() => throw new System.NotImplementedException();

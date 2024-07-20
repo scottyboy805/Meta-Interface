@@ -34,4 +34,22 @@ public class GenerateSource
 
         def.GenerateSource("GeneratedMeta/Ultimate Replay/Source");
     }
+
+    [MenuItem("Tools/Generate Meta Source/From Ultimate DLC Code Base")]
+    public static void GenerateUDLC()
+    {
+        Assembly[] assemblies = CompilationPipeline.GetAssemblies(AssembliesType.Editor);
+
+        Assembly asm = assemblies.Where(a => a.name == "DLCToolkit").FirstOrDefault();
+
+        MetaConfig config = new MetaConfig
+        {
+            DiscardTypeComments = true,
+            DiscardMemberComments = true,
+        };
+
+        AssemblyDefinition def = new AssemblyDefinition(asm);
+
+        def.GenerateSource("GeneratedMeta/DLC Toolkit/Source");
+    }
 }
