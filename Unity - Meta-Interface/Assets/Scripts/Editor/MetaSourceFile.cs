@@ -4,7 +4,10 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using System;
 using System.IO;
+
+#if UNITY
 using UnityEditor;
+#endif
 
 namespace MetaInterface
 {
@@ -26,10 +29,12 @@ namespace MetaInterface
             get { return sourceText; }
         }
 
+#if UNITY
         public string Guid
         {
             get { return AssetDatabase.AssetPathToGUID(sourceFile); }
         }
+#endif
 
         // Constructor
         private MetaSourceFile() { }
@@ -69,9 +74,6 @@ namespace MetaInterface
             // Rewrite and patch declarations
             SyntaxNode patchedRoot = rewriter.Visit(syntaxTree.GetRoot());
 
-            // Fix whitespace
-            //patchedRoot = patchedRoot.NormalizeWhitespace();
-
             // Patch for comments
             SyntaxCommenter commenter = new SyntaxCommenter();
             patchedRoot = commenter.Visit(patchedRoot);
@@ -81,18 +83,12 @@ namespace MetaInterface
 
         public void OverwriteSource(SyntaxNode root)
         {
-            // Fix whitespace
-            root = root.NormalizeWhitespace(); 
-
             // Save to file
             File.WriteAllText(sourceFile, root.ToFullString());
         }
 
         public static void WriteSource(string outputPath, SyntaxNode root)
         {
-            // Fix whitespace
-            root = root.NormalizeWhitespace();
-
             // Save to file
             File.WriteAllText(outputPath, root.ToFullString());
         }

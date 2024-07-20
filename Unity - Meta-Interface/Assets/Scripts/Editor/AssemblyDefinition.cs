@@ -1,4 +1,5 @@
-﻿using MetaInterface.Syntax;
+﻿#if UNITY
+using MetaInterface.Syntax;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -67,9 +68,11 @@ namespace MetaInterface
 
         public bool GenerateSource(string outputFolder)
         {
-            //try
+            try
             {
+#if DEBUG
                 UnityEngine.Debug.Log("Output meta source folder: " + outputFolder);
+#endif
 
                 // Process all sources files
                 foreach (string source in asm.sourceFiles)
@@ -92,7 +95,9 @@ namespace MetaInterface
                     // Insert a comment about the changes made to this source file
                     patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
 
+#if DEBUG
                     UnityEngine.Debug.Log("Generate meta source: " +  sourceOutputPath);
+#endif
 
                     // Write new source
                     MetaSourceFile.WriteSource(sourceOutputPath, patchedRoot);
@@ -101,12 +106,16 @@ namespace MetaInterface
                     modifiedSourceFileGuids.Add(sourceFile.Guid);
                 }
             }
-            //catch
-            //{
-            //    return false;
-            //}
+            catch(Exception e)
+            {
+#if DEBUG
+                UnityEngine.Debug.LogException(e);
+#endif
+                return false;
+            }
 
             return true;
         }
     }
 }
+#endif
