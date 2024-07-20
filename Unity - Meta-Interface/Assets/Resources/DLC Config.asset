@@ -18,6 +18,6 @@ MonoBehaviour:
   scriptingDebug: 0
   forceRebuild: 0
   clearConsoleOnBuild: 1
-  productHash: 
-  versionHash: 
+  productHash: 46d1a83dfa0458add58c9afad4a451f825de645a154684e3eb00f3e1343ce19e
+  versionHash: 14be4b45f18e0d8c67b4f719b5144eee88497e413709d11d85b096d8e2346310
   platformContent: []
