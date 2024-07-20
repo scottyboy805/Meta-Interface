@@ -25,38 +25,6 @@ namespace MetaInterface.Syntax
             }
 
             return base.Visit(node);
-
-            //// Check for root unit
-            //if (node is CompilationUnitSyntax comp)
-            //{
-            //    // Remove region nodes
-            //    node = node.RemoveNodes(node.DescendantNodesAndSelf()
-            //        .Where(n => n is RegionDirectiveTriviaSyntax || n is EndRegionDirectiveTriviaSyntax)
-            //        , SyntaxRemoveOptions.KeepNoTrivia);
-
-            //    // Remove trivia
-            //    node = node.ReplaceTrivia(node.DescendantTrivia(descendIntoTrivia: true)
-            //        .Where(t => t.IsKind(SyntaxKind.RegionDirectiveTrivia) || t.IsKind(SyntaxKind.RegionKeyword) || t.IsKind(SyntaxKind.EndRegionDirectiveTrivia) || t.IsKind(SyntaxKind.EndRegionKeyword))
-            //        , default);
-            //}
-            //return base.Visit(node);
-
-            //if (node != null)
-            //{
-            //    // Get trivial lists
-            //    SyntaxTriviaList leadingTrivia = node.GetLeadingTrivia();
-            //    SyntaxTriviaList trailingTrivial = node.GetTrailingTrivia();
-
-            //    // Replace regions
-            //    node = RemoveTrivia(node, leadingTrivia, SyntaxKind.RegionDirectiveTrivia);
-            //    node = RemoveTrivia(node, leadingTrivia, SyntaxKind.EndRegionDirectiveTrivia);
-            //    node = RemoveTrivia(node, leadingTrivia, SyntaxKind.EndRegionKeyword);
-            //    node = RemoveTrivia(node, trailingTrivial, SyntaxKind.RegionDirectiveTrivia);
-            //    node = RemoveTrivia(node, trailingTrivial, SyntaxKind.EndRegionDirectiveTrivia);
-            //    node = RemoveTrivia(node, trailingTrivial, SyntaxKind.EndRegionKeyword);
-            //}
-
-            //return base.Visit(node);
         }
 
         public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
@@ -66,12 +34,6 @@ namespace MetaInterface.Syntax
                 // Return an empty trivia to remove the directive
                 return default;
             }
-
-            //if (trivia.HasStructure)
-            //{
-            //    var newStructure = this.Visit(trivia.GetStructure());
-            //    return default;// return SyntaxFactory.Trivia(newStructure);
-            //}
 
             return base.VisitTrivia(trivia);
         }
@@ -96,13 +58,7 @@ namespace MetaInterface.Syntax
                 return null;
 
             // Class should remain in the syntax tree
-            SyntaxNode result = base.VisitClassDeclaration(node);
-
-            // Remove comments
-            //if(config.DiscardTypeComments == true)
-            //    result = result.kin
-
-            return result;
+            return base.VisitClassDeclaration(node);
         }
 
         public override SyntaxNode VisitStructDeclaration(StructDeclarationSyntax node)
@@ -123,7 +79,6 @@ namespace MetaInterface.Syntax
 
             // Interface should remain in the syntax tree
             return node;
-            //return base.VisitInterfaceDeclaration(node);
         }
 
         public override SyntaxNode VisitEnumDeclaration(EnumDeclarationSyntax node)
@@ -153,7 +108,7 @@ namespace MetaInterface.Syntax
                 return null;
 
             // Field should remain in the syntax tree
-            return SyntaxPatcher.PatchFieldInitializer(node); //base.VisitFieldDeclaration(node);
+            return SyntaxPatcher.PatchFieldInitializer(node);
         }
 
         public override SyntaxNode VisitPropertyDeclaration(PropertyDeclarationSyntax node)
@@ -163,7 +118,7 @@ namespace MetaInterface.Syntax
                 return null;
 
             // Property should remain in the syntax tree
-            return base.VisitPropertyDeclaration(SyntaxPatcher.PatchPropertyAccessorsLambda(node)); //base.VisitPropertyDeclaration(node);
+            return base.VisitPropertyDeclaration(SyntaxPatcher.PatchPropertyAccessorsLambda(node));
         }
 
         public override SyntaxNode VisitAccessorDeclaration(AccessorDeclarationSyntax node)

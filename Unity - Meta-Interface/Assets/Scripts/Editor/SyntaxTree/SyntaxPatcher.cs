@@ -27,16 +27,11 @@ namespace MetaInterface.Syntax
 
         public static bool IsNamespaceDeclarationExposed(NamespaceDeclarationSyntax syntax)
         {
-            //if(config.HasIgnoreAttribute == true && syntax.att)
-
             return true;
         }
 
         public static bool IsClassDeclarationExposed(ClassDeclarationSyntax syntax, MetaConfig config)
         {
-            //if (config.HasIgnoreAttribute == true && HasCustomAttributeWithName(syntax.AttributeLists, config.IgnoreMembersWithAttributeName) == true)
-            //    return false;
-
             return IsModifierListExposed(syntax.Modifiers);
         }
 
