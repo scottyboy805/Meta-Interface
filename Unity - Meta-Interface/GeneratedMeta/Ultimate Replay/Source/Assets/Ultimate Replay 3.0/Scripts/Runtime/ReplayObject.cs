@@ -44,6 +44,13 @@ namespace UltimateReplay
             public ReplayObjectReference(ReplayObject obj) => throw new System.NotImplementedException();
         }
 
+        // Internal
+#if UNITY_EDITOR || ULTIMATEREPLAY_TRIAL // Must be active in trail version as it is built as a dll
+
+        internal bool isObservedComponentsExpanded = false;
+#endif
+        // Private        
+        private static readonly ReplayObjectFormatter formatter;
         // Properties
         /// <summary>
         /// Get all registered replay objects that exist in all loaded scenes.

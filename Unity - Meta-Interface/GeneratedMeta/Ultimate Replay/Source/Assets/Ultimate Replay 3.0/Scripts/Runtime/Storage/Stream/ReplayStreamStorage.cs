@@ -36,6 +36,9 @@ namespace UltimateReplay.Storage
 
     public abstract partial class ReplayStreamStorage : ReplayStorage
     {
+#if !ULTIMATEREPLAY_DISABLE_THREADING
+        private Queue<Action> threadTasks;
+#endif
         // Protected
         protected bool useSegmentCompression = true;
         protected int snapshotsPerSegment = 30;
@@ -106,6 +109,7 @@ namespace UltimateReplay.Storage
         public override void StoreSnapshot(ReplaySnapshot state) => throw new System.NotImplementedException();
         public override void Prepare(ReplayStorageAction mode) => throw new System.NotImplementedException();
         protected override void OnDispose() => throw new System.NotImplementedException();
+#endif
         public string ToJsonString(Encoding encoding = null) => throw new System.NotImplementedException();
         public byte[] ToBytes() => throw new System.NotImplementedException();
         //public ReplayAsyncOperation<byte[]> ToBytesAsync()

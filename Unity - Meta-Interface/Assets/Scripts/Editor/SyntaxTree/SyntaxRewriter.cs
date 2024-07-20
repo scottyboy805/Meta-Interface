@@ -54,7 +54,8 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax node)
         {
             // Check if class is exposed
-            if (SyntaxPatcher.IsClassDeclarationExposed(node, config) == false)
+            if (SyntaxPatcher.IsClassDeclarationExposed(node, config) == false
+                && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
             // Class should remain in the syntax tree
@@ -64,7 +65,8 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitStructDeclaration(StructDeclarationSyntax node)
         {
             // Check if struct is exposed
-            if (SyntaxPatcher.IsStructDeclarationExposed(node) == false)
+            if (SyntaxPatcher.IsStructDeclarationExposed(node) == false
+                && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
             // Struct should remain in the syntax tree
@@ -74,7 +76,8 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
         {
             // Check if interface is exposed
-            if (SyntaxPatcher.IsInterfaceDeclarationExposed(node) == false)
+            if (SyntaxPatcher.IsInterfaceDeclarationExposed(node) == false 
+                && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
             // Interface should remain in the syntax tree
@@ -84,7 +87,8 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitEnumDeclaration(EnumDeclarationSyntax node)
         {
             // Check if enum is exposed
-            if (SyntaxPatcher.IsEnumDeclarationExposed(node) == false)
+            if (SyntaxPatcher.IsEnumDeclarationExposed(node) == false
+                && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
             // Enum should remain in the syntax tree
@@ -94,7 +98,8 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitEventDeclaration(EventDeclarationSyntax node)
         {
             // Check if event is exposed
-            if (SyntaxPatcher.IsEventDeclarationExposed(node) == false)
+            if (SyntaxPatcher.IsEventDeclarationExposed(node) == false
+                && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
             // Event should remain in the syntax tree
@@ -104,7 +109,8 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitFieldDeclaration(FieldDeclarationSyntax node)
         {
             // Check if field is exposed
-            if (SyntaxPatcher.IsFieldDeclarationExposed(node) == false)
+            if (SyntaxPatcher.IsFieldDeclarationExposed(node) == false 
+                && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
             // Field should remain in the syntax tree
@@ -114,7 +120,8 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitPropertyDeclaration(PropertyDeclarationSyntax node)
         {
             // Check if property is exposed
-            if (SyntaxPatcher.IsPropertyDeclarationExposed(node) == false)
+            if (SyntaxPatcher.IsPropertyDeclarationExposed(node) == false
+                && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
             // Property should remain in the syntax tree
@@ -124,7 +131,8 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitAccessorDeclaration(AccessorDeclarationSyntax node)
         {
             // Check if accessor is exposed
-            if (SyntaxPatcher.IsAccessorDeclarationHidden(node) == true)
+            if (SyntaxPatcher.IsAccessorDeclarationHidden(node) == true
+                && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
             // Accessor should remain in the syntax tree
@@ -134,7 +142,8 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
         {
             // Check if constructor is exposed
-            if (SyntaxPatcher.IsConstructorDeclarationExposed(node) == false)
+            if (SyntaxPatcher.IsConstructorDeclarationExposed(node) == false
+                && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
             // Constructor should remain in the syntax tree
@@ -144,26 +153,12 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
             // Check if method is exposed
-            if (SyntaxPatcher.IsMethodDeclarationExposed(node) == false)
+            if (SyntaxPatcher.IsMethodDeclarationExposed(node) == false
+                && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
             // Method should remain in the syntax tree
             return SyntaxPatcher.PatchMethodBodyLambda(node);
-        }
-
-        private T RemoveTrivia<T>(T node, SyntaxTriviaList trivialList, SyntaxKind kind) where T : SyntaxNode
-        {
-            SyntaxTriviaList.Enumerator enumerator = trivialList.GetEnumerator();
-
-            while (enumerator.MoveNext())
-            {
-                SyntaxTrivia current = enumerator.Current;
-                if (current.IsKind(kind) == true)
-                {
-                    node = node.ReplaceTrivia(current, new SyntaxTrivia());
-                }
-            }
-            return node;
         }
 
         private SyntaxNode RemoveRegionDirectives(SyntaxNode node)
@@ -179,6 +174,16 @@ namespace MetaInterface.Syntax
             return new SyntaxTriviaList(triviaList.Where(trivia =>
                 !trivia.IsKind(SyntaxKind.RegionDirectiveTrivia) &&
                 !trivia.IsKind(SyntaxKind.EndRegionDirectiveTrivia)));
+        }
+
+        private bool HasLeadingPreprocessorDirectives(SyntaxNode node)
+        {
+            var leadingTrivia = node.GetLeadingTrivia();
+            return leadingTrivia.Any(trivia =>
+                trivia.IsKind(SyntaxKind.IfDirectiveTrivia) ||
+                trivia.IsKind(SyntaxKind.EndIfDirectiveTrivia) ||
+                trivia.IsKind(SyntaxKind.ElifDirectiveTrivia) ||
+                trivia.IsKind(SyntaxKind.ElseDirectiveTrivia));
         }
     }
 }

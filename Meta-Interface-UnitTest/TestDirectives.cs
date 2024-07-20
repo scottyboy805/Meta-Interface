@@ -7,11 +7,16 @@ namespace Meta_Interface_UnitTest
         // Explicit interface method
         [DataTestMethod]
         [DataRow(
-@"public class Test
+@"#define Test
+#define Other
+public class Test
 {
 #if Test && Other
+    private int field;
 #endif
 }", @"
+#define Test
+#define Other
 public class Test
 {         
 #if Test && Other

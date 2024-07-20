@@ -29,6 +29,13 @@ namespace UltimateReplay
     public abstract class ReplayBehaviour : MonoBehaviour
 #endif
     {
+        // Internal
+#if UNITY_EDITOR
+        [HideInInspector]
+        internal bool noManagingObject = false;
+#endif
+        // Private
+        private static HashSet<ReplayBehaviour> allBehaviours;
         // Properties 
         /// <summary>
         /// Get the <see cref = "Core.ReplayIdentity"/> associated with this <see cref = "ReplayBehaviour"/>.  
