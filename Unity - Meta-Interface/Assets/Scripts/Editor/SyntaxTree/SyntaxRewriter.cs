@@ -169,8 +169,7 @@ namespace MetaInterface.Syntax
             // Check if method is exposed
             if (SyntaxPatcher.IsMethodDeclarationExposed(node) == false)
             {
-                if (IsExplicitInterfaceDeclaration(node) == true ||
-                    HasLeadingPreprocessorDirectives(node) == false)
+                if (HasLeadingPreprocessorDirectives(node) == false)
                 {
                     return null;
                 }
@@ -210,11 +209,6 @@ namespace MetaInterface.Syntax
                 trivia.IsKind(SyntaxKind.ErrorDirectiveTrivia) ||
                 trivia.IsKind(SyntaxKind.WarningDirectiveTrivia) ||
                 trivia.IsKind(SyntaxKind.PragmaWarningDirectiveTrivia));
-        }
-
-        private bool IsExplicitInterfaceDeclaration(MethodDeclarationSyntax methodNode)
-        {
-            return methodNode.Identifier.Text.Contains('.');
         }
     }
 }
