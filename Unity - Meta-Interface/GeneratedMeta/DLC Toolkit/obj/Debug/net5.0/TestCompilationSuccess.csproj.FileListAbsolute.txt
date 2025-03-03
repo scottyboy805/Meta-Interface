@@ -2,3 +2,4 @@ D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\DLC Toolkit\obj\Deb
 D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\DLC Toolkit\obj\Debug\net5.0\TestCompilationSuccess.AssemblyInfoInputs.cache
 D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\DLC Toolkit\obj\Debug\net5.0\TestCompilationSuccess.AssemblyInfo.cs
 D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\DLC Toolkit\obj\Debug\net5.0\TestCompilationSuccess.csproj.CoreCompileInputs.cache
+D:\Unity\Meta-Interface\Unity - Meta-Interface\GeneratedMeta\DLC Toolkit\obj\Debug\net5.0\TestCompilationSuccess.csproj.AssemblyReference.cache

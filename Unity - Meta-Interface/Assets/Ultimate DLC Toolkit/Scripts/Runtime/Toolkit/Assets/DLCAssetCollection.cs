@@ -12,11 +12,11 @@ namespace DLCToolkit.Assets
     /// <see cref="DLCContent.SharedAssets"/> provides access to all shared assets for the DLC, and <see cref="DLCContent.SceneAssets"/> provides access to all scene assets.
     /// </summary>
     /// <typeparam name="T">The generic type of <see cref="DLCAsset"/> to store in this collection</typeparam>
-    public sealed class DLCAssetCollection<T> : IEnumerable<T> where T : DLCAsset
+    public class DLCAssetCollection<T> : IEnumerable<T> where T : DLCAsset
     {
         // Private
         private const bool ignoreCase = true;
-        private T[] assets = null;
+        private List<T> assets = null;
 
         // Properties
         /// <summary>
@@ -24,11 +24,11 @@ namespace DLCToolkit.Assets
         /// </summary>
         public int AssetCount
         {
-            get { return assets.Length; }
+            get { return assets.Count; }
         }
 
         // Constructor
-        internal DLCAssetCollection(T[] assets)
+        internal DLCAssetCollection(List<T> assets)
         {
             this.assets = assets;
         }
@@ -64,7 +64,7 @@ namespace DLCToolkit.Assets
         public string[] FindAllNames()
         {
             // Create the return array
-            string[] all = new string[assets.Length];
+            string[] all = new string[assets.Count];
 
             // Get the name of each asset
             for (int i = 0; i < all.Length; i++)
@@ -81,7 +81,7 @@ namespace DLCToolkit.Assets
         public string[] FindAllRelativeNames()
         {
             // Create the return array
-            string[] all = new string[assets.Length];
+            string[] all = new string[assets.Count];
 
             // Get the relative name of each asset
             for (int i = 0; i < all.Length; i++)
@@ -97,7 +97,7 @@ namespace DLCToolkit.Assets
         public T[] FindAll()
         {
             // Make a clone so that we don't invalidate our copy
-            return assets.Clone() as T[];
+            return assets.ToArray();
         }
 
         /// <summary>
@@ -724,25 +724,52 @@ namespace DLCToolkit.Assets
             // Get the extension of the specified path
             string ext = Path.GetExtension(nameOrPath);
 
+            // Check for extension
+            bool hasExtension = string.IsNullOrEmpty(ext) == false;
+
             // Remove the extension - It will still be checked later if required
             nameOrPath = Path.ChangeExtension(nameOrPath, null);
 
             foreach (T asset in assets)
             {
-                // Check for full path
-                if (string.Compare(asset.FullName, nameOrPath + ext, ignoreCase) == 0)
-                    return asset;
-
-                // Check for relative path
-                if (string.Compare(asset.RelativeName, nameOrPath, ignoreCase) == 0)
+                // Check for extension
+                if (hasExtension == false)
                 {
-                    // Check for no extension
+                    string fullName = asset.FullName;
+                    string relativeName = asset.RelativeName;
+
+                    // Check for extension
                     if (string.IsNullOrEmpty(ext) == true)
+                    {
+                        fullName = Path.ChangeExtension(fullName, null);
+                        relativeName = Path.ChangeExtension(relativeName, null);
+                    }
+
+                    // Check for full path
+                    if (string.Compare(fullName, nameOrPath, ignoreCase) == 0)
                         return asset;
 
-                    // We need to compare extension too
-                    if (string.Compare(asset.Extension, ext, ignoreCase) == 0)
+                    // Check for relative path
+                    if (string.Compare(relativeName, nameOrPath, ignoreCase) == 0)
                         return asset;
+                }
+                else
+                {
+                    // Check for full path
+                    if (string.Compare(asset.FullName, nameOrPath + ext, ignoreCase) == 0)
+                        return asset;
+
+                    // Check for relative path
+                    if (string.Compare(asset.RelativeName, nameOrPath + ext, ignoreCase) == 0)
+                    {
+                        // Check for no extension
+                        if (string.IsNullOrEmpty(ext) == true)
+                            return asset;
+
+                        // We need to compare extension too
+                        if (string.Compare(asset.Extension, ext, ignoreCase) == 0)
+                            return asset;
+                    }
                 }
 
                 // Check for name only
@@ -770,14 +797,14 @@ namespace DLCToolkit.Assets
         public T Find(int assetID)
         {
             // Validate index
-            if (assetID < 0 || assetID >= assets.Length)
+            if (assetID < 0 || assetID >= assets.Count)
                 return default(T);
 
             // Asset id maps to array index for better performance
             return assets[assetID];
         }
 
-        private static bool IsAssetInFolder(string assetPath, string folderPath)
+        internal static bool IsAssetInFolder(string assetPath, string folderPath)
         {
             string temp = assetPath;
 
@@ -815,7 +842,7 @@ namespace DLCToolkit.Assets
 
         internal static DLCAssetCollection<T> Empty()
         {
-            return new DLCAssetCollection<T>(Array.Empty<T>());
+            return new DLCAssetCollection<T>(new List<T>(0));
         }
     }
 }

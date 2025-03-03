@@ -1,0 +1,16 @@
+{
+    "name": "DLCToolkit.ExampleGame",
+    "rootNamespace": "",
+    "references": [
+        "GUID:7372aa72a36b18645bf57e537045000b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

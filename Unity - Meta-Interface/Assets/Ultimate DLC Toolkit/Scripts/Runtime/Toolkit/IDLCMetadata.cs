@@ -72,9 +72,32 @@ namespace DLCToolkit
         /// Get the time stamp for when the DLC was built.
         /// Can be used as a unique DLC identifier to use in multiplayer scenarios or similar where you need to ensure that the same DLC is used between clients and the name/version combo may not give enough distinction.
         /// </summary>
-        public DateTime BuildTime { get; }
+        DateTime BuildTime { get; }
+
+        /// <summary>
+        /// Get a value indicating whether this DLC content has been distributed as part of the base game or whether it has been added at a later stage from an external source.
+        /// </summary>
+        bool ShippedWithGame { get; }
+
+        /// <summary>
+        /// Return a value indicating whether this DLC content includes any custom metadata.
+        /// </summary>
+        bool HasCustomMetadata { get; }
 
         // Methods
+        /// <summary>
+        /// Get the custom metadata for the DLC if available.
+        /// </summary>
+        /// <returns>The <see cref="DLCCustomMetadata"/> for this DLC content if available, or null if not</returns>
+        DLCCustomMetadata GetCustomMetadata();
+
+        /// <summary>
+        /// Get the custom metadata for the DLC if available as the specified generic type.
+        /// </summary>
+        /// <typeparam name="T">The <see cref="DLCCustomMetadata"/> derived type to fetch the custom metadata as</typeparam>
+        /// <returns>A <see cref="DLCCustomMetadata"/> derived instance containing all custom metadata if available as the specified generic type, or null if not"/></returns>
+        T GetCustomMetadata<T>() where T : DLCCustomMetadata;
+
         /// <summary>
         /// Returns a unique string identifier for this DLC including name and version information which may be used between networking clients to compare DLC content in use.
         /// Can be used to determine if two network clients are using the same DLC (Or atleast have the same unique key and version) which will usually be a good enough indicator.
@@ -83,8 +106,14 @@ namespace DLCToolkit
         /// </summary>
         /// <param name="includeBuildStamp">Should the build time stamp be included in the unique string which will guarantee an explicit DLC match</param>
         /// <returns>A short string identifier to uniquely identify this DLC content and can be shared between network clients to compare DLC's in use</returns>
-        public string GetNetworkUniqueIdentifier(bool includeBuildStamp);
+        string GetNetworkUniqueIdentifier(bool includeBuildStamp);
 
-        public string GetNetworkUniqueIdentifierHash();
+        /// <summary>
+        /// Returns a unique hash string identifier for this DLC calculated from the name, version and build time stamp information.
+        /// Can be used to determine if two network clients are using the same DLC, and also ensures that the build version are identical when checking for string hash equality.
+        /// Unlike <see cref="GetNetworkUniqueIdentifier(bool)"/>, this method produces a typically longer although fixed length string in all cases.
+        /// </summary>
+        /// <returns>A unique hash string identifier which can be used to uniquely identify this DLC content down to the specific build, and can be shared between network clients to compare DLC's in use</returns>
+        string GetNetworkUniqueIdentifierHash();
     }
 }

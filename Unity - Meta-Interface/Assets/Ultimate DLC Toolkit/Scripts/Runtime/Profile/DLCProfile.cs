@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
-using UnityEditor;
 using UnityEngine;
+using UnityEditor;
+using System.Linq;
 
 [assembly: InternalsVisibleTo("DLCToolkit.BuildTools")]
 [assembly: InternalsVisibleTo("DLCToolkit.EditorTools")]
@@ -53,6 +54,8 @@ namespace DLCToolkit.Profile
         internal string publisher = "";
         [SerializeField]
         internal string[] tags = { };
+        [SerializeField]
+        internal DLCCustomMetadata customMetadata = null;
 
         [Header("Signing")]
         [SerializeField]
@@ -306,6 +309,36 @@ namespace DLCToolkit.Profile
         }
 
         /// <summary>
+        /// The custom metadata for this DLC content, or null if no custom metadata has been assigned.
+        /// </summary>
+        public DLCCustomMetadata CustomMetadata
+        {
+            get { return customMetadata; }
+            internal set
+            {
+#if UNITY_EDITOR
+                // Check for changed
+                if(customMetadata != null && value != customMetadata)
+                {
+                    // Remove from asset
+                    AssetDatabase.RemoveObjectFromAsset(customMetadata);
+                    DestroyImmediate(customMetadata);
+                }
+
+                // Check for new value
+                if(value != customMetadata && value != null)
+                {
+                    // Add to asset
+                    AssetDatabase.AddObjectToAsset(value, this);
+                }
+#endif
+
+                customMetadata = value;
+                MarkAsModified();
+            }
+        }
+
+        /// <summary>
         /// Should the DLC content be signed to this game project.
         /// Signing means that the DLC will be encoded with data making it loadable only by this game project.
         /// </summary>
@@ -527,6 +560,19 @@ namespace DLCToolkit.Profile
 #endif
         }
 
+        public string GetShipWithGameOutputPath(BuildTarget buildTarget)
+        {
+            // Try to find platform profile
+            DLCPlatformProfile platformProfile = GetPlatform(buildTarget);
+
+            // Check for any
+            if (platformProfile == null || platformProfile.ShipWithGame == false)
+                return null;
+
+            // Build path
+            return Path.Combine(platformProfile.ShipWithGamePath, DLCName + platformProfile.DLCExtension).Replace('\\', '/');
+        }
+
         public string GetPlatformOutputPath(BuildTarget buildTarget, string overrideOutputFolder = null)
         {
             // Try to find platform profile
@@ -572,6 +618,7 @@ namespace DLCToolkit.Profile
             // Build path
             //return Path.Combine(outputPath, platformProfile.PlatformFriendlyName);
         }
+
         public DLCPlatformProfile GetPlatform(BuildTarget buildTarget)
         {
             foreach (DLCPlatformProfile platform in platforms)
@@ -580,6 +627,28 @@ namespace DLCToolkit.Profile
                     return platform;
             }
             return null;
+        }
+
+        public string GetAssetRelativePath(string projectRelativeAssetPath)
+        {
+            // Check for invalid
+            if (string.IsNullOrEmpty(projectRelativeAssetPath) == true)
+                throw new ArgumentNullException("Asset path cannot be null or empty");
+
+            // Get the content folder
+            string contentFolder = DLCContentPath;
+
+            // Check for asset part of this profile
+            if (projectRelativeAssetPath.StartsWith(contentFolder) == false)
+                return projectRelativeAssetPath;
+
+            // Make relative
+            try
+            {
+                return projectRelativeAssetPath.Remove(0, contentFolder.Length + 1);
+            }
+            catch { }
+            return projectRelativeAssetPath;
         }
 
         internal void UpdateLastBuildTargets(BuildTarget[] buildBatchGroup)
@@ -606,21 +675,89 @@ namespace DLCToolkit.Profile
             {
                 platforms = new DLCPlatformProfile[]
                 {
-                    new DLCPlatformProfile(BuildTarget.StandaloneWindows64, "UNITY_STANDALONE_WIN"),
-                    new DLCPlatformProfile(BuildTarget.StandaloneLinux64, "UNITY_STANDALONE_LINUX"),
-                    new DLCPlatformProfile(BuildTarget.StandaloneOSX, "UNITY_STANDALONE_OSX"),
-                    new DLCPlatformProfile(BuildTarget.iOS, "UNITY_IOS"),
-                    new DLCPlatformProfileAndroid("UNITY_ANDROID"),
-                    new DLCPlatformProfile(BuildTarget.WebGL, "UNITY_WEBGL"),
-                    new DLCPlatformProfile(BuildTarget.PS4, "UNITY_PS4"),
-                    new DLCPlatformProfile(BuildTarget.PS5, "UNITY_PS5"),
-                    new DLCPlatformProfile(BuildTarget.XboxOne, "UNITY_XBOXONE"),
+                    CreatePlatformProfile(BuildTarget.StandaloneWindows64),
+                    CreatePlatformProfile(BuildTarget.StandaloneLinux64),
+                    CreatePlatformProfile(BuildTarget.StandaloneOSX),
+                    CreatePlatformProfile(BuildTarget.iOS),
+                    CreatePlatformProfile(BuildTarget.Android),
+                    CreatePlatformProfile(BuildTarget.WebGL),
+                    CreatePlatformProfile(BuildTarget.PS4),
+                    CreatePlatformProfile(BuildTarget.PS5),
+                    CreatePlatformProfile(BuildTarget.XboxOne),
                 };
 
 #if UNITY_EDITOR
                 UnityEditor.EditorUtility.SetDirty(this);
 #endif
             }
+        }
+
+        internal List<BuildTarget> GetMissingDLCPlatforms()
+        {
+            List<BuildTarget> result = new List<BuildTarget>();
+
+            // Process all supported platforms
+            if(GetPlatform(BuildTarget.StandaloneWindows64) == null) result.Add(BuildTarget.StandaloneWindows64);
+            if (GetPlatform(BuildTarget.StandaloneLinux64) == null) result.Add(BuildTarget.StandaloneLinux64);
+            if (GetPlatform(BuildTarget.StandaloneOSX) == null) result.Add(BuildTarget.StandaloneOSX);
+            if (GetPlatform(BuildTarget.iOS) == null) result.Add(BuildTarget.iOS);
+            if (GetPlatform(BuildTarget.Android) == null) result.Add(BuildTarget.Android);
+            if (GetPlatform(BuildTarget.WebGL) == null) result.Add(BuildTarget.WebGL);
+            if (GetPlatform(BuildTarget.PS4) == null) result.Add(BuildTarget.PS4);
+            if (GetPlatform(BuildTarget.PS5) == null) result.Add(BuildTarget.PS5);
+            if (GetPlatform(BuildTarget.XboxOne) == null) result.Add(BuildTarget.XboxOne);
+
+            return result;
+        }
+
+        internal void DeleteDLCPlatform(BuildTarget target)
+        {
+            // Get the platform
+            DLCPlatformProfile platform = GetPlatform(target);
+
+            // Remove from platforms
+            platforms = platforms.Where(p => p != platform).ToArray();
+
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(this);
+#endif
+        }
+
+        internal void AddDLCPlatform(BuildTarget target)
+        {
+            // Create if supported - an exception will be thrown if not
+            DLCPlatformProfile platform = CreatePlatformProfile(target);
+
+            // Setup default / inherit options
+            platform.Enabled = true;
+            platform.DlcUniqueKey = platforms[platforms.Length - 1].DlcUniqueKey;
+
+            // Add to platforms
+            Array.Resize(ref platforms, platforms.Length + 1);
+
+            // Insert as last entry
+            platforms[platforms.Length - 1] = platform;
+
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(this);
+#endif
+        }
+
+        internal DLCPlatformProfile CreatePlatformProfile(BuildTarget target)
+        {
+            switch(target)
+            {
+                case BuildTarget.StandaloneWindows64: return new DLCPlatformProfile(BuildTarget.StandaloneWindows64, "UNITY_STANDALONE_WIN");
+                case BuildTarget.StandaloneLinux64: return new DLCPlatformProfile(BuildTarget.StandaloneLinux64, "UNITY_STANDALONE_LINUX");
+                case BuildTarget.StandaloneOSX: return new DLCPlatformProfile(BuildTarget.StandaloneOSX, "UNITY_STANDALONE_OSX");
+                case BuildTarget.iOS: return new DLCPlatformProfile(BuildTarget.iOS, "UNITY_IOS");
+                case BuildTarget.Android: return new DLCPlatformProfileAndroid("UNITY_ANDROID");
+                case BuildTarget.WebGL: return new DLCPlatformProfile(BuildTarget.WebGL, "UNITY_WEBGL");
+                case BuildTarget.PS4: return new DLCPlatformProfile(BuildTarget.PS4, "UNITY_PS4");
+                case BuildTarget.PS5: return new DLCPlatformProfile(BuildTarget.PS5, "UNITY_PS5");
+                case BuildTarget.XboxOne: return new DLCPlatformProfile(BuildTarget.XboxOne, "UNITY_XBOXONE");
+            }
+            throw new NotSupportedException("Platform is not supported: " + target);
         }
 
         internal void UpdateDLCContentPath()

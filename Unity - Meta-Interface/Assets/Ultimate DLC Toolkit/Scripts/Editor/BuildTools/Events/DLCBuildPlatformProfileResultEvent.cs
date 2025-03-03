@@ -14,8 +14,7 @@ namespace DLCToolkit.BuildTools.Events
         /// </summary>
         /// <param name="profile">The profile that was built</param>
         /// <param name="platformProfile">The platform that was built</param>
-        /// <param name="success">Did the build succeed</param>
-        /// <param name="output">The output path of the DLC content file</param>
-        public abstract void OnBuildProfileEvent(DLCProfile profile, DLCPlatformProfile platformProfile, bool success, string output);
+        /// <param name="result">The build task for this platform build request containing information about the build</param>
+        public abstract void OnBuildProfileEvent(DLCProfile profile, DLCPlatformProfile platformProfile, DLCBuildTask result);
     }
 }

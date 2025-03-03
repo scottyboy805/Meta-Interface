@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -15,8 +16,34 @@ namespace DLCToolkit
     {
         // Private
         private T result = default;
+        private TaskCompletionSource<T> taskSource = null;
 
         // Properties
+        /// <summary>
+        /// Get the <see cref="System.Threading.Tasks.Task"/> for this async operation for use in C# async/await contexts.
+        /// </summary>
+        public new Task<T> Task
+        {
+            get
+            {
+                if (taskSource == null)
+                {
+                    // Create the awaitable task
+                    taskSource = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                    // Check for completed
+                    if (IsDone == true)
+                    {
+                        if (isSuccessful == false)
+                            taskSource.SetException(new Exception(status));
+                        else
+                            taskSource.SetResult(default);
+                    }
+                }
+                return taskSource.Task;
+            }
+        }
+
         /// <summary>
         /// Get the generic result of the async operation. 
         /// </summary>
@@ -40,9 +67,56 @@ namespace DLCToolkit
         /// <summary>
         /// Create a new instance.
         /// </summary>
-        public DLCAsync() { }
+        /// <param name="awaitable">Can this operation be awaited o the main thread, by blocking until the task has completed. This is only possible for requests that run on a background thread, and UnityWebRequest for example cannot support this</param>
+        public DLCAsync(bool awaitable = true)
+            : base(awaitable)
+        { 
+        }
 
         // Methods
+        /// <summary>
+        /// Update the status message for this operation.
+        /// Useful to show the current status if a failure occurs.
+        /// </summary>
+        /// <param name="status">The status message</param>
+        protected internal new DLCAsync<T> UpdateStatus(string status)
+        {
+            base.UpdateStatus(status);
+            return this;
+        }
+
+        /// <summary>
+        /// Update the load progress for this operation.
+        /// Calculates the progress as a value from 0-1 based on the input values.
+        /// </summary>
+        /// <param name="current">The current number of tasks that have been completed</param>
+        /// <param name="total">The total number of tasks that should be completed</param>
+        protected internal new DLCAsync<T> UpdateProgress(int current, int total)
+        {
+            base.UpdateProgress(current, total);
+            return this;
+        }
+
+        /// <summary>
+        /// Update the load progress for this operation.
+        /// The specified progress value should be in the range of 0-1, and will be clamped if not.
+        /// </summary>
+        /// <param name="progress">The current progress value between 0-1</param>
+        protected internal new DLCAsync<T> UpdateProgress(float progress)
+        {
+            base.UpdateProgress(progress);
+            return this;
+        }
+
+        /// <summary>
+        /// Reset the async operation.
+        /// </summary>
+        public override void Reset()
+        {
+            base.Reset();
+            taskSource = null;
+        }
+
         /// <summary>
         /// Complete the operation with an error status.
         /// This will cause <see cref="DLCAsync.IsDone"/> to become true and <see cref="DLCAsync.Progress"/> to become 1.
@@ -53,6 +127,10 @@ namespace DLCToolkit
         {
             this.result = result;
             base.Error(status);
+
+            // Check for task
+            if (taskSource != null)
+                taskSource.SetException(new Exception(status));
         }
 
         /// <summary>
@@ -65,6 +143,10 @@ namespace DLCToolkit
         {
             this.result = result;
             base.Complete(success, result as Object);
+
+            // Check for task
+            if(taskSource != null)
+                taskSource.SetResult(result);
         }
 
         /// <summary>
@@ -104,6 +186,12 @@ namespace DLCToolkit
     /// </summary>
     public class DLCAsync : IEnumerator
     {
+        // Internal
+        internal bool awaitable = true;
+
+        // Private
+        private TaskCompletionSource<object> taskSource = null;
+
         // Protected
         /// <summary>
         /// Was the operation successful or did something go wrong.
@@ -120,6 +208,31 @@ namespace DLCToolkit
         private bool isDone = false;
 
         // Properties
+        /// <summary>
+        /// Get the <see cref="System.Threading.Tasks.Task"/> for this async operation for use in C# async/await contexts.
+        /// </summary>
+        public Task Task
+        {
+            get
+            {
+                if(taskSource == null)
+                {
+                    // Create the awaitable task
+                    taskSource = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                    // Check for completed
+                    if (IsDone == true)
+                    {
+                        if (isSuccessful == false)
+                            taskSource.SetException(new Exception(status));
+                        else
+                            taskSource.SetResult(null);
+                    }
+                }
+                return taskSource.Task;
+            }
+        }
+
         /// <summary>
         /// Get the <see cref="Object"/> result of the async operation. 
         /// </summary>
@@ -181,7 +294,14 @@ namespace DLCToolkit
         }
 
         // Constructor
-        internal DLCAsync() { }
+        /// <summary>
+        /// Create new operation.
+        /// </summary>
+        /// <param name="awaitable">Can this operation be awaited o the main thread, by blocking until the task has completed. This is only possible for requests that run on a background thread, and UnityWebRequest for example cannot support this</param>
+        public DLCAsync(bool awaitable = true) 
+        { 
+            this.awaitable = awaitable;
+        }
 
         // Methods
         /// <summary>
@@ -208,8 +328,9 @@ namespace DLCToolkit
         /// <summary>
         /// IEnumerator.Reset() implementation.
         /// </summary>
-        public void Reset()
+        public virtual void Reset()
         {
+            taskSource = null;
             result = null;
             status = string.Empty;
             progress = 0;
@@ -223,6 +344,14 @@ namespace DLCToolkit
         /// <exception cref="TimeoutException">The await operation took longer that the specified timeout milliseconds, so was aborted to avoid infinite waiting</exception>
         public void Await(long msTimeout = 10000)
         {
+            // Check for already done
+            if (isDone == true)
+                return;
+
+            // Check for awaitable
+            if (awaitable == false)
+                throw new InvalidOperationException("DLC async await caller does not support waiting on the main thread. You should use the equivalent async API for this call");
+
             // Get current time
             DateTime start = DateTime.Now;
 
@@ -230,7 +359,7 @@ namespace DLCToolkit
             while (isDone == false)
             {
                 // Check if we have timed out
-                if (msTimeout > 0 && (DateTime.Now - start).Milliseconds > msTimeout)
+                if (msTimeout > 0 && (DateTime.Now - start).TotalMilliseconds > msTimeout)
                     throw new TimeoutException("DLC async await call was aborted because the operation timed out");
 
                 // Block the thread
@@ -243,12 +372,14 @@ namespace DLCToolkit
         /// Useful to show the current status if a failure occurs.
         /// </summary>
         /// <param name="status">The status message</param>
-        protected internal void UpdateStatus(string status)
+        protected internal DLCAsync UpdateStatus(string status)
         {
             this.status = status;
 
             if(this.status == null)
                 this.status = string.Empty;
+
+            return this;
         }
 
         /// <summary>
@@ -257,9 +388,10 @@ namespace DLCToolkit
         /// </summary>
         /// <param name="current">The current number of tasks that have been completed</param>
         /// <param name="total">The total number of tasks that should be completed</param>
-        protected internal void UpdateProgress(int current, int total)
+        protected internal DLCAsync UpdateProgress(int current, int total)
         {
             this.progress = Mathf.InverseLerp(0, total, current);
+            return this;
         }
 
         /// <summary>
@@ -267,9 +399,10 @@ namespace DLCToolkit
         /// The specified progress value should be in the range of 0-1, and will be clamped if not.
         /// </summary>
         /// <param name="progress">The current progress value between 0-1</param>
-        protected internal void UpdateProgress(float progress)
+        protected internal DLCAsync UpdateProgress(float progress)
         {
             this.progress = Mathf.Clamp01(progress);
+            return this;
         }
 
         /// <summary>
@@ -285,6 +418,10 @@ namespace DLCToolkit
             this.result = result;
             this.progress = 1f;
             this.isDone = true;
+
+            // Complete task
+            if(taskSource != null)
+                taskSource.SetException(new Exception(status));
         }
 
         /// <summary>
@@ -299,6 +436,10 @@ namespace DLCToolkit
             this.result = result;
             this.progress = 1f;
             this.isDone = true;
+
+            // Complete the task
+            if (taskSource != null)
+                taskSource.SetResult(null);
         }
 
         /// <summary>

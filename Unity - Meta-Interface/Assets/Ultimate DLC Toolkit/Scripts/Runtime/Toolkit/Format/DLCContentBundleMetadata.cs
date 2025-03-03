@@ -26,36 +26,36 @@ namespace DLCToolkit.Format
         protected List<AssetMetadata> assets = new List<AssetMetadata>();
 
         // Methods
-        public DLCAssetCollection<DLCSharedAsset> ExtractSharedAssets(IDLCAsyncProvider asyncProvider, DLCContentBundle contentBundle, DLCLoadMode loadMode)
+        public DLCSharedAssetCollection ExtractSharedAssets(IDLCAsyncProvider asyncProvider, DLCContentBundle contentBundle, DLCLoadMode loadMode)
         {
             // Create shared assets collection
-            return new DLCAssetCollection<DLCSharedAsset>(ExtractAnyAssets((AssetMetadata metadata, int id) =>
+            return new DLCSharedAssetCollection(ExtractAnyAssets((AssetMetadata metadata, int id) =>
             {
                 // Create new instance of shared asset
                 return new DLCSharedAsset(asyncProvider, contentBundle, loadMode, id, metadata.resolvedType, metadata.fullPath, metadata.relativePath);
             }));
         }
 
-        public DLCAssetCollection<DLCSceneAsset> ExtractSceneAssets(IDLCAsyncProvider asyncProvider, DLCContentBundle contentBundle, DLCLoadMode loadMode)
+        public DLCSceneAssetCollection ExtractSceneAssets(IDLCAsyncProvider asyncProvider, DLCContentBundle contentBundle, DLCLoadMode loadMode)
         {
             // Create scene assets collection
-            return new DLCAssetCollection<DLCSceneAsset>(ExtractAnyAssets((AssetMetadata metadata, int id) =>
+            return new DLCSceneAssetCollection(ExtractAnyAssets((AssetMetadata metadata, int id) =>
             {
                 // Create new instance of scene asset
                 return new DLCSceneAsset(asyncProvider, contentBundle, loadMode, id, metadata.fullPath, metadata.relativePath);
             }));
         }
 
-        private T[] ExtractAnyAssets<T>(Func<AssetMetadata, int, T> convert)
+        private List<T> ExtractAnyAssets<T>(Func<AssetMetadata, int, T> convert)
         {
             // Create our actual array
-            T[] anyAssets = new T[assets.Count];
+            List<T> anyAssets = new List<T>(assets.Count);
 
             // Fill out entries
-            for (int i = 0; i < anyAssets.Length; i++)
+            for (int i = 0; i < assets.Count; i++)
             {
                 // Create the shared asset
-                anyAssets[i] = convert(assets[i], i + 1);
+                anyAssets.Add(convert(assets[i], i + 1));
             }
 
             return anyAssets;

@@ -72,7 +72,7 @@ namespace MetaInterface
             SyntaxRewriter rewriter = new SyntaxRewriter(config);
 
             // Rewrite and patch declarations
-            SyntaxNode patchedRoot = rewriter.Visit(syntaxTree.GetRoot());
+            SyntaxNode patchedRoot = rewriter.VisitTree(syntaxTree);
 
             // Patch for comments
             SyntaxCommenter commenter = new SyntaxCommenter();

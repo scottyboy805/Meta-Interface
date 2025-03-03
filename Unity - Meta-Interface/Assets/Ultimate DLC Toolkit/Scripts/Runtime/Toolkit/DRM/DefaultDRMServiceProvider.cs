@@ -13,12 +13,29 @@ namespace DLCToolkit.DRM
     /// </summary>
     public sealed class DefaultDRMServiceProvider : IDRMServiceProvider
     {
-        // Public
+        // Private        
+        private string contentPath = null;
+
+        // Properties
         /// <summary>
-        /// The path where DLC content will be stored in editor mode.
-        /// The editor will scan this folder for DLC content automatically.
+        /// The path where DLC content will be loaded from when targeting desktop standalone.
+        /// Defaults to `install_path/DLC`
         /// </summary>
-        public string editorContentPath = "DLC";
+        public string ContentPath
+        {
+            get
+            {
+                // Get parent folder
+                if(contentPath == null)
+                    contentPath = Directory.GetParent(Application.dataPath).FullName + "/DLC";
+
+                return contentPath;
+            }
+            set
+            {
+                contentPath = value;
+            }
+        }
 
         // Methods
         /// <summary>
@@ -28,37 +45,17 @@ namespace DLCToolkit.DRM
         /// <exception cref="NotSupportedException"></exception>
         public IDRMProvider GetDRMProvider()
         {
-#if UNITY_EDITOR && !DLCTOOLKIT_DRM_TEST
-            switch (Application.platform)
-            {
-                case RuntimePlatform.WindowsEditor:
-                    {
-                        // Get the path
-                        string path = Path.Combine(editorContentPath, "Windows");
-
-                        Debug.Log("Using editor DRM cache: " + path);
-                        return new LocalDirectoryDRM(path);
-                    }
-                case RuntimePlatform.OSXEditor:
-                    {
-                        // Get the path
-                        string path = Path.Combine(editorContentPath, "OSX");
-
-                        Debug.Log("Using editor DRM cache: " + path);
-                        return new LocalDirectoryDRM(path);
-                    }
-
-                case RuntimePlatform.LinuxEditor:
-                    {
-                        // Get the path
-                        string path = Path.Combine(editorContentPath, "Linux");
-
-                        Debug.Log("Using editor DRM cache: " + path);
-                        return new LocalDirectoryDRM(path);
-                    }
-            }
-
+            
             // Check for runtime platforms
+#if UNITY_WEBGL
+            Debug.Log("Using remote web request DRM");
+            return new RemoteWebRequestDRM();
+//#elif DLCTOOLKIT_DRM_PLAYFAB || DLCTOOLKIT_DRM_TEST_PLAYFAB
+//            Debug.Log("Using PlayFab DRM");
+//            return new PlayFabDRM();
+#elif DLCTOOLKIT_DRM_LOOTLOCKER || DLCTOOLKIT_DRM_TEST_LOOTLOCKER
+            Debug.Log("Using LootLocker DRM");
+            return new LootLockerDRM();
 #elif (UNITY_STANDALONE && DLCTOOLKIT_DRM_STEAMWORKSNET) || DLCTOOLKIT_DRM_TEST_STEAMWORKSNET
             Debug.Log("Using Steamworks.Net DRM");
             return new SteamworksNetDRM();            
@@ -68,6 +65,9 @@ namespace DLCToolkit.DRM
 #elif (UNITY_ANDROID && DLCTOOLKIT_DRM_GOOGLEPLAY) || DLCTOOLKIT_DRM_TEST_GOOGLEPLAY
             Debug.Log("Using GooglePlayAssetDelivery DRM");
             return new GooglePlayAssetDeliveryDRM();
+#elif UNITY_STANDALONE
+            Debug.Log("Using local directory DRM");
+            return new LocalDirectoryDRM(ContentPath);
 #endif
 
             // No DRM

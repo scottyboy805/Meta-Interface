@@ -3,9 +3,10 @@ using UnityEditor;
 using DLCToolkit.Profile;
 using System.Linq;
 using System;
+using System.Collections.Generic;
 using DLCToolkit.BuildTools;
 using System.IO;
-using UnityEngine.Experimental.AI;
+using System.Reflection;
 
 namespace DLCToolkit.EditorTools
 {
@@ -27,15 +28,17 @@ namespace DLCToolkit.EditorTools
         private static readonly GUIContent developerLabel = new GUIContent("Developer", "The name of the developer or studio that created this DLC content which will be available at runtime as part of the DLC metadata");
         private static readonly GUIContent publisherLabel = new GUIContent("Publisher", "The name of the publisher who distributed this DLC content which will be available at runtime as part of the DLC metadata");
         private static readonly GUIContent smallIconLabel = new GUIContent("Small Icon", "The small icon for this DLC. Recommended to use a square image of approximately 32x32px");
+        private static readonly GUIContent customMetadataLabel = new GUIContent("Custom Metadata", "The custom metadata for this DLC profile which allows additional quick access user data to be associated with the DLC content");
         private static readonly GUIContent mediumIconLabel = new GUIContent("Medium Icon", "The medium icon for this DLC. Recommended to use a square image of approximately 64x64px");
         private static readonly GUIContent largeIconLabel = new GUIContent("Large Icon", "The large icon for this DLC. Recommended to use a square image of approximately 256x256px");
         private static readonly GUIContent extraLargeIconLabel = new GUIContent("Extra Large Icon", "The extra large icon for this DLC. Recommended to use a square image or approximately 512x512px");
         private static readonly GUIContent customIconLabel = new GUIContent("Custom Icons", "An extra collection of icons for this DLC");
         private static readonly GUIContent platformEnabledLabel = new GUIContent("Platform Enabled", "Should this DLC content be included on the selected platform when building project DLC's");
-        private static readonly GUIContent platformUniqueKeyLabel = new GUIContent("DLC Unique Key", "The DLC unique key for the selected platform");
+        private static readonly GUIContent platformUniqueKeyLabel = new GUIContent("DLC Unique Key *", "The DLC unique key for the selected platform");
         private static readonly GUIContent platformExtensionLabel = new GUIContent("DLC Extension", "The DLC file extension for the selected platform. Can be empty if no extension is required");
         private static readonly GUIContent useCompressionLabel = new GUIContent("Use Compression", "Should the DLC be built with compression for the selected platform");
         private static readonly GUIContent strictBuildLabel = new GUIContent("Strict Build", "Should the DLC asset bundles be built in strict mode for the selected platform");
+        private static readonly GUIContent dlcIAPNameLabel = new GUIContent("DLC IAP Name", "The name of the In-App Purchase to link this DLC to for ownership verification purposes. Linking to an IAP will allow ownership checks before loading the DLC content to ensure that the user has purchased the content if it is paid for. You can simply leave this blank if the DLC does not require ownership verification (Or is provided via another service) and is available for all users (If you are using DLC toolkit simply as a content management system for example) NOTE - Requires Unity.Purchasing to be setup in the project");
         private static readonly GUIContent preloadSharedAssetsLabel = new GUIContent("Preload Shared Assets", "Should the DLC preload shared assets when it is loaded into the game for the selected platform. Shared assets will be loaded on demand if disabled");
         private static readonly GUIContent preloadSceneAssetsLabel = new GUIContent("Preload Scene Assets", "Should the DLC preload scene assets when it is loaded into the game for the selected platform. Scene assets will be loaded on demand if disabled");
         private static readonly GUIContent shipWithGameLabel = new GUIContent("Ship With Game", "Should the DLC content be included with the game at build time. This can include content that the user should not own until purchased, which can be handled by the DRM provider");
@@ -44,17 +47,24 @@ namespace DLCToolkit.EditorTools
         private static readonly GUIContent platformSpecificFolderLabel = new GUIContent("Platform Specific Folder", "The folder path relative to the build folder where the DLC will be built for this platform");
         private static readonly GUIContent platformBuildOutputLabel = new GUIContent("Platform Build Output", "The output folder or files that will be build for this platform");
 
+        private static readonly GUIContent dlcAssetPackDirectoryLabel = new GUIContent("Asset Pack Directory", "The directory in the project where the built DLC APK will be placed along with the generated build.gradle");
+        private static readonly GUIContent deliveryTypeLabel = new GUIContent("Delivery Type", "The play store delivery mode used to install the DLC content. Options are `install-time`, `fast-follow` and `on-demand`");
+        
         private DLCProfile profile = null;
         private DLCPlatformProfile[] platforms = null;
+        private List<BuildTarget> missingPlatforms = null;
+        private Editor customMetadataEditor = null;
         private GUIContent buildSuccessIcon = null;
         private GUIContent buildErrorIcon = null;
         private GUIContent viewFolderIcon = null;
         private GUIContent pingAssetIcon = null;
+        private GUIContent platformSpecificIcon = null;
         private GUIContent[] platformIcons = null;
         private bool tableStyle = true;
 
         private bool buildResultExpanded = false;
         private bool metadataExpanded = false;
+        private bool customMetadataExpanded = false;
         private bool iconsExpanded = false;
         private bool assetsExpanded = false;
         private bool platformsExpanded = true;
@@ -79,16 +89,12 @@ namespace DLCToolkit.EditorTools
         {
             profile = (DLCProfile)target;
 
+            // Init custom metadata inspector
+            if(profile.CustomMetadata != null)
+                Editor.CreateCachedEditor(profile.CustomMetadata, null, ref customMetadataEditor);
+
             // Update platform contents
-            platforms = profile.Platforms;
-            platformIcons = new GUIContent[platforms.Length + 1];
-
-            platformIcons[0] = EditorGUIUtility.IconContent("CustomTool");
-
-            for(int i = 1; i < platformIcons.Length; i++)
-            {
-                platformIcons[i] = GUIIcons.GetIconForPlatform(platforms[i - 1].Platform);
-            }
+            RebuildPlatforms();
 
 
             // Update shared icons
@@ -100,15 +106,44 @@ namespace DLCToolkit.EditorTools
             viewFolderIcon.tooltip = "Open folder location";
             pingAssetIcon = EditorGUIUtility.IconContent("Lighting");
             pingAssetIcon.tooltip = "Ping asset in project window";
+            platformSpecificIcon = EditorGUIUtility.IconContent("d_UnityEditor.InspectorWindow");
 
             // Add modification listener
             DLCAssetModifiedProcessor.OnModifiedAsset.AddListener(OnAssetModified);
+
+
+            // Clear cache
+            ResetCachedAssetPaths();
         }
 
         private void OnDisable()
         {
             // Remove modification listener
             DLCAssetModifiedProcessor.OnModifiedAsset.RemoveListener(OnAssetModified);
+
+            // Clear cache
+            ResetCachedAssetPaths();
+        }
+
+        private void ResetCachedAssetPaths()
+        {
+            // Clear cache
+            includedAssetPaths = null;
+        }
+
+        private void RebuildPlatforms()
+        {
+            // Update platform contents
+            platforms = profile.Platforms;
+            missingPlatforms = profile.GetMissingDLCPlatforms();
+            platformIcons = new GUIContent[platforms.Length + 1];
+
+            platformIcons[0] = EditorGUIUtility.IconContent("CustomTool");
+
+            for (int i = 1; i < platformIcons.Length; i++)
+            {
+                platformIcons[i] = GUIIcons.GetIconForPlatform(platforms[i - 1].Platform);
+            }
         }
 
         private void OnAssetModified()
@@ -120,6 +155,15 @@ namespace DLCToolkit.EditorTools
         public override void OnInspectorGUI()
         {
             tableStyle = true;
+
+
+            // Make sure profile path is synced
+            try
+            {
+                profile.UpdateDLCContentPath();
+            }
+            catch { }
+
 
             // Display build required warning
             if(profile.EnabledForBuild == true && IncludedAssetPaths.Length > 0 && profile.DLCRebuildRequired == true)
@@ -374,12 +418,12 @@ namespace DLCToolkit.EditorTools
                             int total = profile.LastBuildPlatformCount;
 
                             GUILayout.Label(lastBuildResultLabel, GUIStyles.LabelWidth);
-                            GUILayout.Label(profile.LastBuildSuccess == true
+                            GUILayout.Label(successful == total
                                 ? string.Format("Successful ({0}/{1})", successful, total)
                                 : string.Format("Failed ({0}/{1})", successful, total));
 
                             // Draw icon
-                            GUILayout.Label(profile.lastBuildSuccess == true ? buildSuccessIcon : buildErrorIcon, GUILayout.Width(24));
+                            GUILayout.Label(successful == total ? buildSuccessIcon : buildErrorIcon, GUILayout.Width(24));
                         }
                         GUILayout.EndHorizontal();
 
@@ -400,7 +444,7 @@ namespace DLCToolkit.EditorTools
                                     : "Failed", EditorStyles.miniLabel, GUILayout.Height(height));
 
                                 // Draw icon
-                                GUILayout.Label(profile.lastBuildSuccess == true ? buildSuccessIcon : buildErrorIcon, GUILayout.Width(24), GUILayout.Height(height));
+                                GUILayout.Label(platformProfile.lastBuildSuccess == true ? buildSuccessIcon : buildErrorIcon, GUILayout.Width(24), GUILayout.Height(height));
                             }
                             GUILayout.EndHorizontal();
                         }
@@ -479,6 +523,57 @@ namespace DLCToolkit.EditorTools
                             profile.Publisher = result;
                     }
                     GUILayout.EndHorizontal();
+
+
+                    // Custom metadata
+                    GUILayout.BeginHorizontal(GUIStyles.GetActiveTableContentStyle(ref tableStyle));
+                    {
+                        int offset = 0;
+
+                        // Show foldout
+                        if (profile.CustomMetadata != null)
+                        {
+                            GUILayout.Space(16);
+                            customMetadataExpanded = EditorGUILayout.Foldout(customMetadataExpanded, GUIContent.none);
+                            GUILayout.Space(-50);
+                            offset = 26;
+                        }
+
+                        GUILayout.Label(customMetadataLabel, GUILayout.Width(EditorGUIUtility.labelWidth - offset));
+                        EditorGUI.BeginDisabledGroup(true);
+                        EditorGUILayout.TextField(profile.CustomMetadata != null ? profile.CustomMetadata.GetType().FullName : "(None)");
+                        EditorGUI.EndDisabledGroup();
+
+                        // Select button
+                        if(GUILayout.Button(EditorGUIUtility.IconContent("CustomTool")) == true)
+                        {
+                            ShowCustomMetadataSelectionMenu();
+                        }
+                    }
+                    GUILayout.EndHorizontal();
+
+                    // Check for expanded
+                    if (customMetadataExpanded == true)
+                    {
+                        GUILayout.BeginHorizontal();
+                        {
+                            GUILayout.Space(20);
+                            GUILayout.BeginVertical();
+                            {
+                                // Draw the custom metadata
+                                if (profile.CustomMetadata != null && customMetadataEditor != null)
+                                {
+                                    // Check for changes to metadata
+                                    if (customMetadataEditor.DrawDefaultInspector() == true)
+                                        profile.MarkAsModified();
+
+                                }
+                            }
+                            GUILayout.EndVertical();
+                        }
+                        GUILayout.EndHorizontal();
+                    }
+
                 }
                 GUILayout.EndVertical();
             }
@@ -597,6 +692,10 @@ namespace DLCToolkit.EditorTools
                 {
                     foreach (string assetPath in IncludedAssetPaths)
                     {
+                        // Check for in platform specific folder
+                        string platformFolder;
+                        bool isPlatformSpecific = DLCBuildContext.IsSpecialPlatformFolder(assetPath, out platformFolder);
+
                         // Asset path
                         GUILayout.BeginHorizontal(GUIStyles.GetActiveTableContentStyle(ref tableStyle));
                         {
@@ -608,6 +707,14 @@ namespace DLCToolkit.EditorTools
 
                             // Draw path
                             GUILayout.Label(assetPath, GUILayout.MaxWidth(Screen.width - 50));
+
+                            // Platform specific info
+                            if (isPlatformSpecific == true)
+                            {
+                                platformSpecificIcon.tooltip = "Asset will only be included for platform: " + platformFolder;
+                                GUILayout.Label(platformSpecificIcon, GUILayout.Width(28));
+                                GUILayout.Space(-12);
+                            }
 
                             // Ping button
                             if (GUILayout.Button(pingAssetIcon, EditorStyles.label, GUILayout.Width(28)) == true)
@@ -643,11 +750,26 @@ namespace DLCToolkit.EditorTools
                 GUILayout.Space(-4);
                 GUILayout.BeginVertical(EditorStyles.helpBox);
                 {
-                    // Show toolbar
-                    selectedPlatform = GUILayout.Toolbar(selectedPlatform, platformIcons, GUILayout.Height(30));
+                    GUILayout.BeginHorizontal();
+                    {
+                        // Show toolbar
+                        selectedPlatform = GUILayout.Toolbar(selectedPlatform, platformIcons, GUILayout.Width(Screen.width - 60), GUILayout.Height(30));
+                        GUILayout.Space(-6);
+
+                        // Add button
+                        EditorGUI.BeginDisabledGroup(missingPlatforms.Count == 0);
+                        if(GUILayout.Button(EditorGUIUtility.IconContent("CreateAddNew"), GUILayout.Height(30)) == true)
+                        {
+                            // Show menu
+                            ShowAddPlatformSelectionMenu();
+                        }
+                        EditorGUI.EndDisabledGroup();
+                    }
+                    GUILayout.EndHorizontal();
 
 
                     // Platform name
+                    bool deletePlatform = false;
                     GUILayout.BeginHorizontal(GUIStyles.GetActiveTableContentStyle(ref tableStyle));
                     {
                         GUILayout.FlexibleSpace();
@@ -655,8 +777,46 @@ namespace DLCToolkit.EditorTools
                             ? "All Platforms"
                             : platforms[selectedPlatform - 1].PlatformFriendlyName, EditorStyles.largeLabel);
                         GUILayout.FlexibleSpace();
+
+                        if(selectedPlatform > 0)
+                        {
+                            if(GUILayout.Button(EditorGUIUtility.IconContent("d_winbtn_mac_close_a"), EditorStyles.label) == true)
+                            {
+                                // Set delete option
+                                deletePlatform = true;
+                            }
+                        }
                     }
                     GUILayout.EndHorizontal();
+
+
+                    // Handle delete
+                    if(deletePlatform == true)
+                    {
+                        // Get platform name
+                        string platformName = platforms[selectedPlatform - 1].PlatformFriendlyName;
+
+                        if (EditorUtility.DisplayDialog(
+                            string.Format("Delete {0} Platform", platformName),
+                            "Are you sure you want to delete this platform profile? All platform settings will be lost, but you can add the platform again at a later time", 
+                            "Confirm", "Cancel") == true)
+                        {
+                            // Remove from profile
+                            profile.DeleteDLCPlatform(platforms[selectedPlatform - 1].Platform);
+
+                            // Update platforms UI
+                            RebuildPlatforms();
+
+                            // Reset selected platform
+                            if (selectedPlatform >= platforms.Length + 1)
+                                selectedPlatform = platforms.Length;
+
+                            // Refresh window
+                            Repaint();
+                            return;
+                        }
+                    }
+
 
                     // Enabled
                     bool enabled = true;
@@ -788,6 +948,24 @@ namespace DLCToolkit.EditorTools
                     }
                     GUILayout.EndHorizontal();
 
+                    // IAP name
+                    GUILayout.BeginHorizontal(GUIStyles.GetActiveTableContentStyle(ref tableStyle));
+                    {
+                        // Get option
+                        bool mixed;
+                        string value = GetPlatformPropertyMultiple(platforms, selectedPlatform, out mixed, p => p.DLCIAPName);
+
+                        GUILayout.Label(dlcIAPNameLabel, GUIStyles.LabelWidth);
+                        EditorGUI.showMixedValue = mixed;
+                        string result = EditorGUILayout.TextField(value);
+                        EditorGUI.showMixedValue = false;
+
+                        // Check for changed
+                        if(result != value)
+                            SetPlatformPropertyMultiple(platforms, selectedPlatform, p => p.DLCIAPName = result);
+                    }
+                    GUILayout.EndHorizontal();
+
                     // Preload shared assets
                     GUILayout.BeginHorizontal(GUIStyles.GetActiveTableContentStyle(ref tableStyle));
                     {
@@ -914,7 +1092,7 @@ namespace DLCToolkit.EditorTools
                 // Asset pack directory
                 GUILayout.BeginHorizontal(GUIStyles.GetActiveTableContentStyle(ref tableStyle));
                 {
-                    GUILayout.Label("Asset Pack Directory", GUIStyles.LabelWidth);
+                    GUILayout.Label(dlcAssetPackDirectoryLabel, GUIStyles.LabelWidth);
                     string result = EditorGUILayout.TextField(androidPlatform.DLCAssetPackDirectory);
 
                     // Check for changed
@@ -929,7 +1107,7 @@ namespace DLCToolkit.EditorTools
                 // Delivery type
                 GUILayout.BeginHorizontal(GUIStyles.GetActiveTableContentStyle(ref tableStyle));
                 {
-                    GUILayout.Label("Delivery Type", GUIStyles.LabelWidth);
+                    GUILayout.Label(deliveryTypeLabel, GUIStyles.LabelWidth);
                     string result = EditorGUILayout.TextField(androidPlatform.DeliveryType);
 
                     // Check for changed
@@ -993,6 +1171,132 @@ namespace DLCToolkit.EditorTools
 
             // Set dirty
             EditorUtility.SetDirty(target);
+        }
+
+        private void ShowCustomMetadataSelectionMenu()
+        {
+            // Select context menu
+            GenericMenu menu = new GenericMenu();
+
+            List<Type> availableMetadataTypes = new List<Type>();
+
+            // Get assembly name for `DLCToolkit.dll`
+            string dlcToolkitAsmName = typeof(DLCCustomMetadata).Assembly.GetName().Name;
+
+            // Find all types to show
+            foreach(Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                // Check for this
+                if (asm == typeof(DLCCustomMetadata).Assembly)
+                    continue;
+
+                bool hasReference = false;
+
+                foreach(AssemblyName nameInfo in asm.GetReferencedAssemblies())
+                {
+                    if(string.Compare(dlcToolkitAsmName, nameInfo.Name) == 0)
+                    {
+                        hasReference = true;
+                        break;
+                    }
+                }
+
+                // Check for reference - we can skip expensive reflection checks because a reference to DLCToolkit is required in order to derive from DLCCustomMetadata
+                if (hasReference == false)
+                    continue;
+
+                try
+                {
+                    foreach(Type type in asm.GetTypes())
+                    {
+                        // Check for derived
+                        if(type.IsClass == true && typeof(DLCCustomMetadata).IsAssignableFrom(type) == true)
+                        {
+                            // Check for abstract
+                            if (type.IsAbstract == true)
+                                continue;
+
+                            // Register the type
+                            availableMetadataTypes.Add(type);
+                        }
+                    }
+                }
+                catch(TypeLoadException e)
+                {
+                    Debug.LogWarning(string.Format("Could not load types for assembly `{0}`. Custom metadata selection may not be available", asm));
+                    UnityEngine.Debug.LogException(e);
+                }
+            }
+
+            // Add default menu item
+            menu.AddItem(new GUIContent("None"), false, () =>
+            {
+                // Reset to null
+                profile.CustomMetadata = null;
+
+                // Reset drawer
+                customMetadataEditor = null;
+                customMetadataExpanded = false;
+            });
+
+            // Add separator
+            if(availableMetadataTypes.Count > 0)
+                menu.AddSeparator("");
+
+            // Build menu
+            foreach(Type type in availableMetadataTypes)
+            {
+                // Add the menu item
+                menu.AddItem(new GUIContent(type.FullName), false, (object state) =>
+                {
+                    // Create instance
+                    DLCCustomMetadata customMeta = CreateInstance(type) as DLCCustomMetadata;
+
+                    // Check for error
+                    if(customMeta == null)
+                    {
+                        Debug.LogError("Failed to create instance of custom metadata type: " + type);
+                        return;
+                    }
+
+                    // Register custom metadata
+                    profile.CustomMetadata = customMeta;
+                    customMetadataExpanded = true;
+
+                    // Create custom editor
+                    Editor.CreateCachedEditor(profile.CustomMetadata, null, ref customMetadataEditor);
+                }, type);
+            }
+
+            menu.ShowAsContext();
+        }
+
+        private void ShowAddPlatformSelectionMenu()
+        {
+            // Create context menu
+            GenericMenu menu = new GenericMenu();
+
+            // Add all missing platforms
+            foreach(BuildTarget missingPlatform in missingPlatforms)
+            {
+                // Get the friendly display name
+                string platformName = DLCPlatformProfile.GetFriendlyPlatformName(missingPlatform);
+
+                // Create menu
+                menu.AddItem(new GUIContent(platformName), false, () =>
+                {
+                    // Add new platform
+                    profile.AddDLCPlatform(missingPlatform);
+
+                    // Update platform contents
+                    RebuildPlatforms();
+
+                    // Repaint the window
+                    Repaint();
+                });
+            }
+
+            menu.ShowAsContext();
         }
 
         private static Texture2D GetIconTextureForAssetPath(string assetPath)

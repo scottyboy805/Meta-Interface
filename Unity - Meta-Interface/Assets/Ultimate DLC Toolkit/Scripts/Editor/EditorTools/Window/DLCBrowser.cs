@@ -1,5 +1,4 @@
-﻿using Codice.Client.BaseCommands.Differences;
-using DLCToolkit.Assets;
+﻿using DLCToolkit.Assets;
 using DLCToolkit.BuildTools;
 using DLCToolkit.BuildTools.Events;
 using DLCToolkit.Format;
@@ -57,6 +56,7 @@ namespace DLCToolkit.EditorTools
         private static readonly GUIContent descriptionLabel = new GUIContent("Description", "A short description for this DLC");
         private static readonly GUIContent developerLabel = new GUIContent("Developer", "The name of the developer or studio that created this DLC content");
         private static readonly GUIContent publisherLabel = new GUIContent("Publisher", "The name of the publisher who distributed this DLC content");
+        private static readonly GUIContent customMetadataLabel = new GUIContent("Custom Metadata", "The custom metadata included in this DLC content");
         private static readonly GUIContent buildTimeLabel = new GUIContent("Build Time", "The build timestamp for when this DLC content was produced");
         private static readonly GUIContent contentLabel = new GUIContent("Included Content", "The types of content that are included in this DLC");
         private static readonly GUIContent networkUniqueIDLabel = new GUIContent("Network Unique ID", "A unique id string (Formulated from unique key, version, build time stamp) that can be used to determine if DLC content loaded on 2 different devices are considered identical. Useful in network multiplayer games to ensure that all clients have the same DLC available. This value will change on each DLC build!");
@@ -68,6 +68,7 @@ namespace DLCToolkit.EditorTools
 
         private string browseContentLocation = null;
         private DLCContent browseContent = null;
+        private Editor customMetadataEditor = null;
         private int includedIconCount = -1;
         private DLCSharedAsset[] includedAssets = null;
         private DLCSceneAsset[] includedScenes = null;
@@ -140,12 +141,15 @@ namespace DLCToolkit.EditorTools
                     includedAssemblies = new Dictionary<Assembly, Type[]>();
                     expandedAssemblies = new Dictionary<Assembly, bool>();
 
-                    foreach (Assembly asm in browseContent.scriptAssembly.AssembliesLoaded)
+                    if (browseContent.scriptAssembly != null)
                     {
-                        includedAssemblies[asm] = asm.GetTypes()
-                            .Where(t => t.IsPublic == true || typeof(UnityEngine.Object).IsAssignableFrom(t) == true)
-                            .ToArray();
-                        expandedAssemblies[asm] = false;
+                        foreach (Assembly asm in browseContent.scriptAssembly.AssembliesLoaded)
+                        {
+                            includedAssemblies[asm] = asm.GetTypes()
+                                .Where(t => t.IsPublic == true || typeof(UnityEngine.Object).IsAssignableFrom(t) == true)
+                                .ToArray();
+                            expandedAssemblies[asm] = false;
+                        }
                     }
                 }
                 return includedAssemblies;
@@ -440,7 +444,7 @@ namespace DLCToolkit.EditorTools
                         EditorGUILayout.Toggle((browseContent.bundle.Flags & DLCBundle.ContentFlags.Signed) != 0);
 
                         // With version
-                        GUILayout.Label(signingWithVersionLabel, GUILayout.Width(labelWidth));
+                        GUILayout.Label(signingWithVersionLabel);//, GUILayout.Width(labelWidth));
                         EditorGUILayout.Toggle((browseContent.bundle.Flags & DLCBundle.ContentFlags.SignedWithVersion) != 0);
                     }
                     GUILayout.EndHorizontal();
@@ -484,6 +488,32 @@ namespace DLCToolkit.EditorTools
                         EditorGUILayout.TextField(browseContent.Metadata.Publisher);
                     }
                     GUILayout.EndHorizontal();
+
+                    // Custom metadata
+                    if(browseContent.Metadata.GetCustomMetadata() != null)
+                    {
+                        GUILayout.BeginHorizontal(GUIStyles.GetActiveTableContentStyle(ref tableStyle));
+                        {
+                            GUILayout.Label(customMetadataLabel, GUILayout.Width(labelWidth));
+                            EditorGUILayout.TextField(browseContent.Metadata.GetCustomMetadata().GetType().ToString());
+                        }
+                        GUILayout.EndHorizontal();
+
+                        // Draw custom metadata
+                        Editor.CreateCachedEditor(browseContent.Metadata.GetCustomMetadata(), null, ref customMetadataEditor);
+
+                        GUILayout.BeginHorizontal();
+                        {
+                            GUILayout.Space(8 + labelWidth - EditorGUIUtility.labelWidth);
+                            GUILayout.BeginVertical();
+                            {
+                                // Display custom metadata
+                                customMetadataEditor.DrawDefaultInspector();
+                            }
+                            GUILayout.EndVertical();
+                        }
+                        GUILayout.EndHorizontal();
+                    }
 
                     // Build Time
                     GUILayout.BeginHorizontal(GUIStyles.GetActiveTableContentStyle(ref tableStyle));

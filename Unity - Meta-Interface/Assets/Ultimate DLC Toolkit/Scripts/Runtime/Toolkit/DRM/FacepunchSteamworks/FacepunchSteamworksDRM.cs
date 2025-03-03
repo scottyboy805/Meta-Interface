@@ -2,7 +2,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace DLCToolkit.DRM
 {
@@ -15,40 +14,52 @@ namespace DLCToolkit.DRM
     /// </summary>
     public sealed class FacepunchSteamworksDRM : IDRMProvider
     {
-        // Properties
-        DLCAsync<string[]> IDRMProvider.DLCUniqueKeysAsync
-        {
-            get
-            {
-                // Check for steam running
-                if (Steamworks.SteamClient.IsValid == false)
-                {
-                    Debug.WriteLine("Steam is not running!");
-                    return DLCAsync<string[]>.Completed(true, Array.Empty<string>());
-                }
-
-                List<string> uniqueKeys = new List<string>();
-
-                // Get dlc count
-                foreach (Steamworks.Data.DlcInformation info in Steamworks.SteamApps.DlcInformation())
-                {
-                    // Add unique key which is appid for steam
-                    uniqueKeys.Add(info.AppId.Value.ToString());
-                }
-
-                // Get async result
-                return DLCAsync<string[]>.Completed(true, uniqueKeys.ToArray());
-            }
-        }
-
         // Methods
-        DLCStreamProvider IDRMProvider.GetDLCStream(string uniqueKey)
+        DLCAsync<string[]> IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider asyncProvider)
         {
             // Check for steam running
             if (Steamworks.SteamClient.IsValid == false)
             {
-                Debug.WriteLine("Steam is not running!");
-                return null;
+                Debug.LogWarning("Steam is not running!");
+                return DLCAsync<string[]>.Completed(true, Array.Empty<string>());
+            }
+
+            List<string> uniqueKeys = new List<string>();
+
+            // Get dlc count
+            foreach (Steamworks.Data.DlcInformation info in Steamworks.SteamApps.DlcInformation())
+            {
+                // Add unique key which is appid for steam
+                uniqueKeys.Add(info.AppId.Value.ToString());
+            }
+
+            // Get async result
+            return DLCAsync<string[]>.Completed(true, uniqueKeys.ToArray());            
+        }
+
+        DLCAsync IDRMProvider.IsDLCAvailableAsync(IDLCAsyncProvider asyncProvider, string uniqueKey)
+        {
+            // Check for steam running
+            if (Steamworks.SteamClient.IsValid == false)
+            {
+                Debug.LogWarning("Steam is not running!");
+                return DLCAsync.Error("Steam is not running!");
+            }
+
+            // Get steam id
+            Steamworks.AppId id = UniqueKeyToSteamID(uniqueKey);
+
+            // Check installed
+            return DLCAsync.Completed(Steamworks.SteamApps.IsDlcInstalled(id));
+        }
+
+        DLCAsync<DLCStreamProvider> IDRMProvider.GetDLCStreamAsync(IDLCAsyncProvider asyncProvider, string uniqueKey)
+        {
+            // Check for steam running
+            if (Steamworks.SteamClient.IsValid == false)
+            {
+                Debug.LogWarning("Steam is not running!");
+                return DLCAsync<DLCStreamProvider>.Error("Steam is not running!");
             }
 
             // Get steam id
@@ -64,37 +75,38 @@ namespace DLCToolkit.DRM
                 DLCDirectory directory = new DLCDirectory(folder);
 
                 // Try to find
-                string file = directory.GetDLCFileFromUniqueKey(uniqueKey);
+                string file = directory.GetDLCFile(uniqueKey);
 
                 // Check for null
                 if (file != null)
-                    return DLCStreamProvider.FromFile(file);
+                    return DLCAsync<DLCStreamProvider>.Completed(true, DLCStreamProvider.FromFile(file));
             }
-            return null;
-        }
 
-        DLCAsync<bool> IDRMProvider.IsDLCAvailableAsync(IDLCAsyncProvider asyncProvider, string uniqueKey)
-        {
-            // Check for steam running
-            if (Steamworks.SteamClient.IsValid == false)
+            // Get install folder of main app
+            folder = Steamworks.SteamApps.AppInstallDir(Steamworks.SteamClient.AppId);
+
+            // Check for null
+            if(string.IsNullOrEmpty(folder) == false)
             {
-                Debug.WriteLine("Steam is not running!");
-                return DLCAsync<bool>.Error("Steam is not running!");
+                // Create directory
+                DLCDirectory directory = new DLCDirectory(folder, System.IO.SearchOption.AllDirectories);
+
+                // Try to find
+                string file = directory.GetDLCFile(uniqueKey);
+
+                // Create stream
+                if(file != null)
+                    return DLCAsync<DLCStreamProvider>.Completed(true, DLCStreamProvider.FromFile(file));
             }
-
-            // Get steam id
-            Steamworks.AppId id = UniqueKeyToSteamID(uniqueKey);
-
-            // Check installed
-            return DLCAsync<bool>.Completed(true, Steamworks.SteamApps.IsDlcInstalled(id));
-        }
+            return DLCAsync<DLCStreamProvider>.Error("DLC not found: " + uniqueKey);
+        }        
 
         DLCAsync IDRMProvider.RequestInstallDLCAsync(IDLCAsyncProvider asyncProvider, string uniqueKey)
         {
             // Check for steam running
             if (Steamworks.SteamClient.IsValid == false)
             {
-                Debug.WriteLine("Steam is not running!");
+                Debug.LogWarning("Steam is not running!");
                 return DLCAsync<bool>.Error("Steam is not running!");
             }
 
@@ -125,7 +137,7 @@ namespace DLCToolkit.DRM
             // Check for steam running
             if (Steamworks.SteamClient.IsValid == false)
             {
-                Debug.WriteLine("Steam is not running!");
+                Debug.LogWarning("Steam is not running!");
                 return;
             }
 

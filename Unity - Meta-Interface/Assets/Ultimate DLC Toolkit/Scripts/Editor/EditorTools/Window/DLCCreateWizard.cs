@@ -80,8 +80,11 @@ namespace DLCToolkit.EditorTools
                     OnNavigationNodeGUI(style, i, pages[i].PageName);
                 }
 
+                // Perform validation
+                InvalidReason reason = metadataPage.ValidateDLCProfile();
+
                 // Draw the create node
-                EditorGUI.BeginDisabledGroup(metadataPage.ValidateDLCProfile() != InvalidReason.None);
+                EditorGUI.BeginDisabledGroup(reason != InvalidReason.None && reason != InvalidReason.PathAlreadyExists);
                 if(OnNavigationNodeGUI(GUIStyles.BreadcrumbEndStyle, 3, "Create") == true)
                 {
                     // Show create dialog
@@ -138,9 +141,30 @@ namespace DLCToolkit.EditorTools
 
         private void CreateDLCProfile()
         {
+            // Get validation
+            InvalidReason reason = metadataPage.ValidateDLCProfile();
+
             // Validate once more
-            if (metadataPage.ValidateDLCProfile() != InvalidReason.None)
+            if (reason != InvalidReason.None && reason != InvalidReason.PathAlreadyExists)
                 Debug.LogError("Cannot create new DLC. One or more required parameters are missing or invalid");
+
+            // Get the asset path to create
+            string createAssetPathRelative = metadataPage.CreatePath + "/" + profile.DLCName + ".asset";
+
+            // Check for path already exists
+            if (reason == InvalidReason.PathAlreadyExists)
+            {
+                // Check for dlc already exists
+                if(File.Exists(createAssetPathRelative) == true)
+                {
+                    EditorUtility.DisplayDialog("Could not create DLC!", "A DLC profile with the same name already exists in the specified folder: \n" + createAssetPathRelative + "\n\nPlease choose a different path or name for the DLC to continue", "Confirm");
+                    return;
+                }
+
+                // Show a warning dialog
+                if (EditorUtility.DisplayDialog("Path already exists!", "Are you sure you want to create a new DLC inside an existing folder? It is recommended to create the DLC in a dedicated folder", "Continue", "Cancel") == false)
+                    return;
+            }
 
 
             // Update platform unique keys
@@ -156,14 +180,14 @@ namespace DLCToolkit.EditorTools
 
 
             // Create directory
-            if(Directory.Exists(metadataPage.CreatePath) == false)
+            if(reason != InvalidReason.PathAlreadyExists && Directory.Exists(metadataPage.CreatePath) == false)
                 Directory.CreateDirectory(metadataPage.CreatePath);
 
             // Import
             AssetDatabase.Refresh();
 
             // Save the asset
-            AssetDatabase.CreateAsset(profile, metadataPage.CreatePath + "/" + profile.DLCName + ".asset");
+            AssetDatabase.CreateAsset(profile, createAssetPathRelative);
 
             // Update content folder - must be performed after asset is created
             profile.UpdateDLCContentPath();

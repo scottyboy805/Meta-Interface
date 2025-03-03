@@ -14,6 +14,8 @@ namespace DLCToolkit.EditorTools
         public const string setScriptDebugMode = "Tools/DLC Toolkit/Build Config/Compilation/Debug";
         public const string setForceRebuildEnabled = "Tools/DLC Toolkit/Build Config/Force Rebuild/Enabled";
         public const string setForceRebuildDisabled = "Tools/DLC Toolkit/Build Config/Force Rebuild/Disabled";
+        public const string setTestModeEnabled = "Tools/DLC Toolkit/Test Mode/Enabled";
+        public const string setTestModeDisabled = "Tools/DLC Toolkit/Test Mode/Disabled";
 
         // Constructor
         static EditorMenu()
@@ -26,10 +28,12 @@ namespace DLCToolkit.EditorTools
             Menu.SetChecked(setScriptDebugMode, config.scriptingDebug == true);
             Menu.SetChecked(setForceRebuildEnabled, config.forceRebuild == true);
             Menu.SetChecked(setForceRebuildDisabled, config.forceRebuild == false);
+            Menu.SetChecked(setTestModeEnabled, config.enabledEditorTestMode == true);
+            Menu.SetChecked(setTestModeDisabled, config.enabledEditorTestMode == false);
         }
 
         // Methods
-        [MenuItem("Assets/Create/Ultimate DLC Toolkit/Create DLC", false, 1)]
+        [MenuItem("Assets/Create/DLC Toolkit/Create DLC", false, -100)]
         public static void CreateNewDLCInFolder()
         {
             string path = "Assets";
@@ -60,7 +64,8 @@ namespace DLCToolkit.EditorTools
         [MenuItem("Tools/DLC Toolkit/Browse DLC", priority = 120)]
         public static void BrowseDLC()
         {
-            EditorWindow.GetWindowWithRect<DLCBrowser>(new Rect(-1, -1, 500, 380), false, "Browse DLC");
+            EditorWindow.GetWindow<DLCBrowser>(false, "Browse DLC")
+                .minSize = new Vector2(380, 250);
         }
 
 
@@ -528,10 +533,65 @@ namespace DLCToolkit.EditorTools
             Menu.SetChecked(setForceRebuildDisabled, config.forceRebuild == false);
         }
 
+        [MenuItem(setTestModeEnabled, priority = 303)]
+        public static void SetEditorTestModeEnabled()
+        {
+            // Update and load config
+            DLCConfig config = DLCBuildPipeline.UpdateDLCConfigFromProject();
+
+            // Update value
+            config.enabledEditorTestMode = true;
+            EditorUtility.SetDirty(config);
+
+            // Update menus
+            Menu.SetChecked(setTestModeEnabled, config.enabledEditorTestMode == true);
+            Menu.SetChecked(setTestModeDisabled, config.enabledEditorTestMode == false);
+        }
+
+        [MenuItem(setTestModeDisabled, priority = 304)]
+        public static void SetEditorTestModeDisabled()
+        {
+            // Update and load config
+            DLCConfig config = DLCBuildPipeline.UpdateDLCConfigFromProject();
+
+            // Update value
+            config.enabledEditorTestMode = false;
+            EditorUtility.SetDirty(config);
+
+            // Update menus
+            Menu.SetChecked(setTestModeEnabled, config.enabledEditorTestMode == true);
+            Menu.SetChecked(setTestModeDisabled, config.enabledEditorTestMode == false);
+        }
+
         [MenuItem("Tools/DLC Toolkit/Settings", false, priority = 400)]
         public static void OpenSettings()
         {
             SettingsService.OpenProjectSettings("Project/DLC Toolkit");
+        }
+
+
+        [MenuItem("Tools/DLC Toolkit/Help/Online Scripting Reference", false, priority = 500)]
+        public static void OpenOnlineScriptingReference()
+        {
+            Application.OpenURL("https://trivialinteractive.co.uk/products/scriptingreference/ultimatedlctoolkit");
+        }
+
+        [MenuItem("Tools/DLC Toolkit/Help/Online Code Samples", false, priority = 501)]
+        public static void OpenOnlineCodeSamples()
+        {
+            Application.OpenURL("https://github.com/TrivialInteractive/Ultimate-DLC-Toolkit-Samples");
+        }
+
+        [MenuItem("Tools/DLC Toolkit/Help/Support", false, priority = 502)]
+        public static void OpenSupport()
+        {
+            Application.OpenURL("https://trivialinteractive.co.uk/support.html");
+        }
+
+        [MenuItem("Tools/DLC Toolkit/Help/Discord", false, priority = 503)]
+        public static void OpenDiscord()
+        {
+            Application.OpenURL("https://discord.gg/sHREXjmwa2");
         }
     }
 }

@@ -1,13 +1,21 @@
 ﻿using System;
-using System.IO;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace DLCToolkit.Profile
 {
+    public enum PlatformGroup
+    {
+        None = 0,
+        Desktop,
+        Console,
+        Mobile,
+    }
+
     public enum ShipWithGameDirectory
     {
         StreamingAssets,
@@ -27,9 +35,15 @@ namespace DLCToolkit.Profile
         /// <summary>
         /// An array of supported platform names in an easily readable format.
         /// </summary>
+        [NonSerialized]
         public static readonly string[] friendlyPlatformNames = ((BuildTarget[])Enum.GetValues(typeof(BuildTarget)))
             .Select(t => GetFriendlyPlatformName(t))
+            .Where(n => n != "UnsupportedPlatform")
             .ToArray();
+
+        public const string friendlyDesktopPlatformName = "Desktop";
+        public const string friendlyMobilePlatformName = "Mobile";
+        public const string friendlyConsolePlatformName = "Console";
 
         // Internal
         [SerializeField]
@@ -57,7 +71,10 @@ namespace DLCToolkit.Profile
         [SerializeField]
         private bool useCompression = true;
         [SerializeField]
-        private bool strictBuild = false;        
+        private bool strictBuild = false;
+
+        [Header("DRM")]
+        private string dlcIAPName = "";
 
         [Header("Options")]
         [SerializeField]
@@ -133,6 +150,32 @@ namespace DLCToolkit.Profile
         }
 
         /// <summary>
+        /// Return a value indicating whether this platform is targeting a desktop build target.
+        /// Note that this value will be false if targeting an unsupported desktop platform.
+        /// </summary>
+        public bool IsDesktopPlatform
+        {
+            get { return GetPlatformGroup(platform) == PlatformGroup.Desktop; }
+        }
+
+        /// <summary>
+        /// Return a value indicating whether this platform is targeting a console build target.
+        /// Note that this value will be false if targeting an unsupported console platform.
+        /// </summary>
+        public bool IsConsolePlatform
+        {
+            get { return GetPlatformGroup(platform) == PlatformGroup.Console; }
+        }
+
+        /// <summary>
+        /// Return a value indicating whether this platform is targeting a mobile build target.
+        /// </summary>
+        public bool IsMobilePlatform
+        {
+            get { return GetPlatformGroup(platform) == PlatformGroup.Mobile; }
+        }
+
+        /// <summary>
         /// Is this platform enabled for build.
         /// </summary>
         public bool Enabled
@@ -205,6 +248,28 @@ namespace DLCToolkit.Profile
                 strictBuild = value;
                 OnProfileModified?.Invoke();
             }
+        }
+
+        /// <summary>
+        /// The name of an InApp Purchase that is linked to this DLC, and verifies ownership of the DLC content.
+        /// Requires Unity.Purchasing or other IAP integration.
+        /// </summary>
+        public string DLCIAPName
+        {
+            get { return dlcIAPName; }
+            set
+            {
+                dlcIAPName = value;
+                OnProfileModified?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// Return a value indicating whether this DLC is linked to a specific InApp Purchase.
+        /// </summary>
+        public bool IsLinkedToIAP
+        {
+            get { return string.IsNullOrEmpty(dlcIAPName); }
         }
 
         /// <summary>
@@ -302,6 +367,50 @@ namespace DLCToolkit.Profile
         }
 
         // Methods
+        public IList<string> GetPlatformExcludeDirectories()
+        {
+            // Get platform exclude folders
+            List<string> platformExcludeDirectories = new List<string>(friendlyPlatformNames);
+
+            // Get the platform group
+            PlatformGroup platformGroup = GetPlatformGroup(platform);
+
+            // Check for group special folders
+            switch (platformGroup)
+            {
+                case PlatformGroup.Desktop:
+                    {
+                        // Exclude console and mobile
+                        platformExcludeDirectories.Add(friendlyConsolePlatformName);
+                        platformExcludeDirectories.Add(friendlyMobilePlatformName);
+                        break;
+                    }
+                case PlatformGroup.Console:
+                    {
+                        // Exclude desktop and mobile
+                        platformExcludeDirectories.Add(friendlyDesktopPlatformName);
+                        platformExcludeDirectories.Add(friendlyMobilePlatformName);
+                        break;
+                    }
+                case PlatformGroup.Mobile:
+                    {
+                        // Exclude desktop and console
+                        platformExcludeDirectories.Add(friendlyDesktopPlatformName);
+                        platformExcludeDirectories.Add(friendlyConsolePlatformName);
+                        break;
+                    }
+            }
+
+            // Get the friendly name
+            string platformFriendlyName = PlatformFriendlyName;
+
+            // Remove restricted platform name - this platform folder is allowed during this phase of the build
+            while (platformExcludeDirectories.Contains(platformFriendlyName) == true)
+                platformExcludeDirectories.Remove(platformFriendlyName);
+
+            return platformExcludeDirectories;
+        }
+
         /// <summary>
         /// Get the platform friendly name from the specified build target.
         /// </summary>
@@ -348,7 +457,7 @@ namespace DLCToolkit.Profile
                 case BuildTarget.XboxOne: return RuntimePlatform.XboxOne;
             }
             throw new NotSupportedException("Platform is not supported");
-        }
+        }        
 
         /// <summary>
         /// Check if build support for the target platform is installed.
@@ -375,6 +484,30 @@ namespace DLCToolkit.Profile
             }
             // Could not determine availability - We must assume that the platform is available and the build will fail when generating asset bundles if it is not
             return true;
+        }
+
+        public static PlatformGroup GetPlatformGroup(BuildTarget buildTarget)
+        {
+            switch(buildTarget)
+            {
+                // Check for desktop
+                case BuildTarget.StandaloneWindows64:
+                case BuildTarget.StandaloneOSX:
+                case BuildTarget.StandaloneLinux64:
+                    return PlatformGroup.Desktop;
+
+                // Check for console
+                case BuildTarget.PS4:
+                case BuildTarget.PS5:
+                case BuildTarget.XboxOne:
+                    return PlatformGroup.Console;
+
+                // Check for mobile
+                case BuildTarget.iOS:
+                case BuildTarget.Android:
+                    return PlatformGroup.Mobile;
+            }
+            return PlatformGroup.None;
         }
     }
 }

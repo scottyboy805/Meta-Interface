@@ -15,8 +15,10 @@ namespace DLCToolkit.BuildTools
     {
         // Internal
         internal bool isFaulted = false;
+        internal DateTime platformBuildStartTime;
 
         // Private
+        private string profilePath = null;
         private DLCProfile profile = null;
         private DLCPlatformProfile platformProfile = null;
         private string platformFriendlyName = null;
@@ -62,6 +64,7 @@ namespace DLCToolkit.BuildTools
         // Constructor
         public DLCBuildContext(DLCProfile profile, DLCPlatformProfile platformProfile)
         {
+            this.profilePath = AssetDatabase.GetAssetPath(profile);
             this.profile = profile;
             this.platformProfile = platformProfile;
             this.platformFriendlyName = DLCPlatformProfile.GetFriendlyPlatformName(platformProfile.Platform);
@@ -118,8 +121,7 @@ namespace DLCToolkit.BuildTools
             Debug.Log("Collecting DLC assets...");
 
             // Get platform exclude folders
-            List<string> platformExcludeDirectories = new List<string>(DLCPlatformProfile.friendlyPlatformNames);
-            platformExcludeDirectories.Remove(platformFriendlyName);
+            IList<string> platformExcludeDirectories = PlatformProfile.GetPlatformExcludeDirectories();
 
             // Scan directory - exclude meta files
             string[] assetFiles = Directory.GetFiles(Path.GetFullPath(profile.DLCContentPath), "*.*", SearchOption.AllDirectories)
@@ -142,8 +144,8 @@ namespace DLCToolkit.BuildTools
                 if (asset != null)
                 {
                     // Update progress
-                    EditorUtility.DisplayProgressBar(string.Format("Discover DLC Content ({0} / {1})", current, assetFiles.Length),
-                        asset.RelativePath, Mathf.InverseLerp(0, assetFiles.Length, current));
+                    //EditorUtility.DisplayProgressBar(string.Format("Discover DLC Content ({0} / {1})", current, assetFiles.Length),
+                    //    asset.RelativePath, Mathf.InverseLerp(0, assetFiles.Length, current));
 
                     // Check for icon asset
                     if (IsIconAssetExcluded(profile, asset.RelativePath) == true)
@@ -173,7 +175,7 @@ namespace DLCToolkit.BuildTools
             }
 
             // Hide progress
-            EditorUtility.ClearProgressBar();
+            //EditorUtility.ClearProgressBar();
 
             // Check for shared assets
             if(buildAssets.HasAssetContent(DLCContentFlags.Assets) == true)
@@ -298,7 +300,9 @@ namespace DLCToolkit.BuildTools
                 profile.Publisher,
                 DLC.ToolkitVersion,
                 Application.unityVersion,
-                buildAssets.ContentFlags);
+                buildAssets.ContentFlags,
+                platformProfile.ShipWithGame,
+                profile.CustomMetadata);
 
             // Register metadata
             Debug.Log("Register metadata...");
@@ -395,10 +399,17 @@ namespace DLCToolkit.BuildTools
             throw new NotSupportedException("Build platform is not supported: " +  platformProfile.Platform);
         }
 
+        internal void ReloadProfileFromAssetDatabase()
+        {
+            profile = AssetDatabase.LoadAssetAtPath<DLCProfile>(profilePath);
+        }
+
         internal static bool IsSpecialFolderExcluded(IList<string> platformExcludeFolders, string assetPath)
         {
             // Get relative path
-            string relativePath = FileUtil.GetProjectRelativePath(assetPath.Replace('\\', '/'));
+            string relativePath = Path.IsPathRooted(assetPath) == true
+                ? FileUtil.GetProjectRelativePath(assetPath.Replace('\\', '/'))
+                : assetPath;
 
             // Get all folders
             string[] folders = relativePath.Split('/');
@@ -423,6 +434,29 @@ namespace DLCToolkit.BuildTools
             }
 
             // Folder is not excluded
+            return false;
+        }
+
+        internal static bool IsSpecialPlatformFolder(string assetPath, out string platformFolder)
+        {
+            // Get relative path
+            string relativePath = Path.IsPathRooted(assetPath) == true
+                ? FileUtil.GetProjectRelativePath(assetPath.Replace('\\', '/'))
+                : assetPath;
+
+            // Get all folders
+            string[] folders = relativePath.Split('/');
+
+            // Check for special folders - note that we skip the last string because it contains the asset file name
+            for (int i = 0; i < folders.Length - 1; i++)
+            {
+                if (DLCPlatformProfile.friendlyPlatformNames.Contains(folders[i]) == true)
+                {
+                    platformFolder = folders[i];
+                    return true;
+                }
+            }
+            platformFolder = null;
             return false;
         }
 

@@ -6,35 +6,6 @@ namespace DLCToolkit
 {
     internal sealed class DLCConfig : ScriptableObject
     {
-        // Type
-        [Serializable]
-        private class DLCPlatformContent
-        {
-            // Private
-            [SerializeField]
-            private RuntimePlatform platform;
-            [SerializeField]
-            private string uniqueKey;
-
-            // Properties
-            public RuntimePlatform Platform
-            {
-                get { return platform; }
-            }
-
-            public string UniqueKey
-            {
-                get { return uniqueKey; }
-            }
-
-            // Constructor
-            public DLCPlatformContent(RuntimePlatform platform,  string uniqueKey)
-            {
-                this.platform = platform;
-                this.uniqueKey = uniqueKey;
-            }
-        }
-
         // Internal
         [SerializeField]
 #if !DLCTOOLKIT_DEBUG
@@ -60,6 +31,11 @@ namespace DLCToolkit
 #if !DLCTOOLKIT_DEBUG
         [HideInInspector]
 #endif
+        internal bool enabledEditorTestMode = true;
+        [SerializeField]
+#if !DLCTOOLKIT_DEBUG
+        [HideInInspector]
+#endif
         internal bool forceRebuild = false;
         [SerializeField]
 #if !DLCTOOLKIT_DEBUG
@@ -78,11 +54,6 @@ namespace DLCToolkit
 #endif
         [SerializeField]
         private byte[] versionHash = null;
-#if !DLCTOOLKIT_DEBUG
-        [HideInInspector]
-#endif
-        [SerializeField]
-        private List<DLCPlatformContent> platformContent = new List<DLCPlatformContent>();
 
         // Internal
         internal const string assetName = "DLC Config";
@@ -108,40 +79,23 @@ namespace DLCToolkit
             get { return scriptingDebug; }
         }
 
+        public bool EnableEditorTestMode
+        {
+            get { return enabledEditorTestMode; }
+        }
+
         public bool ForceRebuild
         {
             get { return forceRebuild; }
         }
 
+        // Constructor
+        internal DLCConfig()
+        {
+            Debug.OnLog += SetLogLevel;
+        }
+
         // Methods
-        public string[] GetPlatformDLCUniqueKeys()
-        {
-            return GetPlatformDLCUniqueKeys(Application.platform);
-        }
-
-        public string[] GetPlatformDLCUniqueKeys(RuntimePlatform platform)
-        {
-            // Check for editor
-            switch(platform)
-            {
-                case RuntimePlatform.WindowsEditor: platform = RuntimePlatform.WindowsPlayer; break;
-                case RuntimePlatform.OSXEditor: platform = RuntimePlatform.OSXPlayer; break;
-                case RuntimePlatform.LinuxEditor: platform = RuntimePlatform.LinuxPlayer; break;
-            }
-
-            List<string> uniqueKeys = new List<string>();
-
-            // Check all content
-            foreach(DLCPlatformContent content in platformContent)
-            {
-                // Register platform keys
-                if(content.Platform == platform)
-                    uniqueKeys.Add(content.UniqueKey);
-            }
-
-            return uniqueKeys.ToArray();
-        }
-
         internal void UpdateProductHash(byte[] hash)
         {
             this.productHash = hash;
@@ -161,33 +115,14 @@ namespace DLCToolkit
 #endif
         }
 
-        internal void UpdatePlatformContent(IEnumerable<KeyValuePair<RuntimePlatform, string>> content)
-        {
-            this.platformContent.Clear();
-
-            // Add all
-            foreach(KeyValuePair<RuntimePlatform, string> entry in content)
-            {
-                this.platformContent.Add(new DLCPlatformContent(entry.Key, entry.Value));
-            }
-
-#if UNITY_EDITOR
-            UnityEditor.EditorUtility.SetDirty(this);
-#endif
-        }
-
-        internal void SetRuntimeLogLevel()
+        internal void SetLogLevel()
         {
             if (Application.isPlaying == true)
             {
                 Debug.logLevel = runtimeLogLevel;
                 Debug.logPrefix = "DLC: ";
             }
-        }
-
-        internal void SetBuildLogLevel()
-        {
-            if(Application.isPlaying == false)
+            else
             {
                 Debug.logLevel = buildLogLevel;
                 Debug.logPrefix = "DLC Build: ";

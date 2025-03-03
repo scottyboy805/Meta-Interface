@@ -7,6 +7,12 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Events;
+using System.Security.Cryptography;
+
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace DLCToolkit
 {
@@ -84,14 +90,15 @@ namespace DLCToolkit
         private static readonly Queue<DLCContent> availableContents = new Queue<DLCContent>();
         private static readonly List<DLCContent> allContents = new List<DLCContent>();
 
+        private string hostName = null;
         private DLCLoadMode loadMode = DLCLoadMode.Full;
         private DLCLoadState loadState = DLCLoadState.NotLoaded;
         private IDRMProvider drmProvider = null;
         private DLCAsync<DLCContent> loadAsync = null;        
         private DLCStreamProvider streamProvider = null;
 
-        private DLCAssetCollection<DLCSharedAsset> sharedAssetsCollection = DLCAssetCollection<DLCSharedAsset>.Empty();
-        private DLCAssetCollection<DLCSceneAsset> sceneAssetsCollection = DLCAssetCollection<DLCSceneAsset>.Empty();
+        private DLCSharedAssetCollection sharedAssetsCollection = DLCSharedAssetCollection.Empty();
+        private DLCSceneAssetCollection sceneAssetsCollection = DLCSceneAssetCollection.Empty();
 
         // Internal
         internal DLCBundle bundle = null;
@@ -99,7 +106,8 @@ namespace DLCToolkit
         internal DLCIconSet iconSet = null;
         internal DLCScriptAssembly scriptAssembly = null;
         internal DLCContentBundle sharedAssetsBundle = null;
-        internal DLCContentBundle sceneAssetsBundle = null;        
+        internal DLCContentBundle sceneAssetsBundle = null;
+        internal bool willDestroyInstantiatedContent = false;
 
         // Properties
         internal static IReadOnlyList<DLCContent> AllContents
@@ -194,7 +202,7 @@ namespace DLCToolkit
         /// Provides access to useful asset metadata such as name, path, extension, type and more.
         /// </summary>
         /// <exception cref="DLCNotLoadedException">The DLC is not currently loaded or is loaded in metadata only mode</exception>
-        public DLCAssetCollection<DLCSharedAsset> SharedAssets
+        public DLCSharedAssetCollection SharedAssets
         {
             get 
             {
@@ -209,7 +217,7 @@ namespace DLCToolkit
         /// Provides access to useful asset metadata such as name, path, extension, type and more.
         /// </summary>
         /// <exception cref="DLCNotLoadedException">The DLC is not currently loaded or is loaded in metadata only mode</exception>
-        public DLCAssetCollection<DLCSceneAsset> SceneAssets
+        public DLCSceneAssetCollection SceneAssets
         {
             get 
             {
@@ -219,16 +227,48 @@ namespace DLCToolkit
         }
 
         // Methods
+#if UNITY_EDITOR
+        [InitializeOnEnterPlayMode]
+        private static void OnEnterPlayMode(EnterPlayModeOptions options)
+        {
+            // Support enter play mode options
+            availableContents.Clear();
+            allContents.Clear();
+        }
+#endif
+
+        /// <summary>
+        /// Override implementation of ToString.
+        /// </summary>
+        /// <returns>Get the string representation of the DLCContent</returns>
+        public override string ToString()
+        {
+            if (loadState == DLCLoadState.Loaded)
+            {
+                // Get extra hint
+                string extra = loadMode switch
+                { 
+                    DLCLoadMode.Header => "(Header Only)",
+                    DLCLoadMode.Metadata => "(Metadata Only)",
+                    DLCLoadMode.MetadataWithAssets => "(Metadata With Assets)",
+                    _ => string.Empty,
+                };
+
+                return string.Format("{0}<{1}, {2}>{3}", nameof(DLCContent), NameInfo.Name, NameInfo.Version, extra);
+            }
+
+            return base.ToString();
+        }
+
         private void Awake()
         {
-            // Force awake
-            DLC.Config.SetRuntimeLogLevel();
+            hostName = gameObject.name;
         }
 
         private void OnDestroy()
         {
             // Release resources
-            Dispose();
+            Unload(true);
         }
 
         internal bool IsLoadPath(string path)
@@ -276,7 +316,7 @@ namespace DLCToolkit
             if (loadMode <= DLCLoadMode.Metadata)
             {
                 Debug.Log("Partial DLC load completed - Metadata content");
-                loadState = DLCLoadState.Loaded;
+                SetLoadState(DLCLoadState.Loaded);
                 return;
             }
 
@@ -343,6 +383,9 @@ namespace DLCToolkit
                     // Extract our shared asset table
                     sharedAssetsCollection = sharedAssetsMetadata.ExtractSharedAssets(this, sharedAssetsBundle, loadMode);
 
+                    // Add to dlc
+                    DLC.allSharedAssets.AddRange(sharedAssetsCollection.EnumerateAll());
+
                     // Preload if option is set - otherwise lazy load on demand
                     if ((bundle.Flags & DLCBundle.ContentFlags.PreloadSharedBundle) != 0)
                     {
@@ -377,6 +420,9 @@ namespace DLCToolkit
                     // Extract our scene asset table
                     sceneAssetsCollection = sceneAssetsMetadata.ExtractSceneAssets(this, sceneAssetsBundle, loadMode);
 
+                    // Add to dlc
+                    DLC.allSceneAssets.AddRange(sceneAssetsCollection.EnumerateAll());
+
                     // Preload if option is set - otherwise lazy load on demand
                     if ((bundle.Flags & DLCBundle.ContentFlags.PreloadSceneBundle) != 0)
                     {
@@ -391,11 +437,21 @@ namespace DLCToolkit
 
             // Set load state
             Debug.Log("DLC was loaded successfully: " + metadata.NameInfo.Name);
-            loadState = DLCLoadState.Loaded;
+            SetLoadState(DLCLoadState.Loaded);
 
             // Track in use
             if (drmProvider != null && Application.isPlaying == true)
-                drmProvider.TrackDLCUsage(metadata.NameInfo.UniqueKey, true);
+            {
+                try
+                { 
+                    drmProvider.TrackDLCUsage(metadata.NameInfo.UniqueKey, true);
+                }
+                catch (NotSupportedException) { } // The API is optional and can be discarded using a NotSupportedException
+                catch (Exception e)
+                {
+                    Debug.LogError("Unhandled exception thrown by DRM call: " + e);
+                }
+            }
         }
 
         internal void LoadDLCContentAsync(DLCAsync<DLCContent> async, DLCStreamProvider streamProvider, DLCLoadMode loadMode)
@@ -456,7 +512,7 @@ namespace DLCToolkit
             {
                 async.Error("The DLC content was built with a different Unity version");
                 loadAsync = null;
-                loadState = DLCLoadState.NotLoaded;
+                SetLoadState(DLCLoadState.NotLoaded);
                 yield break;
             }
 
@@ -465,7 +521,7 @@ namespace DLCToolkit
             {
                 async.Error("The DLC content was created with a newer version of DLC Toolkit");
                 loadAsync = null;
-                loadState = DLCLoadState.NotLoaded;
+                SetLoadState(DLCLoadState.NotLoaded);
                 yield break;
             }
 
@@ -475,7 +531,7 @@ namespace DLCToolkit
                 Debug.Log("Partial DLC load completed - Metadata content");
                 async.Complete(true, this);
                 loadAsync = null;
-                loadState = DLCLoadState.Loaded;
+                SetLoadState(DLCLoadState.Loaded);
                 yield break;
             }
 
@@ -566,6 +622,9 @@ namespace DLCToolkit
                     // Extract our shared asset table
                     sharedAssetsCollection = sharedAssetsMetadata.ExtractSharedAssets(this, sharedAssetsBundle, loadMode);
 
+                    // Add to dlc
+                    DLC.allSharedAssets.AddRange(sharedAssetsCollection.EnumerateAll());
+
 
                     // Preload if option is set - otherwise lazy load on demand
                     if ((bundle.Flags & DLCBundle.ContentFlags.PreloadSharedBundle) != 0)
@@ -636,6 +695,9 @@ namespace DLCToolkit
                     // Extract our scene asset table
                     sceneAssetsCollection = sceneAssetsMetadata.ExtractSceneAssets(this, sceneAssetsBundle, loadMode);
 
+                    // Add to dlc
+                    DLC.allSceneAssets.AddRange(sceneAssetsCollection.EnumerateAll());
+
 
                     // Preload if option is set - otherwise lazy load on demand
                     if ((bundle.Flags & DLCBundle.ContentFlags.PreloadSceneBundle) != 0)
@@ -670,14 +732,24 @@ namespace DLCToolkit
             // Set load state
             Debug.Log("DLC was loaded successfully: " + metadata.NameInfo.Name);
             loadAsync = null;
-            loadState = DLCLoadState.Loaded;
+            SetLoadState(DLCLoadState.Loaded);
 
             // Complete operation
             async.Complete(true, this);
 
             // Track in use
             if (drmProvider != null && Application.isPlaying == true)
-                drmProvider.TrackDLCUsage(metadata.NameInfo.UniqueKey, true);
+            {
+                try
+                { 
+                    drmProvider.TrackDLCUsage(metadata.NameInfo.UniqueKey, true);
+                }
+                catch (NotSupportedException) { } // The API is optional and can be discarded using a NotSupportedException
+                catch (Exception e)
+                {
+                    Debug.LogError("Unhandled exception thrown by DRM call: " + e);
+                }
+            }
         }
 
         internal DLCAsync<DLCContent> AwaitLoadedAsync(IDLCAsyncProvider asyncProvider)
@@ -709,15 +781,25 @@ namespace DLCToolkit
             async.Complete(IsLoaded, this);
         }
 
+#if UNITY_EDITOR
+        [ContextMenu("Unload DLC")]
+        private void UnloadInEditor() => Unload();
+#endif
+
         /// <summary>
         /// Request that the DLC contents be unloaded from memory.
-        /// This will case DLC metadata, assets and scenes to be unloaded.
+        /// This will cause DLC metadata, assets and scenes to be unloaded.
         /// Note that the <see cref="DLCContent"/> container object will not be destroyed and will remain in memory until manually destroyed.
         /// Use <see cref="Dispose"/> to unload the content and to recycle the <see cref="DLCContent"/> container object for use in other DLC load operations.
         /// </summary>
         /// <param name="withAssets">Should asset instances also be unloaded</param>
-        public void Unload(bool withAssets = true)
+        /// <param name="destroyInstantiatedContent">Should objects in any scene that were instantiated from DLC prefabs also be destroyed</param>
+        public void Unload(bool withAssets = true, bool destroyInstantiatedContent = false)
         {
+            // Remove this
+            if (allContents.Contains(this) == true)
+                allContents.Remove(this);
+
             // Check for loaded
             if (loadState != DLCLoadState.Loaded)
                 return;
@@ -725,15 +807,25 @@ namespace DLCToolkit
             // Track no longer use
             if (drmProvider != null && Application.isPlaying == true)
             {
-                drmProvider.TrackDLCUsage(metadata.NameInfo.UniqueKey, false);
-                drmProvider = null;
+                try
+                {
+                    drmProvider.TrackDLCUsage(metadata.NameInfo.UniqueKey, false);
+                    drmProvider = null;
+                }
+                catch (NotSupportedException) { } // The API is optional and can be discarded using a NotSupportedException
+                catch (Exception e)
+                {
+                    Debug.LogError("Unhandled exception thrown by DRM call: " + e);
+                }
             }
+
+            // Check for instantiated content
+            if (destroyInstantiatedContent == true)
+                willDestroyInstantiatedContent = true;
 
             // Trigger event
             OnWillUnload.Invoke();
-
-            // Remove this
-            allContents.Remove(this);
+            DLC.OnContentWillUnload.Invoke(this);
 
             // Release loaded shared assets
             if (sharedAssetsBundle != null)
@@ -759,13 +851,20 @@ namespace DLCToolkit
                 iconSet = null;
             }
 
+            // Remove from dlc
+            foreach (DLCSharedAsset asset in sharedAssetsCollection)
+                DLC.allSharedAssets.Remove(asset);
+
+            foreach(DLCSceneAsset asset in sceneAssetsCollection)
+                DLC.allSceneAssets.Remove(asset);
+
             // Reset collections
-            sharedAssetsCollection = DLCAssetCollection<DLCSharedAsset>.Empty();
-            sceneAssetsCollection = DLCAssetCollection<DLCSceneAsset>.Empty();
+            sharedAssetsCollection = DLCSharedAssetCollection.Empty();
+            sceneAssetsCollection = DLCSceneAssetCollection.Empty();
 
             // Reset state
             loadMode = DLCLoadMode.Full;
-            loadState = DLCLoadState.NotLoaded;            
+            SetLoadState(DLCLoadState.NotLoaded);
 
             // Dispose of bundle
             if (bundle != null)
@@ -777,10 +876,30 @@ namespace DLCToolkit
 
             // Trigger event
             OnUnloaded.Invoke();
+            DLC.OnContentUnloaded.Invoke(this);
+
+            // Reset content flag after event
+            willDestroyInstantiatedContent = false;
+
+            // Cache this host - Check for not destroyed
+            if (this != null)
+                availableContents.Enqueue(this);
         }
 
-        public DLCAsync UnloadAsync(bool withAssets = true)
+        /// <summary>
+        /// Request that the DLC contents be unloaded from memory asynchronously.
+        /// This will cause DLC metadata, assets and scenes to be unloaded.
+        /// Note that the <see cref="DLCContent"/> container object will not be destroyed and will remain in memory until manually destroyed.
+        /// Use <see cref="Dispose"/> to unload the content and to recycle the <see cref="DLCContent"/> container object for use in other DLC load operations.
+        /// </summary>
+        /// <param name="withAssets">Should asset instances also be unloaded</param>
+        /// <param name="destroyInstantiatedContent">Should objects in any scene that were instantiated from DLC prefabs also be destroyed</param>
+        public DLCAsync UnloadAsync(bool withAssets = true, bool destroyInstantiatedContent = false)
         {
+            // Remove this
+            if (allContents.Contains(this) == true)
+                allContents.Remove(this);
+
             // Check for loaded
             if (loadState != DLCLoadState.Loaded)
                 return DLCAsync.Completed(true);
@@ -788,16 +907,26 @@ namespace DLCToolkit
             // Track no longer use
             if (drmProvider != null && Application.isPlaying == true)
             {
-                drmProvider.TrackDLCUsage(metadata.NameInfo.UniqueKey, false);
-                drmProvider = null;
+                try
+                { 
+                    drmProvider.TrackDLCUsage(metadata.NameInfo.UniqueKey, false);
+                    drmProvider = null;
+                }
+                catch (NotSupportedException) { } // The API is optional and can be discarded using a NotSupportedException
+                catch (Exception e)
+                {
+                    Debug.LogError("Unhandled exception thrown by DRM call: " + e);
+                }
             }
+
+            // Check for instantiated content
+            if (destroyInstantiatedContent == true)
+                willDestroyInstantiatedContent = true;
 
             // Trigger event
             OnWillUnload.Invoke();
-
-            // Remove this
-            allContents.Remove(this);            
-
+            DLC.OnContentWillUnload.Invoke(this);
+       
             // Reset state
             metadata = null;
 
@@ -808,13 +937,20 @@ namespace DLCToolkit
                 iconSet = null;
             }
 
+            // Remove from dlc
+            foreach (DLCSharedAsset asset in sharedAssetsCollection)
+                DLC.allSharedAssets.Remove(asset);
+
+            foreach (DLCSceneAsset asset in sceneAssetsCollection)
+                DLC.allSceneAssets.Remove(asset);
+
             // Reset collections
-            sharedAssetsCollection = DLCAssetCollection<DLCSharedAsset>.Empty();
-            sceneAssetsCollection = DLCAssetCollection<DLCSceneAsset>.Empty();
+            sharedAssetsCollection = DLCSharedAssetCollection.Empty();
+            sceneAssetsCollection = DLCSceneAssetCollection.Empty();
 
             // Reset state
             loadMode = DLCLoadMode.Full;
-            loadState = DLCLoadState.NotLoaded;
+            SetLoadState(DLCLoadState.NotLoaded);
 
             // Create async
             DLCAsync async = new DLCAsync();
@@ -878,6 +1014,20 @@ namespace DLCToolkit
 
             // Trigger event
             OnUnloaded.Invoke();
+            DLC.OnContentUnloaded.Invoke(this);
+
+            // Reset flag after event
+            willDestroyInstantiatedContent = false;
+        }
+
+        private void SetLoadState(DLCLoadState loadState)
+        {
+            this.loadState = loadState;
+
+            // Update name
+            gameObject.name = loadState == DLCLoadState.Loaded
+                ? string.Format("{0}<{1}, {2}>", hostName, NameInfo.Name, NameInfo.Version)
+                : hostName;
         }
 
         /// <summary>
@@ -888,12 +1038,8 @@ namespace DLCToolkit
         /// </summary>
         public void Dispose()
         {
-            // Unload
-            Unload(true);
-
-            // Cache this host - Check for not destroyed
-            if(this != null)
-                availableContents.Enqueue(this);
+            // Destroy the host object triggering a full unload and destruction of the host
+            Destroy(gameObject);
         }
 
         Coroutine IDLCAsyncProvider.RunAsync(IEnumerator routine)
@@ -931,8 +1077,9 @@ namespace DLCToolkit
                 GameObject temp = new GameObject(defaultGameObjectName);
                 result = temp.AddComponent<DLCContent>();
 
-                // Keep alive
-                DontDestroyOnLoad(temp);
+                // Keep alive in play mode
+                if(Application.isPlaying == true)
+                    DontDestroyOnLoad(temp);
             }
 
             // Update provider

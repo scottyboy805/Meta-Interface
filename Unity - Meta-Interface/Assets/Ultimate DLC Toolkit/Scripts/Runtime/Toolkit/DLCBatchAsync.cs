@@ -94,7 +94,8 @@ namespace DLCToolkit
                     // Get number of successful
                     int successfulCount = items.Where(i => i.IsSuccessful == true).Count();
 
-                    this.Error(string.Format("({0} / {1}) successful", successfulCount, TotalCount));
+                    this.Error(string.Format("({0} / {1}) successful", successfulCount, TotalCount),
+                        items.Where(i => i.IsSuccessful == true).Select(t => t.Result).ToArray());
                 }
             }
         }
@@ -115,7 +116,6 @@ namespace DLCToolkit
     /// Can represent the progress and status of all operations combined and will wait until all operations have finished.
     /// Note that all sub operations will run in parallel in most cases, so a batch operation will only usually take as much time as the longest sub operation in most cases, plus some minor overhead for management.
     /// </summary>
-    /// <typeparam name="T">The generic type returned by each sub operation</typeparam>
     public sealed class DLCBatchAsync : DLCAsync
     {
         // Private

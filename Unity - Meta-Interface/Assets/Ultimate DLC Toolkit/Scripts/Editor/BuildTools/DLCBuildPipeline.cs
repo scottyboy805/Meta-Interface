@@ -70,6 +70,9 @@ namespace DLCToolkit.BuildTools
         // Private
         private static readonly string profileDBSearch = "t:" + typeof(DLCProfile).FullName;
 
+        // Public
+        public static string StreamingAssetsPath = "Assets/StreamingAssets";
+
         // Constructor
         static DLCBuildPipeline()
         {
@@ -82,6 +85,135 @@ namespace DLCToolkit.BuildTools
         }
 
         // Methods
+        public static DLCManifest GetProjectManifest(BuildTarget target, bool usePlatformPath = false)
+        {
+            // Load profiles for current build target
+            DLCProfile[] profiles = DLCBuildPipeline.GetAllDLCProfiles(new[] { target });
+
+            // Create manifest entries
+            List<DLCManifestEntry> manifestEntries = new List<DLCManifestEntry>();
+
+            // Process all profiles
+            foreach (DLCProfile profile in profiles)
+            {
+                // Get the platform profile
+                DLCPlatformProfile platformProfile = profile.GetPlatform(target);
+
+                // Check for error
+                if (platformProfile == null)
+                    continue;
+
+                // Get the path
+                string dlcPath = profile.GetPlatformOutputPath(target);
+
+                // Get file meta
+                long size = 0;
+                DateTime writeTime = default;
+
+                if (File.Exists(dlcPath) == true)
+                {
+                    // Create the file info
+                    FileInfo info = new FileInfo(dlcPath);
+
+                    size = info.Length;
+                    writeTime = info.LastWriteTime;
+                }
+                else
+                    dlcPath = "";
+
+                // Get IAP name
+                string iapName = platformProfile.IsLinkedToIAP == true
+                    ? platformProfile.DLCIAPName
+                    : string.Empty;
+
+                // Get assets
+                string[] assetPaths = GetAllAssetPathsForDLCPlatformProfile(profile, platformProfile);
+
+                // Make relative paths
+                for(int i = 0; i < assetPaths.Length; i++)
+                    assetPaths[i] = profile.GetAssetRelativePath(assetPaths[i]);
+
+                // Build manifest entry
+                DLCManifestEntry entry = new DLCManifestEntry
+                {
+                    dlcUniqueKey = platformProfile.DlcUniqueKey,
+                    dlcName = profile.DLCName,
+                    dlcPath = usePlatformPath == false
+                        ? profile.GetShipWithGameOutputPath(target)
+                        : dlcPath,
+                    dlcIAPName = iapName,
+                    shipWithGame = platformProfile.ShipWithGame,
+                    streamingContent = platformProfile.ShipWithGameDirectory == ShipWithGameDirectory.StreamingAssets,
+                    sizeOnDisk = size,
+                    lastWriteTime = writeTime,
+                    assets = assetPaths.Where(a => Path.GetExtension(a) != DLCBuildAsset.sceneExtension).ToList(),
+                    scenes = assetPaths.Where(a => Path.GetExtension(a) == DLCBuildAsset.sceneExtension).ToList(),
+                };
+
+                // Add the entry
+                manifestEntries.Add(entry);
+            }
+
+            // Create the manifest
+            return new DLCManifest
+            {
+                dlcContents = manifestEntries.ToArray(),
+            };
+        }
+
+        public static DLCProfile CreateDLCProfile(string createInFolder, string dlcName, Version dlcVersion = null)
+        {
+            // Create profile
+            DLCProfile profile = ScriptableObject.CreateInstance<DLCProfile>();
+
+            // Create version
+            if (dlcVersion == null)
+                dlcVersion = new Version(1, 0, 0);
+
+            profile.DLCName = dlcName;
+            profile.DLCVersionString = dlcVersion.ToString();
+
+            // Save in project
+            CreateDLCProfileInProject(profile, createInFolder);
+
+            return profile;
+        }
+
+        private static void CreateDLCProfileInProject(DLCProfile profile, string createInFolder)
+        {
+            // Update platform unique keys
+            string uniqueKey = profile.DLCName.Replace(" ", "")
+                .ToLower();
+
+            // Remove disabled platforms
+            profile.RemoveDisabledPlatforms();
+
+            // Update platform unique key
+            foreach (DLCPlatformProfile platform in profile.Platforms)
+                platform.DlcUniqueKey = uniqueKey;
+
+
+            // Create directory
+            if (Directory.Exists(createInFolder) == false)
+                Directory.CreateDirectory(createInFolder);
+
+            // Import
+            AssetDatabase.Refresh();
+
+            // Save the asset
+            AssetDatabase.CreateAsset(profile, createInFolder + "/" + profile.DLCName + ".asset");
+
+            // Update content folder - must be performed after asset is created
+            profile.UpdateDLCContentPath();
+            AssetDatabase.SaveAssetIfDirty(profile);
+
+            // Select the asset
+            Selection.SetActiveObjectWithContext(profile, profile);
+
+            // Ping folder
+            EditorGUIUtility.PingObject(profile);
+        }
+
         /// <summary>
         /// Try to get the <see cref="DLCProfile"/> from the project with the specified name and optional version.
         /// </summary>
@@ -327,6 +459,66 @@ namespace DLCToolkit.BuildTools
             return result.ToArray();
         }
 
+        public static string[] GetAllAssetPathsForDLCPlatformProfile(DLCProfile profile, DLCPlatformProfile platformProfile, bool includeIcons = false, bool includeScripts = false)
+        {
+            // Check for null
+            if (profile == null)
+                throw new ArgumentNullException(nameof(profile));
+
+            if(platformProfile == null)
+                throw new ArgumentNullException(nameof(platformProfile));
+
+            // Get profile path
+            string profilePath = AssetDatabase.GetAssetPath(profile);
+
+            // Get profile guid
+            string profileGuid;
+            long localID;
+            if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(profile, out profileGuid, out localID) == false)
+                throw new Exception("Could not determine guid for profile asset: " + profile + ". Please ensure the profile asset has been saved first");
+
+            // Search in content folder
+            string[] guids = AssetDatabase.FindAssets("", new string[] { profile.DLCContentPath });
+
+            // Get exclude directories
+            IList<string> platformExcludeDirectories = platformProfile.GetPlatformExcludeDirectories();
+
+            // Create results
+            List<string> result = new List<string>(guids.Length);
+
+            // Process all assets
+            foreach (string guid in guids)
+            {
+                // Check for profile asset
+                if (guid == profileGuid)
+                    continue;
+
+                // Get asset path
+                string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+
+                // Check for folder
+                if (Path.HasExtension(assetPath) == false)
+                    continue;
+
+                // Check for excluded due to special folders
+                if (DLCBuildContext.IsSpecialFolderExcluded(platformExcludeDirectories, assetPath) == true)
+                    continue;
+
+                // Check for icon content
+                if (includeIcons == false && DLCBuildContext.IsIconAssetExcluded(profile, assetPath) == true)
+                    continue;
+
+                // Check for scripts
+                if (includeIcons == false && Path.GetExtension(assetPath) == DLCBuildAsset.scriptExtension)
+                    continue;
+
+                // Add the guid
+                result.Add(assetPath);
+            }
+
+            return result.ToArray();
+        }
+
         /// <summary>
         /// Build all <see cref="DLCProfile"/> in the project with the specified options.
         /// </summary>
@@ -462,47 +654,151 @@ namespace DLCToolkit.BuildTools
             // Check for install
             if(install == true)
             {
-                bool hasStreamingBuilds = false;
-
-                // Copy all successful
-                foreach (DLCBuildTask task in result.GetSuccessfulBuildTasks())
-                {
-                    // Check for streaming
-                    if (shipProfilesStreaming.Contains(task.Profile) == true)
-                    {
-                        // Copy to streaming
-                        string copyPath = Path.Combine("Assets/StreamingAssets", task.PlatformProfile.ShipWithGamePath);
-
-                        // Create directory
-                        if (Directory.Exists(copyPath) == false)
-                            Directory.CreateDirectory(copyPath);
-
-                        // Copy to output
-                        File.Copy(task.OutputPath, Path.Combine(copyPath, Path.GetFileName(task.OutputPath)), true);
-                        hasStreamingBuilds = true;
-                    }
-                    // Check for build
-                    else
-                    {
-                        // Copy to build
-                        string copyPath = Path.Combine(buildOutputFolder, task.PlatformProfile.ShipWithGamePath);
-
-                        // Create directory
-                        if (Directory.Exists(copyPath) == false)
-                            Directory.CreateDirectory(copyPath);
-
-                        // Copy to output
-                        File.Copy(task.OutputPath, Path.Combine(copyPath, Path.GetFileName(task.OutputPath)), true);
-                    }
-                }
-
-                // Refresh for streaming assets
-                if (hasStreamingBuilds == true)
-                    AssetDatabase.Refresh();
+                // Install DLC in the correct location
+                InstallDLCShipWithGameContent(result.BuildTasks.ToArray(), buildOutputFolder);
             }
             
             // Get the build result
             return result;
+        }
+
+        /// <summary>
+        /// Attempt to install all built DLC from a DLC build result into the built game output folder.
+        /// Only DLC profiles that are enabled, enabled for platform, are set as `Ship With Game`, and have been built atleast once will be included.
+        /// Optionally you can specify a subset of <see cref="DLCProfile"/> that you want to install, otherwise all DLC profiles in the project matching the above criteria will attempt to be installed.
+        /// Note: Any DLC profiles set to install in the streaming assets location will also be installed as part of this operation.
+        /// </summary>
+        /// <param name="dlcBuildTasks">The DLC build tasks that should be installed</param>
+        /// <param name="buildOutputFolder">The build folder where the built game has been created (Can be an empty folder in which case the DLC will still be installed at the correct relative location)</param>
+        /// <param name="successfulBuildsOnly">Should only DLC builds that were successful be installed in the output directory. Setting this to false will also try to install any DLC that did not build, but may have been built previously</param>
+        /// <exception cref="ArgumentNullException">dlcBuildTasks is null</exception>
+        public static void InstallDLCShipWithGameContent(DLCBuildTask[] dlcBuildTasks, string buildOutputFolder, bool successfulBuildsOnly = true)
+        {
+            // Check for null
+            if (dlcBuildTasks == null)
+                throw new ArgumentNullException(nameof(dlcBuildTasks));
+
+            bool hasStreamingBuilds = false;
+
+            // Copy all successful
+            foreach (DLCBuildTask task in dlcBuildTasks)
+            {
+                // Check for successful
+                if (task == null || (successfulBuildsOnly == true && task.Success == false))
+                    continue;
+
+                // Check for ship with game
+                if (task.PlatformProfile.ShipWithGame == false)
+                    continue;
+
+                // Check for output file created
+                if (File.Exists(task.OutputPath) == false)
+                    continue;
+
+                // Check for streaming
+                if (task.PlatformProfile.ShipWithGameDirectory == ShipWithGameDirectory.StreamingAssets)
+                {
+                    // Copy to streaming
+                    string copyPath = Path.Combine(StreamingAssetsPath, task.PlatformProfile.ShipWithGamePath);
+
+                    // Create directory
+                    if (Directory.Exists(copyPath) == false)
+                        Directory.CreateDirectory(copyPath);
+
+                    // Copy to output
+                    File.Copy(task.OutputPath, Path.Combine(copyPath, Path.GetFileName(task.OutputPath)), true);
+                    hasStreamingBuilds = true;
+                }
+                // Check for build
+                else
+                {
+                    // Copy to build
+                    string copyPath = Path.Combine(buildOutputFolder, task.PlatformProfile.ShipWithGamePath);
+
+                    // Create directory
+                    if (Directory.Exists(copyPath) == false)
+                        Directory.CreateDirectory(copyPath);
+
+                    // Copy to output
+                    File.Copy(task.OutputPath, Path.Combine(copyPath, Path.GetFileName(task.OutputPath)), true);
+                }
+            }
+
+            // Refresh for streaming assets
+            if (hasStreamingBuilds == true)
+                AssetDatabase.Refresh();
+        }
+
+        /// <summary>
+        /// Attempt to install all built DLC for the specific build target into the built game output folder.
+        /// Only DLC profiles that are enabled, enabled for platform, are set as `Ship With Game`, and have been built atleast once will be included.
+        /// Optionally you can specify a subset of <see cref="DLCProfile"/> that you want to install, otherwise all DLC profiles in the project matching the above criteria will attempt to be installed.
+        /// Note: Any DLC profiles set to install in the streaming assets location will also be installed as part of this operation.
+        /// </summary>
+        /// <param name="target">The build target to install. For example: Use StandaloneWindows64 if you want to install for a Windows game</param>
+        /// <param name="buildOutputFolder">The build folder where the built game has been created (Can be an empty folder in which case the DLC will still be installed at the correct relative location)</param>
+        /// <param name="profiles">An optional array of profiles if you only want to install specific DLC, or null if all matching profiles in the project should be installed</param>
+        public static void InstallDLCShipWithGameContent(BuildTarget target, string buildOutputFolder, DLCProfile[] profiles = null)
+        {
+            // Create profiles
+            if (profiles == null)
+                profiles = GetAllDLCProfiles(new BuildTarget[] { target });
+
+            bool hasStreamingBuilds = false;
+
+            // Copy all successful
+            foreach (DLCProfile profile in profiles)
+            {
+                // Check for profile
+                if (profile == null || profile.EnabledForBuild == false)
+                    continue;
+
+                // Get platform profile
+                DLCPlatformProfile platformProfile = profile.GetPlatform(target);
+
+                // Check for platform profile
+                if (platformProfile == null || platformProfile.Enabled == false || platformProfile.ShipWithGame == false)
+                    continue;
+
+                // Get the build path
+                string outputPath = profile.GetPlatformOutputPath(target);
+
+                // Check for output file created
+                if (File.Exists(outputPath) == false)
+                    continue;
+
+                // Check for streaming
+                if (platformProfile.ShipWithGameDirectory == ShipWithGameDirectory.StreamingAssets)
+                {
+                    // Copy to streaming
+                    string copyPath = Path.Combine(StreamingAssetsPath, platformProfile.ShipWithGamePath);
+
+                    // Create directory
+                    if (Directory.Exists(copyPath) == false)
+                        Directory.CreateDirectory(copyPath);                    
+
+                    // Copy to output
+                    File.Copy(outputPath, Path.Combine(copyPath, Path.GetFileName(outputPath)), true);
+                    hasStreamingBuilds = true;
+                }
+                // Check for build
+                else
+                {
+                    // Copy to build
+                    string copyPath = Path.Combine(buildOutputFolder, platformProfile.ShipWithGamePath);
+
+                    // Create directory
+                    if (Directory.Exists(copyPath) == false)
+                        Directory.CreateDirectory(copyPath);
+
+                    // Copy to output
+                    File.Copy(outputPath, Path.Combine(copyPath, Path.GetFileName(outputPath)), true);
+                }
+            }
+
+            // Refresh for streaming assets
+            if (hasStreamingBuilds == true)
+                AssetDatabase.Refresh();
         }
 
         /// <summary>
@@ -524,9 +820,6 @@ namespace DLCToolkit.BuildTools
             // Get or create asset
             DLCConfig config = DLC.Config;
 
-            // Set build log level
-            config.SetBuildLogLevel();
-
             // Write product hash
             using (HashAlgorithm hash = SHA256.Create())
             {
@@ -547,40 +840,6 @@ namespace DLCToolkit.BuildTools
                 config.UpdateVersionHash(hash.ComputeHash(Encoding.UTF8.GetBytes(versionString)));
             }
 
-
-            // Update available content
-            // Get all profiles
-            DLCProfile[] profiles = GetAllDLCProfiles();
-
-            // Build all platform keys
-            Dictionary<RuntimePlatform, string> platformUniqueKeys = new Dictionary<RuntimePlatform, string>();
-
-            // Check all profiles
-            foreach(DLCProfile profile in profiles)
-            {
-                // Check for enabled
-                if (profile.EnabledForBuild == false)
-                    continue;
-
-                // Check all platforms
-                foreach(DLCPlatformProfile platform in profile.Platforms)
-                {
-                    // Check for enabled
-                    if (platform.Enabled == false)
-                        continue;
-
-                    // Register content
-                    try
-                    {
-                        platformUniqueKeys[platform.RuntimePlatform] = platform.DlcUniqueKey;
-                    }
-                    // Platform is not supported
-                    catch (NotSupportedException) { }
-                }
-            }
-
-            // Store platforms
-            config.UpdatePlatformContent(platformUniqueKeys);
             return config;
         }
 

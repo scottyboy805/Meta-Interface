@@ -130,6 +130,15 @@ namespace DLCToolkit
 
         // Methods
         /// <summary>
+        /// Override implementation of ToString.
+        /// </summary>
+        /// <returns>The string representation of the DLCDirectory</returns>
+        public override string ToString()
+        {
+            return string.Format("{0}({1})", nameof(DLCDirectory), dlcDirectoryPath); 
+        }
+
+        /// <summary>
         /// Check if a valid DLC with the specified name and optional version is installed in this directory.
         /// </summary>
         /// <param name="name">The name of the DLC</param>

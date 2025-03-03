@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using Unity.VisualScripting.Antlr3.Runtime.Collections;
+using UnityEngine;
 
 namespace DLCToolkit.Format
 {
@@ -75,6 +75,8 @@ namespace DLCToolkit.Format
         protected string unityVersion = "";
         protected DLCContentFlags contentFlags = 0;
         protected DateTime buildTime = DateTime.MinValue;
+        protected bool shippedWithGame = false;
+        protected DLCCustomMetadata customMetadata = null;
 
         // Properties
         public IDLCNameInfo NameInfo
@@ -122,10 +124,20 @@ namespace DLCToolkit.Format
             get { return buildTime; }
         }
 
+        public bool ShippedWithGame
+        {
+            get { return shippedWithGame; }
+        }
+
+        public bool HasCustomMetadata
+        {
+            get { return customMetadata != null; }
+        }
+
         // Constructor
         internal DLCMetadata() { }
 
-        internal DLCMetadata(DLCNameInfo nameInfo, string guid, string description, string developer, string publisher, Version toolkitVersion, string unityVersion, DLCContentFlags contentFlags)
+        internal DLCMetadata(DLCNameInfo nameInfo, string guid, string description, string developer, string publisher, Version toolkitVersion, string unityVersion, DLCContentFlags contentFlags, bool shippedWithGame)
         {
             this.nameInfo = nameInfo;
             this.guid = guid;
@@ -136,9 +148,20 @@ namespace DLCToolkit.Format
             this.unityVersion = unityVersion;
             this.contentFlags = contentFlags;
             this.buildTime = DateTime.Now;
+            this.shippedWithGame = shippedWithGame;
         }
 
         // Methods
+        DLCCustomMetadata IDLCMetadata.GetCustomMetadata()
+        {
+            return customMetadata;
+        }
+
+        T IDLCMetadata.GetCustomMetadata<T>()
+        {
+            return customMetadata as T;
+        }
+
         string IDLCMetadata.GetNetworkUniqueIdentifier(bool includeBuildStamp)
         {
             // Create unique id
@@ -210,6 +233,30 @@ namespace DLCToolkit.Format
                 unityVersion = reader.ReadString();
                 contentFlags = (DLCContentFlags)reader.ReadUInt32();
                 buildTime = DateTime.FromFileTime(reader.ReadInt64());
+                shippedWithGame = reader.ReadBoolean();
+
+                // Custom metadata
+                bool hasCustomMetadata = reader.ReadBoolean();
+
+                if(hasCustomMetadata == true)
+                {
+                    // Read type
+                    string customMetadataTypeString = DLCFormatUtils.ReadString(reader);
+
+                    // Try to resolve type
+                    Type customMetadataType = Type.GetType(customMetadataTypeString, false);
+
+                    // Check for resolved
+                    if(customMetadataType != null)
+                    {
+                        // Create instance
+                        customMetadata = ScriptableObject.CreateInstance(customMetadataType) as DLCCustomMetadata;
+
+                        // Load metadata
+                        if(customMetadata != null)
+                            customMetadata.FromSerializeString(DLCFormatUtils.ReadString(reader));
+                    }
+                }
             }
         }
     }

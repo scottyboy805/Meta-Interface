@@ -1,4 +1,4 @@
-﻿using Codice.Client.Common.GameUI;
+﻿using DLCToolkit.Assets;
 using DLCToolkit.DRM;
 using System;
 using System.Collections;
@@ -8,7 +8,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
-using static Codice.CM.WorkspaceServer.WorkspaceTreeDataStore;
+using UnityEngine.Events;
+using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
 
 [assembly: InternalsVisibleTo("DLCToolkit.BuildTools")]
 [assembly: InternalsVisibleTo("DLCToolkit.EditorTools")]
@@ -39,6 +41,14 @@ namespace DLCToolkit
             }
         }
 
+        // Events
+        public static readonly UnityEvent<DLCContent> OnContentWillUnload = new UnityEvent<DLCContent>();
+        public static readonly UnityEvent<DLCContent> OnContentUnloaded = new UnityEvent<DLCContent>();
+
+        // Internal
+        internal static readonly List<DLCSharedAsset> allSharedAssets = new List<DLCSharedAsset>();
+        internal static readonly List<DLCSceneAsset> allSceneAssets = new List<DLCSceneAsset>();
+
         // Private
         private static DLCContent tempContent = null;
         private static DLCAsyncCommon asyncCommon = null;
@@ -46,12 +56,17 @@ namespace DLCToolkit
 
         private static IDRMServiceProvider drmServiceProvider = new DefaultDRMServiceProvider();
         private static IDRMProvider drmProvider = null;
+        private static DLCAsync<DLCManifest> cachedManifestRequest = null;
+        private static bool isTestMode = false;
+
+        private static readonly DLCAssetCollection<DLCSharedAsset> allSharedAssetsCollection = new DLCAssetCollection<DLCSharedAsset>(allSharedAssets);
+        private static readonly DLCAssetCollection<DLCSceneAsset> allSceneAssetsCollection = new DLCAssetCollection<DLCSceneAsset>(allSceneAssets);
 
         // Public
         /// <summary>
         /// Get the current version of DLC Toolkit.
         /// </summary>
-        public static readonly Version ToolkitVersion = new Version(1, 0, 0);
+        public static readonly Version ToolkitVersion = new Version(1, 2, 0);
 
         // Properties
         private static DLCContent TempContent
@@ -73,7 +88,7 @@ namespace DLCToolkit
             }
         }
 
-        private static DLCAsyncCommon AsyncCommon
+        internal static IDLCAsyncProvider AsyncCommon
         {
             get
             {
@@ -189,38 +204,33 @@ namespace DLCToolkit
         }
 
         /// <summary>
-        /// Try to get all DLC unique keys that are available locally.
-        /// Local keys are simply DLC unique keys which were known about at the time of building the game (DLC profiles created before building the game).
-        /// Note that only unique keys for enabled DLC profiles at the time of building the game will be available.
-        /// For that reason the array will only list DLC contents that were created during development of the game, whether the DLC content was released or not.
-        /// As a result it is highly recommended that you check with the current DRM provider for a true reflection of available DLC content using <see cref="IDRMProvider.DLCUniqueKeysAsync"/> (If the current platform has DRM support and the DRM provider can support listing unique contents).
-        /// Alternatively you might use these local keys in combination with <see cref="IDRMProvider.IsDLCAvailableAsync(IDLCAsyncProvider, string)"/> to determine whether the DLC is usable (Exists via DRM) and is available (Installed locally).
+        /// An async operation to fetch the default <see cref="DLCManifest"/> that is included in all standalone builds via streaming assets.
+        /// The manifest contains information about all enabled DLC known to the game at build time.
         /// </summary>
-        public static string[] LocalDLCUniqueKeys
-        {
-            get { return Config.GetPlatformDLCUniqueKeys(); }
-        }
-
-        /// <summary>
-        /// Try to get all DLC unique keys that are available remotely. 
-        /// Remote keys are simply DLC unique keys which have been published to a DRM provider such as Steamworks.
-        /// Some DRM providers may not support listing DLC contents that are published remotely.
-        /// Note that only published unique keys will be returned here if the DRM provider supports listing available DLC contents.
-        /// Note also that all DLC unique keys will be listed here even if the user does not own or subscribed to the downloadable content. 
-        /// For that reason you should use <see cref="IDRMProvider.IsDLCAvailableAsync(IDLCAsyncProvider, string)"/> to determine whether the DLC is usable (Exists via DRM) and is available (Installed locally).
-        /// </summary>
-        /// <exception cref="NotSupportedException">DRM provider does not support listing published DLC unique keys</exception>
-        public static DLCAsync<string[]> RemoteDLCUniqueKeysAsync
+        public static DLCAsync<DLCManifest> ManifestAsync
         {
             get
             {
-                // Check for invalid
-                if (DRMProvider == null)
-                    throw new NotSupportedException("No suitable DRM provider is available on this platform. You will need to use a LoadFrom method to load DLC content");
+                // Check for not initialized
+                if (cachedManifestRequest == null)
+                    cachedManifestRequest = DLCManifest.FromProjectAsync(AsyncCommon);
 
-                // Try to get remote DLC's
-                return DRMProvider.DLCUniqueKeysAsync;
+                // Get the current operation
+                return cachedManifestRequest;
             }
+        }
+
+        /// <summary>
+        /// Get a value indicating whether Ultimate DLC Toolkit is currently setup in editor test mode.
+        /// Editor test mode allows DLC DRM management to be simulated in the editor environment.
+        /// This means that you can load any DLC you have created in the editor using the DRM API, as long as it has been built for the equivalent editor built target.
+        /// For example: The DLC must be built for StandaloneWindows if running in the Windows Editor, otherwise it will not be available for loading.
+        /// This mode is fully automatic and is intended for quick and easy testing of DLC content. 
+        /// THIS MODE IS ONLY AVAILABLE IN EDITOR AND SHOULD BE DISABLED VIA THE TOOLS MENU IF YOU WANT TO TEST HOW A STANDALONE BUILD WOULD ACTUALLY FUNCTION.
+        /// </summary>
+        public static bool IsTestMode
+        {
+            get { return Application.isEditor == true && isTestMode == true; }
         }
 
         /// <summary>
@@ -273,6 +283,16 @@ namespace DLCToolkit
             }
         }
 
+        // Constructor
+        static DLC()
+        {
+            // Only start request in play mode otherwise there will be issues
+            if (Application.isPlaying == true)
+            {
+                // Start requesting the manifest at earliest opportunity
+                cachedManifestRequest = DLCManifest.FromProjectAsync(AsyncCommon);
+            }
+        }
 
         // Methods        
         #region IsLoaded
@@ -549,23 +569,95 @@ namespace DLCToolkit
 
         #region DRM
         /// <summary>
+        /// Try to get all DLC unique keys that are available locally.
+        /// Although this operation is async, it will complete instantly on all platforms except Web.
+        /// Local keys are simply DLC unique keys which were known about at the time of building the game (DLC profiles created before building the game).
+        /// Note that only unique keys for enabled DLC profiles at the time of building the game will be available.
+        /// For that reason the array will only list DLC contents that were created during development of the game, whether the DLC content was released or not.
+        /// As a result it is highly recommended that you check with the current DRM provider for a true reflection of available DLC content using <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> (If the current platform has DRM support and the DRM provider can support listing unique contents).
+        /// Alternatively you might use these local keys in combination with <see cref="IDRMProvider.IsDLCAvailableAsync(IDLCAsyncProvider, string)"/> to determine whether the DLC is usable (Exists via DRM) and is available (Installed locally).
+        /// </summary>
+        public static DLCAsync<string[]> FetchLocalDLCUniqueKeys()
+        {
+            // Get the manifest request - should be instant on all platforms except web
+            DLCAsync<DLCManifest> manifest = ManifestAsync;
+
+            // Create request
+            DLCAsync<string[]> async = new DLCAsync<string[]>();
+
+            // Wait for operation to complete
+            AsyncCommon.RunAsync(WaitForCompleted(manifest, () =>
+            {
+                // Complete the operation
+                if(manifest.IsSuccessful == true)
+                {
+                    // Update status
+                    async.UpdateStatus("Successfully listed local DLC");
+                    async.Complete(true, manifest.Result.DLCContents.Select(c => c.DLCUniqueKey).ToArray());
+                }
+                else
+                {
+                    // Fail operation
+                    async.Error(manifest.Status);
+                }
+            }));
+
+            return async;
+        }
+
+        /// <summary>
+        /// Try to get all DLC unique keys that are available remotely. 
+        /// Remote keys are simply DLC unique keys which have been published to a DRM provider such as Steamworks.
+        /// Some DRM providers may not support listing DLC contents that are published remotely.
+        /// Note that only published unique keys will be returned here if the DRM provider supports listing available DLC contents.
+        /// Note also that all DLC unique keys will be listed here even if the user does not own or subscribed to the downloadable content. 
+        /// For that reason you should use <see cref="IDRMProvider.IsDLCAvailableAsync(IDLCAsyncProvider, string)"/> to determine whether the DLC is usable (Exists via DRM) and is available (Installed locally).
+        /// </summary>
+        /// <exception cref="NotSupportedException">No DRM provider is setup for this platform</exception>
+        public static DLCAsync<string[]> FetchRemoteDLCUniqueKeys()
+        {
+            // Check for invalid
+            if (DRMProvider == null)
+                throw new NotSupportedException("No suitable DRM provider is available on this platform. You will need to use a LoadFrom method to load DLC content");
+
+            try
+            {
+                // Try to get remote DLC's
+                return DRMProvider.GetDLCUniqueKeysAsync(AsyncCommon);
+            }
+            catch (NotSupportedException)
+            {
+                // Check for not supported
+                return DLCAsync<string[]>.Error("DRM provider does not support listing DLC content");
+            }
+            catch (Exception e)
+            {
+                // Check for error during call
+                return DLCAsync<string[]>.Error("An unhandled exception was thrown when calling the DRM provider: " + e);
+            }
+        }
+
+        /// <summary>
         /// Check if the specified DLC is purchased and installed.
         /// Some providers may need to make a web request to check for purchased DLC, so this operations must be async.
         /// </summary>
         /// <param name="uniqueKey">The unique key for the dlc</param>
         /// <returns>True if the dlc is installed or false if not</returns>
         /// <exception cref="NotSupportedException">No DRM provider for ths current platform</exception>
-        public static DLCAsync<bool> IsAvailable(string uniqueKey)
+        public static DLCAsync IsAvailable(string uniqueKey)
         {
             // Create async operations
-            DLCAsync<bool> async = new DLCAsync<bool>();
+            DLCAsync async = new DLCAsync();
             DLCAsync<KeyValuePair<bool, DLCStreamProvider>> asyncAvailable = CheckDLCAvailableAsync(AsyncCommon, uniqueKey, false);
 
             // Wait for completed
-            AsyncCommon.RunAsync(WaitForLoaded(asyncAvailable, (() =>
+            AsyncCommon.RunAsync(WaitForCompleted(asyncAvailable, (() =>
             {
+                // Update the status
+                async.UpdateStatus(asyncAvailable.Status);
+
                 // Complete the operation
-                async.Complete(asyncAvailable.IsSuccessful, asyncAvailable.IsSuccessful == true && asyncAvailable.Result.Key == true);
+                async.Complete(asyncAvailable.IsSuccessful == true && asyncAvailable.Result.Key == true);
             })));
 
             return async;
@@ -579,12 +671,31 @@ namespace DLCToolkit
         /// <exception cref="NotSupportedException">No DRM provider for ths current platform</exception>
         public static DLCAsync RequestInstall(string uniqueKey)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform");
+#else
+
             // Check for invalid
             if (DRMProvider == null)
                 throw new NotSupportedException("No suitable DRM provider is available on this platform. You will need to use a LoadFrom method to load DLC content");
 
-            // Request installation
-            return DRMProvider.RequestInstallDLCAsync(AsyncCommon, uniqueKey);
+            try
+            { 
+                // Request installation
+                return DRMProvider.RequestInstallDLCAsync(AsyncCommon, uniqueKey);
+            }
+            catch (NotSupportedException)
+            {
+                // Check for not supported
+                return DLCAsync<string[]>.Error("DRM provider does not support installing DLC content");
+            }
+            catch (Exception e)
+            {
+                // Check for error during call
+                return DLCAsync<string[]>.Error("An unhandled exception was thrown when calling the DRM provider: " + e);
+            }
+#endif
         }
 
         /// <summary>
@@ -594,14 +705,33 @@ namespace DLCToolkit
         /// <exception cref="NotSupportedException">No DRM provider for ths current platform</exception>
         public static void RequestUninstall(string uniqueKey)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform");
+#else
+
             // Check for invalid
             if (DRMProvider == null)
                 throw new NotSupportedException("No suitable DRM provider is available on this platform. You will need to use a LoadFrom method to load DLC content");
 
-            // Request installation
-            DRMProvider.RequestUninstallDLC(uniqueKey);
+            try
+            { 
+                // Request installation
+                DRMProvider.RequestUninstallDLC(uniqueKey);
+            }
+            catch (NotSupportedException)
+            {
+                // Check for not supported
+                Debug.LogError("DRM provider does not support listing DLC content");
+            }
+            catch (Exception e)
+            {
+                // Check for error during call
+                Debug.LogError("An unhandled exception was thrown when calling the DRM provider: " + e);
+            }
+#endif
         }
-        #endregion
+#endregion
 
 
         // ### Load batch
@@ -609,7 +739,7 @@ namespace DLCToolkit
         /// <summary>
         /// Attempt to load multiple DLC content simultaneously with the specified unique keys asynchronously.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC will be loaded on the background thread so it is possible to continue with gameplay or show an animated loading screen.
         /// The DLC will need to be available (Owned and installed, or owned with <paramref name="installOnDemand"/> enabled) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
@@ -709,7 +839,7 @@ namespace DLCToolkit
         /// <summary>
         /// Attempt to load DLC content with the specified unique key.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC will need to be available (Owned and installed) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
         /// </summary>
@@ -726,8 +856,13 @@ namespace DLCToolkit
         /// <exception cref="InvalidOperationException">The DLC file is missing required data or is possibly corrupt</exception>
         public static DLCContent LoadDLC(DLCStreamProvider streamProvider)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform. Use `LoadDLCAsync` instead!");
+#else
+
             // Check provider
-            if(streamProvider == null)
+            if (streamProvider == null)
                 throw new ArgumentNullException(nameof(streamProvider));
 
             // Create the content
@@ -737,6 +872,7 @@ namespace DLCToolkit
             content.LoadDLCContent(streamProvider, DLCLoadMode.Full);
 
             return content;
+#endif
         }
 
         /// <summary>
@@ -745,7 +881,7 @@ namespace DLCToolkit
         /// Designed to be a quick operation for accessing metadata, but may take some time to complete depending upon DRM provider and availability.
         /// Use <see cref="LoadDLCAsync(string, bool)"/> if you need to load assets from the DLC.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC will need to be available (Owned and installed) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
         /// </summary>
@@ -762,6 +898,11 @@ namespace DLCToolkit
         /// <exception cref="InvalidOperationException">The DLC file is missing required data or is possibly corrupt</exception>
         public static IDLCMetadata LoadDLCMetadata(DLCStreamProvider streamProvider)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform. Use `LoadDLCMetadataAsync` instead!");
+#else
+
             // Check provider
             if (streamProvider == null)
                 throw new ArgumentNullException(nameof(streamProvider));
@@ -779,13 +920,14 @@ namespace DLCToolkit
             content.Dispose();
 
             return metadata;
+#endif
         }
 
         /// <summary>
         /// Attempt to load DLC content with the specified unique key.
         /// This is a reduced load mode and it will be possible to access extra metadata for assets and scenes, but it will not be possible to load any asset or scene content into the game.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC will need to be available (Owned and installed) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
         /// </summary>
@@ -802,6 +944,11 @@ namespace DLCToolkit
         /// <exception cref="InvalidOperationException">The DLC file is missing required data or is possibly corrupt</exception>
         public static DLCContent LoadDLCMetadataWithAssets(DLCStreamProvider streamProvider)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform. Use `LoadDLCMetadataWithAssetsAsync` instead!");
+#else
+            
             // Check provider
             if (streamProvider == null)
                 throw new ArgumentNullException(nameof(streamProvider));
@@ -813,6 +960,7 @@ namespace DLCToolkit
             content.LoadDLCContent(streamProvider, DLCLoadMode.MetadataWithAssets);
 
             return content;
+#endif
         }
         #endregion
 
@@ -820,7 +968,7 @@ namespace DLCToolkit
         /// <summary>
         /// Attempt to load DLC content with the specified unique key.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC will need to be available (Owned and installed) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
         /// </summary>
@@ -835,8 +983,14 @@ namespace DLCToolkit
         /// <exception cref="FormatException">The specified file is not a valid DLC format</exception>
         /// <exception cref="InvalidDataException">The specified file has been signed by another game or version - The DLC does not belong to this game</exception>
         /// <exception cref="InvalidOperationException">The DLC file is missing required data or is possibly corrupt</exception>
+        [Obsolete("Non-Async variants are no longer supported due to the need to make async DRM requests: Use LoadDLCAsync")]
         public static DLCContent LoadDLC(string uniqueKey)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform. Use `LoadDLCAsync` instead!");
+#else
+
             // Check key
             if (string.IsNullOrEmpty(uniqueKey) == true)
                 throw new ArgumentException(nameof(uniqueKey) + " is null or empty");
@@ -855,7 +1009,8 @@ namespace DLCToolkit
                 return null;
 
             // Try to load the DLC
-            return LoadDLC(streamProvider);            
+            return LoadDLC(streamProvider);    
+#endif
         }
 
         /// <summary>
@@ -864,7 +1019,7 @@ namespace DLCToolkit
         /// Designed to be a quick operation for accessing metadata, but may take some time to complete depending upon DRM provider and availability.
         /// Use <see cref="LoadDLCAsync(string, bool)"/> if you need to load assets from the DLC.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC will need to be available (Owned and installed) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
         /// </summary>
@@ -879,8 +1034,14 @@ namespace DLCToolkit
         /// <exception cref="FormatException">The specified file is not a valid DLC format</exception>
         /// <exception cref="InvalidDataException">The specified file has been signed by another game or version - The DLC does not belong to this game</exception>
         /// <exception cref="InvalidOperationException">The DLC file is missing required data or is possibly corrupt</exception>
+        [Obsolete("Non-Async variants are no longer supported due to the need to make async DRM requests: Use LoadDLCMetadataAsync")]
         public static IDLCMetadata LoadDLCMetadata(string uniqueKey)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform. Use `LoadDLCMetadataAsync` instead!");
+#else
+
             // Check key
             if (string.IsNullOrEmpty(uniqueKey) == true)
                 throw new ArgumentException(nameof(uniqueKey) + " is null or empty");
@@ -895,13 +1056,14 @@ namespace DLCToolkit
 
             // Try to load the DLC
             return LoadDLCMetadata(streamProvider);
+#endif
         }
 
         /// <summary>
         /// Attempt to load DLC content with the specified unique key.
         /// This is a reduced load mode and it will be possible to access extra metadata for assets and scenes, but it will not be possible to load any asset or scene content into the game.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC will need to be available (Owned and installed) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
         /// </summary>
@@ -915,9 +1077,15 @@ namespace DLCToolkit
         /// <exception cref="FileNotFoundException">The specified file path does not exist</exception>
         /// <exception cref="FormatException">The specified file is not a valid DLC format</exception>
         /// <exception cref="InvalidDataException">The specified file has been signed by another game or version - The DLC does not belong to this game</exception>
-        /// <exception cref="InvalidOperationException">The DLC file is missing required data or is possibly corrupt</exception>
+        /// <exception cref="InvalidOperationException">The DLC file is missing required data or is possibly corrupt</exception>#
+        [Obsolete("Non-Async variants are no longer supported due to the need to make async DRM requests: Use LoadDLCMetadataWithAssetsAsync")]
         public static DLCContent LoadDLCMetadataWithAssets(string uniqueKey)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform. Use `LoadDLCMetadataWithAssetsAsync` instead!");
+#else
+
             // Check key
             if (string.IsNullOrEmpty(uniqueKey) == true)
                 throw new ArgumentException(nameof(uniqueKey) + " is null or empty");
@@ -932,6 +1100,7 @@ namespace DLCToolkit
 
             // Try to load the DLC
             return LoadDLCMetadataWithAssets(streamProvider);
+#endif
         }
 
         private static bool CheckDLCAvailable(string uniqueKey, out DLCStreamProvider streamProvider)
@@ -947,22 +1116,25 @@ namespace DLCToolkit
             try
             {
                 // Send request for remote keys
-                DLCAsync<string[]> uniqueKeysAsync = provider.DLCUniqueKeysAsync;
+                DLCAsync<string[]> uniqueKeysAsync = FetchLocalDLCUniqueKeys();
 
                 // Wait for operation to complete - Block the main thread
-                // This will timeout if it takes to long with an exception
+                // This will timeout if it takes too long with an exception
                 uniqueKeysAsync.Await();
 
                 // Check for potential DLC valid key
-                if (Array.Exists(uniqueKeysAsync.Result, k => k == uniqueKey) == false)
+                if (uniqueKeysAsync.Result == null || Array.Exists(uniqueKeysAsync.Result, k => k == uniqueKey) == false)
                 {
-                    Debug.LogWarning("DLC unique key potentially does not exist. Checking DRM provider for DLC that the game is not aware of...");
+                    Debug.LogWarning("DLC unique key potentially does not exist `" + uniqueKey + "`. Checking DRM provider for DLC that the game is not aware of...");
                 }
             }
-            catch (NotSupportedException) { }
+            catch (NotSupportedException) 
+            {
+                Debug.LogWarning("A list remote DLC request was made but the DRM provider does not support listing DLC contents, falling back to local DLC checks...");
+            }
 
             // Send request from DLC provider
-            DLCAsync<bool> async = provider.IsDLCAvailableAsync(AsyncCommon, uniqueKey);
+            DLCAsync async = provider.IsDLCAvailableAsync(AsyncCommon, uniqueKey);
 
             // Wait for operation to complete - Block the main thread
             // This will timeout if it takes to long with an exception
@@ -971,18 +1143,31 @@ namespace DLCToolkit
             // Check result
             if(async.IsSuccessful == false)
             {
-                Debug.LogWarning("DRM provider failed to check is DLC is available. The DLC may be valid but not usable at this time");
+                Debug.LogWarning("DRM provider failed to check if DLC is available `" + uniqueKey + "`. The DLC may be valid but not usable at this time: " + async.Status);
                 streamProvider = null;
                 return false;
             }
 
             // Check available
-            bool available =  async.Result;
+            bool available =  async.IsSuccessful;
 
             // Update install path
-            streamProvider = (available == true)
-                ? DRMProvider.GetDLCStream(uniqueKey)
-                : null;
+            streamProvider = null;            
+
+            // Get the stream
+            if(available == true)
+            {
+                // Get the stream
+                DLCAsync<DLCStreamProvider> streamAsync = provider.GetDLCStreamAsync(AsyncCommon, uniqueKey);
+
+                // Wait for operation to complete - Block the main thread
+                // This will timeout if it takes to long with an exception
+                streamAsync.Await();
+
+                // Check for success
+                if (streamAsync.IsSuccessful == true)
+                    streamProvider = streamAsync.Result;
+            }
 
             // Check for available but DLC file not found
             if (available == true && streamProvider == null)
@@ -990,7 +1175,7 @@ namespace DLCToolkit
 
             return available;
         }
-        #endregion
+#endregion
 
         #region LoadFrom
         /// <summary>
@@ -1007,6 +1192,11 @@ namespace DLCToolkit
         /// <exception cref="InvalidOperationException">The DLC file is missing required data or is possibly corrupt</exception>
         public static DLCContent LoadDLCFrom(string path)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform. Use `LoadDLCAsync` instead!");
+#else
+
             // Check arg
             if (string.IsNullOrEmpty(path) == true)
                 throw new ArgumentException(nameof(path) + " is null or empty");
@@ -1018,6 +1208,7 @@ namespace DLCToolkit
 
             // Load from path
             return LoadDLC(DLCStreamProvider.FromFile(path));
+#endif
         }
 
         /// <summary>
@@ -1035,12 +1226,18 @@ namespace DLCToolkit
         /// <exception cref="InvalidOperationException">The DLC file is missing required data or is possibly corrupt</exception>
         public static IDLCMetadata LoadDLCMetadataFrom(string path)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform. Use `LoadDLCMetadataAsync` instead!");
+#else
+
             // Check arg
             if (string.IsNullOrEmpty(path) == true)
                 throw new ArgumentException(nameof(path) + " is null or empty");
 
             // Load from path
             return LoadDLCMetadata(DLCStreamProvider.FromFile(path));
+#endif
         }
 
         /// <summary>
@@ -1059,12 +1256,18 @@ namespace DLCToolkit
         /// <exception cref="InvalidOperationException">The DLC file is missing required data or is possibly corrupt</exception>
         public static DLCContent LoadDLCMetadataWithAssetsFrom(string path)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform. Use `LoadDLCMetadataWithAssetsAsync` instead!");
+#else
+
             // Check arg
             if (string.IsNullOrEmpty(path) == true)
                 throw new ArgumentException(nameof(path) + " is null or empty");
 
             // Load from path
             return LoadDLCMetadataWithAssets(DLCStreamProvider.FromFile(path));
+#endif
         }
         #endregion
 
@@ -1076,7 +1279,7 @@ namespace DLCToolkit
         /// Attempt to load DLC content from the specified stream provider asynchronously.
         /// If the target DLC is already being loaded or has been loaded, this method will simply return the current load operation or a completed operation with the already loaded <see cref="DLCContent"/>.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC will be loaded on the background thread so it is possible to continue with gameplay or show an animated loading screen.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
         /// Note that a DRM provider is required for the current platform, otherwise you should use <see cref="LoadDLCFromAsync(string)"/>.
@@ -1121,7 +1324,7 @@ namespace DLCToolkit
         /// Designed to be a quick operation for accessing metadata, but may take some time to complete depending upon DRM provider and availability.
         /// Use <see cref="LoadDLCAsync(string, bool)"/> if you need to load assets from the DLC.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC metadata will be loaded on the background thread so it is possible to continue with gameplay or show an animated loading screen.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
         /// Note that a DRM provider is required for the current platform, otherwise you should use <see cref="LoadDLCMetadataFrom(string)"/>.
@@ -1159,7 +1362,7 @@ namespace DLCToolkit
             }
 
             // Wait for loaded
-            AsyncCommon.RunAsync(WaitForLoaded(loadAsync, () =>
+            AsyncCommon.RunAsync(WaitForCompleted(loadAsync, () =>
             {
                 // Complete operation
                 async.Complete(loadAsync.IsSuccessful, loadAsync.IsSuccessful ? loadAsync.Result.Metadata : null);
@@ -1177,7 +1380,7 @@ namespace DLCToolkit
         /// This is a reduced load mode and it will be possible to access extra metadata for assets and scenes, but it will not be possible to load any asset or scene content into the game.
         /// Use <see cref="LoadDLCAsync(string, bool)"/> if you need to load assets from the DLC.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC will be loaded on the background thread so it is possible to continue with gameplay or show an animated loading screen.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
         /// Note that a DRM provider is required for the current platform, otherwise you should use <see cref="LoadDLCMetadataWithAssetsFrom(string)"/>.
@@ -1222,7 +1425,7 @@ namespace DLCToolkit
         /// Attempt to load DLC content with the specified name and optional version asynchronously.
         /// If the target DLC is already being loaded or has been loaded, this method will simply return the current load operation or a completed operation with the already loaded <see cref="DLCContent"/>.
         /// This method is slow (and available as async only) since all available DLC need to be evaluated at the metadata level in order to find a matching name and version before loading can begin. Use <see cref="LoadDLCAsync(string, bool)"/> for quicker load times
-        /// The available DLC that will be scanned is determined from the active DRM provider via <see cref="RemoteDLCUniqueKeysAsync"/>.
+        /// The available DLC that will be scanned is determined from the active DRM provider via <see cref="FetchRemoteDLCUniqueKeys"/>.
         /// The DLC will be loaded on the background thread so it is possible to continue with gameplay or show an animated loading screen.
         /// The DLC will need to be available (Owned and installed, or owned with <paramref name="installOnDemand"/> enabled) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
@@ -1258,7 +1461,7 @@ namespace DLCToolkit
         /// Designed to be a quick operation for accessing metadata, but may take some time to complete depending upon DRM provider and availability.
         /// Use <see cref="LoadDLCNameAsync(string, Version, bool)"/> if you need to load assets from the DLC.
         /// This method is slow (and available as async only) since all available DLC need to be evaluated at the metadata level in order to find a matching name and version before loading can begin. Use <see cref="LoadDLCMetadataAsync(string, bool)"/> for quicker load times
-        /// The available DLC that will be scanned is determined from the active DRM provider via <see cref="RemoteDLCUniqueKeysAsync"/>.
+        /// The available DLC that will be scanned is determined from the active DRM provider via <see cref="FetchRemoteDLCUniqueKeys"/>.
         /// The DLC metadata will be loaded on the background thread so it is possible to continue with gameplay or show an animated loading screen.
         /// The DLC will need to be available (Owned and installed, or owned with <paramref name="installOnDemand"/> enabled) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
@@ -1289,7 +1492,7 @@ namespace DLCToolkit
             AsyncCommon.RunAsync(LoadDLCNameAsyncRoutine(loadAsync, AsyncCommon, dlcName, version, installOnDemand, DLCLoadMode.Metadata));
 
             // Wait for loaded
-            AsyncCommon.RunAsync(WaitForLoaded(loadAsync, () =>
+            AsyncCommon.RunAsync(WaitForCompleted(loadAsync, () =>
             {
                 // Complete operation
                 async.Complete(loadAsync.IsSuccessful, loadAsync.IsSuccessful ? loadAsync.Result.Metadata : null);
@@ -1306,9 +1509,9 @@ namespace DLCToolkit
         /// <summary>
         /// Attempt to load DLC content with the specified name and optional version asynchronously in metadata with assets mode.
         /// This is a reduced load mode and it will be possible to access extra metadata for assets and scenes, but it will not be possible to load any asset or scene content into the game.
-        /// Use <see cref="LoadDLCNameAsync(string, bool)"/> if you need to load assets from the DLC.
+        /// Use <see cref="LoadDLCNameAsync(string, Version, bool)"/> if you need to load assets from the DLC.
         /// This method is slow (and available as async only) since all available DLC need to be evaluated at the metadata level in order to find a matching name and version before loading can begin. Use <see cref="LoadDLCMetadataAsync(string, bool)"/> for quicker load times
-        /// The available DLC that will be scanned is determined from the active DRM provider via <see cref="RemoteDLCUniqueKeysAsync"/>.
+        /// The available DLC that will be scanned is determined from the active DRM provider via <see cref="FetchRemoteDLCUniqueKeys"/>.
         /// The DLC will be loaded on the background thread so it is possible to continue with gameplay or show an animated loading screen.
         /// The DLC will need to be available (Owned and installed, or owned with <paramref name="installOnDemand"/> enabled) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
@@ -1412,7 +1615,7 @@ namespace DLCToolkit
         /// Attempt to load DLC content with the specified unique key asynchronously.
         /// If the target DLC is already being loaded or has been loaded, this method will simply return the current load operation or a completed operation with the already loaded <see cref="DLCContent"/>.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC will be loaded on the background thread so it is possible to continue with gameplay or show an animated loading screen.
         /// The DLC will need to be available (Owned and installed, or owned with <paramref name="installOnDemand"/> enabled) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
@@ -1452,7 +1655,7 @@ namespace DLCToolkit
         /// Designed to be a quick operation for accessing metadata, but may take some time to complete depending upon DRM provider and availability.
         /// Use <see cref="LoadDLCAsync(string, bool)"/> if you need to load assets from the DLC.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC metadata will be loaded on the background thread so it is possible to continue with gameplay or show an animated loading screen.
         /// The DLC will need to be available (Owned and installed, or owned with <paramref name="installOnDemand"/> enabled) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
@@ -1482,7 +1685,7 @@ namespace DLCToolkit
             AsyncCommon.RunAsync(LoadDLCAsyncRoutine(loadAsync, AsyncCommon, uniqueKey, installOnDemand, DLCLoadMode.Metadata));
 
             // Wait for loaded
-            AsyncCommon.RunAsync(WaitForLoaded(loadAsync, () =>
+            AsyncCommon.RunAsync(WaitForCompleted(loadAsync, () =>
             {
                 // Complete operation
                 async.Complete(loadAsync.IsSuccessful, loadAsync.IsSuccessful ? loadAsync.Result.Metadata : null);
@@ -1501,7 +1704,7 @@ namespace DLCToolkit
         /// This is a reduced load mode and it will be possible to access extra metadata for assets and scenes, but it will not be possible to load any asset or scene content into the game.
         /// Use <see cref="LoadDLCAsync(string, bool)"/> if you need to load assets from the DLC.
         /// Note that the unique key can be different between platforms and you should check the DLC profile to ensure that the correct key is used for the current platform. 
-        /// Alternatively you may be able to query <see cref="IDRMProvider.DLCUniqueKeys"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
+        /// Alternatively you may be able to query <see cref="IDRMProvider.GetDLCUniqueKeysAsync(IDLCAsyncProvider)"/> to enumerate all available DLC's, but note that some DRM providers may not implement that property or only partially implement it (May not return all possible DLC's).
         /// The DLC will be loaded on the background thread so it is possible to continue with gameplay or show an animated loading screen.
         /// The DLC will need to be available (Owned and installed, or owned with <paramref name="installOnDemand"/> enabled) from the current DRM provider in order to succeed.
         /// The DLC will be loaded into memory and data may be preloaded according to the preload options set at build time.
@@ -1606,28 +1809,20 @@ namespace DLCToolkit
             IDRMProvider provider = DRMProvider;
 
             // Request for DLC keys
-            DLCAsync<string[]> uniqueKeysAsync = null;
-
-            // Some DRM providers may not support listing DLC unique keys
-            try
-            {
-                // Send request for remote keys
-                uniqueKeysAsync = provider.DLCUniqueKeysAsync;
-            }
-            catch (NotSupportedException) { }
+            DLCAsync<string[]> uniqueKeysAsync = FetchLocalDLCUniqueKeys();
 
             // Wait for request
             yield return uniqueKeysAsync;
 
             // Check for potential DLC valid key
-            if (Array.Exists(uniqueKeysAsync.Result, k => k == uniqueKey) == false)
+            if (uniqueKeysAsync == null || uniqueKeysAsync.Result == null || Array.Exists(uniqueKeysAsync.Result, k => k == uniqueKey) == false)
             {
                 Debug.LogWarning("DLC unique key potentially does not exist. Checking DRM provider for DLC that the game is not aware of...");
             }
 
 
             // Send request from DLC provider
-            DLCAsync<bool> availableAsync = provider.IsDLCAvailableAsync(AsyncCommon, uniqueKey);
+            DLCAsync availableAsync = provider.IsDLCAvailableAsync(AsyncCommon, uniqueKey);
 
             // Update status
             async.UpdateStatus("Checking if DLC is available");
@@ -1645,24 +1840,58 @@ namespace DLCToolkit
             // Check result
             if (availableAsync.IsSuccessful == false)
             {
-                async.Error("DRM provider failed to check if DLC is available. The DLC may be valid but not usable at this time perhaps due to connection, hosting or service issues");
+                async.Error("DRM provider informed that DLC is not available. The DLC may not be owned by the user or there may be connection, hosting or service issues: " + availableAsync);
                 yield break;
             }
 
             // Check available
-            bool available = availableAsync.Result;
-
-            // Check for owned
-            if(available == false)
-            {
-                async.Error("DRM provider informed that DLC is not available. The DLC may not be owned by the user");
-                yield break;
-            }
+            bool available = availableAsync.IsSuccessful;
 
             // Update install path
-            DLCStreamProvider streamProvider = (available == true)
-                ? DRMProvider.GetDLCStream(uniqueKey)
-                : null;
+            DLCStreamProvider streamProvider = null;
+
+            // Check for available
+            if (available == true)
+            {
+                // Send request for DLC stream
+                DLCAsync<DLCStreamProvider> streamAsync = null;
+
+                try
+                {
+                    streamAsync = provider.GetDLCStreamAsync(AsyncCommon, uniqueKey);
+                }
+                catch (NotSupportedException) 
+                {
+                    Debug.LogWarning("A DLC installation request was made but the DRM provider does not support install on demand feature");
+                }
+
+                // Check for supported by DRM
+                if (streamAsync != null)
+                {
+                    // Update status
+                    async.UpdateStatus("Fetching DLC stream");
+
+                    // Wait for completed
+                    while (streamAsync.IsDone == false)
+                    {
+                        // Update progress
+                        async.UpdateProgress(streamAsync.Progress);
+
+                        // Wait a frame
+                        yield return null;
+                    }
+
+                    // Check result
+                    if (streamAsync.IsSuccessful == false)
+                    {
+                        async.Error("DRM provider failed to get DLC stream. The DLC may be valid but not usable at this time perhaps due to connection, hosting or service issues: " + streamAsync.Status);
+                        yield break;
+                    }
+
+                    // Get the stream
+                    streamProvider = streamAsync.Result;
+                }
+            }
 
             // Check for available but DLC file not found
             if (available == true && streamProvider == null)
@@ -1689,8 +1918,36 @@ namespace DLCToolkit
                     // Check for success
                     available = installAsync.IsSuccessful;
 
-                    // Get the stream provider once more
-                    streamProvider = DRMProvider.GetDLCStream(uniqueKey);
+                    // Get the stream provider once more now that the content is installed
+                    // Check for available
+                    if (available == true)
+                    {
+                        // Send request for DLC stream
+                        DLCAsync<DLCStreamProvider> streamAsync = provider.GetDLCStreamAsync(AsyncCommon, uniqueKey);
+
+                        // Update status
+                        async.UpdateStatus("Fetching DLC stream");
+
+                        // Wait for completed
+                        while (streamAsync.IsDone == false)
+                        {
+                            // Update progress
+                            async.UpdateProgress(streamAsync.Progress);
+
+                            // Wait a frame
+                            yield return null;
+                        }
+
+                        // Check result
+                        if (streamAsync.IsSuccessful == false)
+                        {
+                            async.Error("DRM provider failed to get DLC stream. The DLC may be valid but not usable at this time perhaps due to connection, hosting or service issues: " + streamAsync.Status);
+                            yield break;
+                        }
+
+                        // Get the stream
+                        streamProvider = streamAsync.Result;
+                    }
                 }
                 else
                 {
@@ -1781,13 +2038,856 @@ namespace DLCToolkit
         #endregion
 
 
+
+        // ### Load Asset
+        #region LoadAsset
+        ///<summary>
+        /// Attempts to load an asset with the specified name or path from any loaded DLC.
+        /// You must ensure that the containing DLC is loaded before hand, or alternatively you can use the async version <see cref="LoadAssetAsync(string, string)"/> which can load the DLC on demand in a single call.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <param name="throwOnError">Will throw an exception on error if enabled, or simply return null if disabled</param>
+        /// <returns>The loaded asset</returns>
+        public static Object LoadAsset(string nameOrPath, string dlcUniqueKey = null, bool throwOnError = true)
+        {
+            return LoadAsset<Object>(nameOrPath, dlcUniqueKey, throwOnError);
+        }
+
+        ///<summary>
+        /// Attempts to load an asset with the specified name or path from any loaded DLC.
+        /// You must ensure that the containing DLC is loaded before hand, or alternatively you can use the async version <see cref="LoadAssetAsync{T}(string, string)"/> which can load the DLC on demand in a single call.
+        /// </summary>
+        /// <typeparam name="T">The type of asset to return</typeparam>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <param name="throwOnError">Will throw an exception on error if enabled, or simply return null if disabled</param>
+        /// <returns>The loaded asset</returns>
+        public static T LoadAsset<T>(string nameOrPath, string dlcUniqueKey = null, bool throwOnError = true) where T : Object
+        {
+            // Find the asset
+            DLCSharedAsset asset = GetAssetWithNameOrPath(nameOrPath, dlcUniqueKey, throwOnError);
+
+            // Load the asset
+            T result = asset.Load<T>();
+
+            // Check for load error
+            if(result == null)
+            {
+                // Check for throw
+                if (throwOnError == true)
+                    throw new Exception("Could not load asset with name or path: " + nameOrPath);
+
+                return null;
+            }
+
+            // Get the result
+            return result;
+        }
+
+        ///<summary>
+        /// Attempts to load an asset with the specified name or path from any loaded DLC with all associated sub assets.
+        /// You must ensure that the containing DLC is loaded before hand, or alternatively you can use the async version <see cref="LoadAssetWithSubAssetsAsync(string, string)"/> which can load the DLC on demand in a single call.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <param name="throwOnError">Will throw an exception on error if enabled, or simply return null if disabled</param>
+        /// <returns>An array of assets containing the main and sub assets</returns>
+        public static Object[] LoadAssetWithSubAssets(string nameOrPath, string dlcUniqueKey = null, bool throwOnError = true)
+        {
+            return LoadAssetWithSubAssets<Object>(nameOrPath, dlcUniqueKey, throwOnError);
+        }
+
+        ///<summary>
+        /// Attempts to load an asset with the specified name or path from any loaded DLC with all associated sub assets of the specified generic type.
+        /// You must ensure that the containing DLC is loaded before hand, or alternatively you can use the async version <see cref="LoadAssetWithSubAssetsAsync{T}(string, string)"/> which can load the DLC on demand in a single call.
+        /// </summary>
+        /// <typeparam name="T">The type of asset to return</typeparam>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <param name="throwOnError">Will throw an exception on error if enabled, or simply return null if disabled</param>
+        /// <returns>An array of loaded assets of the specified generic type</returns>
+        public static T[] LoadAssetWithSubAssets<T>(string nameOrPath, string dlcUniqueKey = null, bool throwOnError = true) where T : Object
+        {
+            // Find the asset
+            DLCSharedAsset asset = GetAssetWithNameOrPath(nameOrPath, dlcUniqueKey, throwOnError);
+
+            // Load the asset
+            T[] result = asset.LoadWithSubAssets<T>();
+
+            // Check for load error
+            if (result == null)
+            {
+                // Check for throw
+                if (throwOnError == true)
+                    throw new Exception("Could not load asset or sub assets with name or path: " + nameOrPath);
+
+                return null;
+            }
+
+            // Get the result
+            return result;
+        }
+        #endregion
+
+        // ### Load Asset Async
+        #region LoadAssetAsync
+        ///<summary>
+        /// Attempts to load an asset with the specified name or path from any loaded DLC asynchronously.
+        /// This call will attempt to load the associated DLC as part of the same call if it is not already loaded into memory, and the target DLC can be determined from the specified name or path.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <returns>An awaitable object</returns>
+        public static DLCAsync<Object> LoadAssetAsync(string nameOrPath, string dlcUniqueKey = null)
+        {
+            // Create async
+            DLCAsync<Object> async = new DLCAsync<Object>();
+
+            // Issue load request
+            AsyncCommon.RunAsync(WaitForLoadAssetAsync(async, nameOrPath, dlcUniqueKey));
+            return async;
+        }
+
+        ///<summary>
+        /// Attempts to load an asset with the specified name or path from any loaded DLC asynchronously as the specified generic type.
+        /// This call will attempt to load the associated DLC as part of the same call if it is not already loaded into memory, and the target DLC can be determined from the specified name or path.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <typeparam name="T">The type of asset to load</typeparam>
+        /// <returns>An awaitable object</returns>
+        public static DLCAsync<T> LoadAssetAsync<T>(string nameOrPath, string dlcUniqueKey = null) where T : Object
+        {
+            // Create async
+            DLCAsync<T> async = new DLCAsync<T>();
+
+            // Issue load request
+            AsyncCommon.RunAsync(WaitForLoadAssetAsync(async, nameOrPath, dlcUniqueKey));
+            return async;
+        }
+
+        ///<summary>
+        /// Attempts to load an asset and sub-assets with the specified name or path from any loaded DLC asynchronously.
+        /// This call will attempt to load the associated DLC as part of the same call if it is not already loaded into memory, and the target DLC can be determined from the specified name or path.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <returns>An awaitable object</returns>
+        public static DLCAsync<Object[]> LoadAssetWithSubAssetsAsync(string nameOrPath, string dlcUniqueKey = null)
+        {
+            // Create async
+            DLCAsync<Object[]> async = new DLCAsync<Object[]>();
+
+            // Issue load request
+            AsyncCommon.RunAsync(WaitForLoadAssetWithSubAssetsAsync(async, nameOrPath, dlcUniqueKey));
+            return async;
+        }
+
+        ///<summary>
+        /// Attempts to load an asset and sub-assets of the specifried generic type with the specified name or path from any loaded DLC asynchronously.
+        /// This call will attempt to load the associated DLC as part of the same call if it is not already loaded into memory, and the target DLC can be determined from the specified name or path.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <typeparam name="T">The type of asset to load</typeparam>
+        /// <returns>An awaitable object</returns>
+        public static DLCAsync<T[]> LoadAssetWithSubAssetsAsync<T>(string nameOrPath, string dlcUniqueKey = null) where T : Object
+        {
+            // Create async
+            DLCAsync<T[]> async = new DLCAsync<T[]>();
+
+            // Issue load request
+            AsyncCommon.RunAsync(WaitForLoadAssetWithSubAssetsAsync(async, nameOrPath, dlcUniqueKey));
+            return async;
+        }
+
+        private static IEnumerator WaitForLoadAssetAsync<T>(DLCAsync<T> async, string nameOrPath, string dlcUniqueKey) where T : Object
+        {
+            // Wait for get DLC
+            DLCAsync<DLCContent> dlcRequest = GetOrLoadDLCContentWithAssetAsync(nameOrPath, dlcUniqueKey);
+
+            // Wait for load
+            while(dlcRequest.IsDone == false)
+            {
+                // Update progress
+                async.UpdateProgress(dlcRequest.Progress * 0.5f);
+
+                // Wait a frame
+                yield return null;
+            }
+
+            // Check for loaded
+            if(dlcRequest.IsSuccessful == false)
+            {
+                async.Error("Could not load asset because no DLC content containing such an asset could be located: " + nameOrPath);
+                yield break;
+            }
+
+            // Find the asset
+            DLCSharedAsset asset = dlcRequest.Result.SharedAssets.Find(nameOrPath);
+
+            // Check for not found
+            if(asset == null)
+            {
+                async.Error("Could not locate asset with the specified name or path in the associated DLC: " + nameOrPath + ", " + dlcRequest.Result.Metadata.NameInfo.UniqueKey + ": " + dlcRequest.Status);
+                yield break;
+            }
+
+            // Load the asset
+            DLCAsync<T> assetRequest = asset.LoadAsync<T>();
+
+            // Wait for load
+            while(assetRequest.IsDone == false)
+            {
+                // Update progress
+                async.UpdateProgress(0.5f + (assetRequest.Progress * 0.5f));
+
+                // Wait a frame
+                yield return null;
+            }
+
+            // Check for success
+            if(assetRequest.IsSuccessful == false)
+            {
+                async.Error("Could not load asset from target DLC: " + nameOrPath + ", " + dlcRequest.Result.NameInfo.UniqueKey + ": " + assetRequest.Status);
+                yield break;
+            }
+
+            // Complete the operation
+            async.Complete(true, assetRequest.Result);
+        }
+
+        private static IEnumerator WaitForLoadAssetWithSubAssetsAsync<T>(DLCAsync<T[]> async, string nameOrPath, string dlcUniqueKey) where T : Object
+        {
+            // Wait for get DLC
+            DLCAsync<DLCContent> dlcRequest = GetOrLoadDLCContentWithAssetAsync(nameOrPath, dlcUniqueKey);
+
+            // Wait for load
+            while (dlcRequest.IsDone == false)
+            {
+                // Update progress
+                async.UpdateProgress(dlcRequest.Progress * 0.5f);
+
+                // Wait a frame
+                yield return null;
+            }
+
+            // Check for loaded
+            if (dlcRequest.IsSuccessful == false)
+            {
+                async.Error("Could not load asset or sub assets because no DLC content containing such an asset could be located: " + nameOrPath);
+                yield break;
+            }
+
+            // Find the asset
+            DLCSharedAsset asset = dlcRequest.Result.SharedAssets.Find(nameOrPath);
+
+            // Check for not found
+            if (asset == null)
+            {
+                async.Error("Could not locate asset with the specified name or path in the associated DLC: " + nameOrPath + ", " + dlcRequest.Result.Metadata.NameInfo.UniqueKey + ": " + dlcRequest.Status);
+                yield break;
+            }
+
+            // Load the asset
+            DLCAsync<T[]> assetRequest = asset.LoadWithSubAssetsAsync<T>();
+
+            // Wait for load
+            while (assetRequest.IsDone == false)
+            {
+                // Update progress
+                async.UpdateProgress(0.5f + (assetRequest.Progress * 0.5f));
+
+                // Wait a frame
+                yield return null;
+            }
+
+            // Check for success
+            if (assetRequest.IsSuccessful == false)
+            {
+                async.Error("Could not load asset from target DLC: " + nameOrPath + ", " + dlcRequest.Result.NameInfo.UniqueKey + ": " + assetRequest.Status);
+                yield break;
+            }
+
+            // Complete the operation
+            async.Complete(true, assetRequest.Result);
+        }
+
+        private static DLCAsync<DLCContent> GetOrLoadDLCContentWithAssetAsync(string nameOrPath, string dlcUniqueKey)
+        {
+            // Check for dlc provided
+            if(string.IsNullOrEmpty(dlcUniqueKey) == false)
+            {
+                // Try to get loaded
+                DLCContent targetContent = GetLoadedDLC(dlcUniqueKey);
+
+                // Check for loaded
+                if (targetContent != null)
+                {
+                    // Complete operation
+                    return DLCAsync<DLCContent>.Completed(true, targetContent);
+                }
+
+                // Request load the dlc
+                return LoadDLCAsync(dlcUniqueKey);
+            }
+
+            // Create async
+            DLCAsync<DLCContent> async = new DLCAsync<DLCContent>();
+
+            // Issue request
+            AsyncCommon.RunAsync(WaitForLoadDLCContentWithAssetAsync(async, nameOrPath));
+            return async;
+        }
+
+        private static IEnumerator WaitForLoadDLCContentWithAssetAsync(DLCAsync<DLCContent> async, string nameOrPath)
+        {
+            // Get the manifest
+            yield return ManifestAsync;
+
+            // Try to get the dlc content from the manifest
+            DLCManifest manifest = ManifestAsync.Result;
+
+            // Find the associated manifest
+            DLCManifestEntry targetManifestEntry = null;
+            foreach(DLCManifestEntry manifestEntry in manifest.DLCContents)
+            {
+                // Check for asset found
+                if(manifestEntry.HasAsset(nameOrPath) == true)
+                {
+                    targetManifestEntry = manifestEntry;
+                    break;
+                }
+            }
+
+            // Check for found
+            if(targetManifestEntry == null)
+            {
+                async.Error("Could not determine the associated DLC containing the specified asset: " + nameOrPath);
+                yield break;
+            }
+
+            // Check for loaded
+            DLCContent targetContent = GetLoadedDLC(targetManifestEntry.DLCUniqueKey);
+
+            // Complete if loaded
+            if(targetContent != null)
+            {
+                async.Complete(true, targetContent);
+                yield break;
+            }
+
+            // Load the DLC
+            DLCAsync<DLCContent> dlcRequest = LoadDLCAsync(targetManifestEntry.DLCUniqueKey);
+
+            // Wait for loaded
+            while(dlcRequest.IsDone == false)
+            {
+                // Update progress and status
+                async.UpdateProgress(dlcRequest.Progress);
+                async.UpdateStatus(dlcRequest.Status);
+
+                // Wait a frame
+                yield return null;
+            }
+
+            // Complete operation
+            async.Complete(dlcRequest.IsSuccessful, dlcRequest.Result);
+        }
+        #endregion
+
+        // ### Load Scene
+        #region LoadScene
+        ///<summary>
+        /// Attempts to load a scene with the specified name or path from any loaded DLC.
+        /// You must ensure that the containing DLC is loaded before hand, or alternatively you can use the async version <see cref="LoadSceneAsync(string, LoadSceneMode, bool, string)"/> which can load the DLC on demand in a single call.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="loadSceneMode">The mode used to load the scene</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <param name="throwOnError">Will throw an exception on error if enabled, or simply return null if disabled</param>
+        /// <returns>The loaded asset</returns>
+        public static bool LoadScene(string nameOrPath, LoadSceneMode loadSceneMode, string dlcUniqueKey = null, bool throwOnError = true)
+        {
+            // Find the asset
+            DLCSceneAsset scene = GetSceneWithNameOrPath(nameOrPath, dlcUniqueKey, throwOnError);
+
+            // Check for found
+            if (scene != null)
+            {
+                // Start loading scene
+                scene.Load(loadSceneMode);
+                return true;
+            }
+
+            // Could not load
+            return false;
+        }
+
+        ///<summary>
+        /// Attempts to load a scene with the specified name or path from any loaded DLC.
+        /// You must ensure that the containing DLC is loaded before hand, or alternatively you can use the async version <see cref="LoadSceneAsync(string, LoadSceneParameters, bool, string)"/> which can load the DLC on demand in a single call.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="loadSceneParameters">The parameters used to load the scene</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <param name="throwOnError">Will throw an exception on error if enabled, or simply return null if disabled</param>
+        /// <returns>Was the scene loaded</returns>
+        public static bool LoadScene(string nameOrPath, LoadSceneParameters loadSceneParameters, string dlcUniqueKey = null, bool throwOnError = true)
+        {
+            // Find the asset
+            DLCSceneAsset scene = GetSceneWithNameOrPath(nameOrPath, dlcUniqueKey, throwOnError);
+
+            // Check for found
+            if (scene != null)
+            {
+                // Start loading scene
+                scene.Load(loadSceneParameters);
+                return true;
+            }
+
+            // Could not load
+            return false;
+        }
+        #endregion
+
+        // ### Load Scene Async
+        #region LoadSceneAsync
+        ///<summary>
+        /// Attempts to load a scene with the specified name or path from any loaded DLC asynchronously.
+        /// This call will attempt to load the associated DLC as part of the same call if it is not already loaded into memory, and the target DLC can be determined from the specified scene name or path.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="loadSceneMode">The mode used to load the scene</param>
+        /// <param name="allowSceneActivation">Should the scene be activated as soon as it is loaded</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <returns>An awaitable object</returns>
+        public static DLCAsync LoadSceneAsync(string nameOrPath, LoadSceneMode loadSceneMode, bool allowSceneActivation = true, string dlcUniqueKey = null)
+        {
+            // Create async
+            DLCAsync async = new DLCAsync();
+
+            // Issue load request
+            AsyncCommon.RunAsync(WaitForLoadSceneAsync(async, nameOrPath, dlcUniqueKey, new LoadSceneParameters(loadSceneMode), allowSceneActivation));
+            return async;
+        }
+
+
+        ///<summary>
+        /// Attempts to load a scene with the specified name or path from any loaded DLC asynchronously.
+        /// This call will attempt to load the associated DLC as part of the same call if it is not already loaded into memory, and the target DLC can be determined from the specified scene name or path.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="loadSceneParameters">The parameters used to load the scene</param>
+        /// <param name="allowSceneActivation">Should the scene be activated as soon as it is loaded</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <returns>An awaitable object</returns>
+        public static DLCAsync LoadSceneAsync(string nameOrPath, LoadSceneParameters loadSceneParameters, bool allowSceneActivation = true, string dlcUniqueKey = null)
+        {
+            // Create async
+            DLCAsync async = new DLCAsync();
+
+            // Issue load request
+            AsyncCommon.RunAsync(WaitForLoadSceneAsync(async, nameOrPath, dlcUniqueKey, loadSceneParameters, allowSceneActivation));
+            return async;
+        }
+
+        private static IEnumerator WaitForLoadSceneAsync(DLCAsync async, string nameOrPath, string dlcUniqueKey, LoadSceneParameters loadSceneParameters, bool allowSceneActivation)
+        {
+            // Wait for get DLC
+            DLCAsync<DLCContent> dlcRequest = GetOrLoadDLCContentWithSceneAsync(nameOrPath, dlcUniqueKey);
+
+            // Wait for load
+            while (dlcRequest.IsDone == false)
+            {
+                // Update progress
+                async.UpdateProgress(dlcRequest.Progress * 0.5f);
+
+                // Wait a frame
+                yield return null;
+            }
+
+            // Check for loaded
+            if (dlcRequest.IsSuccessful == false)
+            {
+                async.Error("Could not load scene because no DLC content containing such an asset could be located: " + nameOrPath);
+                yield break;
+            }
+
+            // Find the asset
+            DLCSceneAsset scene = dlcRequest.Result.SceneAssets.Find(nameOrPath);
+
+            // Check for not found
+            if (scene == null)
+            {
+                async.Error("Could not locate scene with the specified name or path in the associated DLC: " + nameOrPath + ", " + dlcRequest.Result.Metadata.NameInfo.UniqueKey + ": " + dlcRequest.Status);
+                yield break;
+            }
+
+            // Load the asset
+            DLCAsync sceneRequest = scene.LoadAsync(loadSceneParameters, allowSceneActivation);
+
+            // Wait for load
+            while (sceneRequest.IsDone == false)
+            {
+                // Update progress
+                async.UpdateProgress(0.5f + (sceneRequest.Progress * 0.5f));
+
+                // Wait a frame
+                yield return null;
+            }
+
+            // Check for success
+            if (sceneRequest.IsSuccessful == false)
+            {
+                async.Error("Could not load scene from target DLC: " + nameOrPath + ", " + dlcRequest.Result.NameInfo.UniqueKey + ": " + sceneRequest.Status);
+                yield break;
+            }
+
+            // Complete the operation
+            async.Complete(true, sceneRequest.Result);
+        }
+
+        private static DLCAsync<DLCContent> GetOrLoadDLCContentWithSceneAsync(string nameOrPath, string dlcUniqueKey)
+        {
+            // Check for dlc provided
+            if (string.IsNullOrEmpty(dlcUniqueKey) == false)
+            {
+                // Try to get loaded
+                DLCContent targetContent = GetLoadedDLC(dlcUniqueKey);
+
+                // Check for loaded
+                if (targetContent != null)
+                {
+                    // Complete operation
+                    return DLCAsync<DLCContent>.Completed(true, targetContent);
+                }
+
+                // Request load the dlc
+                return LoadDLCAsync(dlcUniqueKey);
+            }
+
+            // Create async
+            DLCAsync<DLCContent> async = new DLCAsync<DLCContent>();
+
+            // Issue request
+            AsyncCommon.RunAsync(WaitForLoadDLCContentWithSceneAsync(async, nameOrPath));
+            return async;
+        }
+
+        private static IEnumerator WaitForLoadDLCContentWithSceneAsync(DLCAsync<DLCContent> async, string nameOrPath)
+        {
+            // Get the manifest
+            yield return ManifestAsync;
+
+            // Try to get the dlc content from the manifest
+            DLCManifest manifest = ManifestAsync.Result;
+
+            // Find the associated manifest
+            DLCManifestEntry targetManifestEntry = null;
+            foreach (DLCManifestEntry manifestEntry in manifest.DLCContents)
+            {
+                // Check for asset found
+                if (manifestEntry.HasScene(nameOrPath) == true)
+                {
+                    targetManifestEntry = manifestEntry;
+                    break;
+                }
+            }
+
+            // Check for found
+            if (targetManifestEntry == null)
+            {
+                async.Error("Could not determine the associated DLC containing the specified scene: " + nameOrPath);
+                yield break;
+            }
+
+            // Check for loaded
+            DLCContent targetContent = GetLoadedDLC(targetManifestEntry.DLCUniqueKey);
+
+            // Complete if loaded
+            if (targetContent != null)
+            {
+                async.Complete(true, targetContent);
+                yield break;
+            }
+
+            // Load the DLC
+            DLCAsync<DLCContent> dlcRequest = LoadDLCAsync(targetManifestEntry.DLCUniqueKey);
+
+            // Wait for loaded
+            while (dlcRequest.IsDone == false)
+            {
+                // Update progress and status
+                async.UpdateProgress(dlcRequest.Progress);
+                async.UpdateStatus(dlcRequest.Status);
+
+                // Wait a frame
+                yield return null;
+            }
+
+            // Complete operation
+            async.Complete(dlcRequest.IsSuccessful, dlcRequest.Result);
+        }
+        #endregion
+
+
+
+        // ### Find asset
+        #region FindAsset
+        ///<summary>
+        /// Attempts to find an asset with the specified name or path from any loaded DLC.
+        /// You must ensure that the containing DLC is loaded before hand, or alternatively you can use the async version <see cref="FindAssetAsync(string, string)"/> which can load the DLC on demand in a single call.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <param name="throwOnError">Will throw an exception on error if enabled, or simply return null if disabled</param>
+        /// <returns>The loaded asset</returns>
+        public static DLCSharedAsset FindAsset(string nameOrPath, string dlcUniqueKey = null, bool throwOnError = true)
+        {
+            // Find the asset
+            DLCSharedAsset asset = GetAssetWithNameOrPath(nameOrPath, dlcUniqueKey, throwOnError);
+
+            // Check for not found
+            if(asset == null)
+            {
+                // Check for throw
+                if(throwOnError == true)
+                    throw new Exception("Could not locate asset with name or path: " + nameOrPath);
+            }
+            return asset;
+        }
+
+        private static DLCSharedAsset GetAssetWithNameOrPath(string nameOrPath, string dlcUniqueKey = null, bool throwOnError = true)
+        {
+            // Find the asset
+            DLCSharedAsset asset = null;
+
+            if (string.IsNullOrEmpty(dlcUniqueKey) == false)
+            {
+                // Try to find the target dlc
+                DLCContent targetDLC = LoadedDLCContents.FirstOrDefault(d => d.Metadata.NameInfo.UniqueKey == dlcUniqueKey);
+
+                // Check for not found
+                if (targetDLC == null)
+                {
+                    // Check for throw
+                    if (throwOnError == true)
+                        throw new DLCNotLoadedException("Could not find loaded DLC with the unique key, and the DLC will not be loaded on demand in non-async calls: " + dlcUniqueKey);
+
+                    return null;
+                }
+
+                // Try to find the asset
+                asset = targetDLC.SharedAssets.Find(nameOrPath);
+            }
+            else
+            {
+                // Try to find from all loaded
+                allSharedAssetsCollection.Find(nameOrPath);
+            }
+
+            // Check for found
+            if (asset == null)
+            {
+                // Check for throw
+                if (throwOnError == true)
+                    throw new Exception("Could not find asset from loaded DLC contents with the specified name or path: " + nameOrPath);
+
+                return null;
+            }
+            return asset;
+        }
+        #endregion
+
+        // ### Find Asset Async
+        #region FindAssetAsync
+        ///<summary>
+        /// Attempts to find an asset with the specified name or path from any loaded DLC or DLC known at build time.
+        /// If there is no loaded DLC containing the specified asset, then this call will attempt to load the DLC on demand if the source DLC can be determined from the name or path.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the asset to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain assets with the same name or relative paths</param>
+        /// <returns>An awaitable object containing the found asset</returns>
+        public static DLCAsync<DLCSharedAsset> FindAssetAsync(string nameOrPath, string dlcUniqueKey = null)
+        {
+            // Create async
+            DLCAsync<DLCSharedAsset> async = new DLCAsync<DLCSharedAsset>();
+            
+            // Run async
+            AsyncCommon.RunAsync(WaitForFindAssetAsync(async, nameOrPath, dlcUniqueKey));
+            return async;
+        }
+
+        private static IEnumerator WaitForFindAssetAsync(DLCAsync<DLCSharedAsset> async, string nameOrPath, string dlcUniqueKey)
+        {
+            // Wait for get DLC
+            DLCAsync<DLCContent> dlcRequest = GetOrLoadDLCContentWithAssetAsync(nameOrPath, dlcUniqueKey);
+
+            // Wait for load
+            while (dlcRequest.IsDone == false)
+            {
+                // Update progress
+                async.UpdateProgress(dlcRequest.Progress * 0.5f);
+
+                // Wait a frame
+                yield return null;
+            }
+
+            // Check for loaded
+            if (dlcRequest.IsSuccessful == false)
+            {
+                async.Error("Could not load asset because no DLC content containing such an asset could be located: " + nameOrPath);
+                yield break;
+            }
+
+            // Find the asset
+            DLCSharedAsset asset = dlcRequest.Result.SharedAssets.Find(nameOrPath);
+
+            // Check for not found
+            if (asset == null)
+            {
+                async.Error("Could not locate asset with the specified name or path in the associated DLC: " + nameOrPath + ", " + dlcRequest.Result.Metadata.NameInfo.UniqueKey + ": " + dlcRequest.Status);
+                yield break;
+            }
+
+            // Complete the operation
+            async.Complete(true, asset);
+        }
+        #endregion
+
+        // ### Find Scene
+        #region FindScene
+        ///<summary>
+        /// Attempts to find a scene with the specified name or path from any loaded DLC or DLC known at build time.
+        /// If there is no loaded DLC containing the specified scene, then this call will attempt to load the DLC on demand if the source DLC can be determined from the name or path.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the scene to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain scenes with the same name or relative paths</param>
+        /// <param name="throwOnError">Will throw an exception on error if enabled, or simply return null if disabled</param>
+        /// <returns>An awaitable object containing the found asset</returns>
+        public static DLCSceneAsset FindScene(string nameOrPath, string dlcUniqueKey = null, bool throwOnError = true)
+        {
+            // Find the scene
+            DLCSceneAsset scene = GetSceneWithNameOrPath(nameOrPath, dlcUniqueKey, throwOnError);
+
+            // Check for not found
+            if (scene == null)
+            {
+                // Check for throw
+                if (throwOnError == true)
+                    throw new Exception("Could not locate scene with name or path: " + nameOrPath);
+            }
+            return scene;
+        }
+
+        private static DLCSceneAsset GetSceneWithNameOrPath(string nameOrPath, string dlcUniqueKey = null, bool throwOnError = true)
+        {
+            // Find the asset
+            DLCSceneAsset scene = null;
+
+            if (string.IsNullOrEmpty(dlcUniqueKey) == false)
+            {
+                // Try to find the target dlc
+                DLCContent targetDLC = LoadedDLCContents.FirstOrDefault(d => d.Metadata.NameInfo.UniqueKey == dlcUniqueKey);
+
+                // Check for not found
+                if (targetDLC == null)
+                {
+                    // Check for throw
+                    if (throwOnError == true)
+                        throw new DLCNotLoadedException("Could not find loaded DLC with the unique key, and the DLC will not be loaded on demand in non-async calls: " + dlcUniqueKey);
+
+                    return null;
+                }
+
+                // Try to find the asset
+                scene = targetDLC.SceneAssets.Find(nameOrPath);
+            }
+            else
+            {
+                // Try to find from all loaded
+                allSharedAssetsCollection.Find(nameOrPath);
+            }
+
+            // Check for found
+            if (scene == null)
+            {
+                // Check for throw
+                if (throwOnError == true)
+                    throw new Exception("Could not find scene from loaded DLC contents with the specified name or path: " + nameOrPath);
+
+                return null;
+            }
+            return scene;
+        }
+        #endregion
+
+        // ### Find Scene Async
+        #region FindSceneAsync
+        ///<summary>
+        /// Attempts to find a scene with the specified name or path from any loaded DLC or DLC known at build time.
+        /// This call will attempt to load the associated DLC as part of the same call if it is not already loaded into memory, and the target DLC can be determined from the specified scene name or path.
+        /// </summary>
+        /// <param name="nameOrPath">The name or path of the scene to load</param>
+        /// <param name="dlcUniqueKey">The optional unique key of the DLC to search, useful if multiple DLC's may contain scenes with the same name or relative paths</param>
+        /// <returns>An awaitable object containing the found asset</returns>
+        public static DLCAsync<DLCSceneAsset> FindSceneAsync(string nameOrPath, string dlcUniqueKey = null)
+        {
+            // Create async
+            DLCAsync<DLCSceneAsset> async = new DLCAsync<DLCSceneAsset>();
+
+            // Run async
+            AsyncCommon.RunAsync(WaitForFindSceneAsync(async, nameOrPath, dlcUniqueKey));
+            return async;
+        }
+
+        private static IEnumerator WaitForFindSceneAsync(DLCAsync<DLCSceneAsset> async, string nameOrPath, string dlcUniqueKey)
+        {
+            // Wait for get DLC
+            DLCAsync<DLCContent> dlcRequest = GetOrLoadDLCContentWithSceneAsync(nameOrPath, dlcUniqueKey);
+
+            // Wait for load
+            while (dlcRequest.IsDone == false)
+            {
+                // Update progress
+                async.UpdateProgress(dlcRequest.Progress * 0.5f);
+
+                // Wait a frame
+                yield return null;
+            }
+
+            // Check for loaded
+            if (dlcRequest.IsSuccessful == false)
+            {
+                async.Error("Could not load scene because no DLC content containing such an asset could be located: " + nameOrPath);
+                yield break;
+            }
+
+            // Find the asset
+            DLCSceneAsset scene = dlcRequest.Result.SceneAssets.Find(nameOrPath);
+
+            // Check for not found
+            if (scene == null)
+            {
+                async.Error("Could not locate scene with the specified name or path in the associated DLC: " + nameOrPath + ", " + dlcRequest.Result.Metadata.NameInfo.UniqueKey + ": " + dlcRequest.Status);
+                yield break;
+            }
+
+            // Complete the operation
+            async.Complete(true, scene);
+        }
+        #endregion
+
+
+
         // ### Unload
         #region UnloadAll
         /// <summary>
         /// Attempt to unload all the current loaded DLC contents.
         /// </summary>
         /// <param name="withAssets">Should asset instances also be unloaded</param>
-        /// <exception cref="ArgumentNullException"><paramref name="dlcContents"/> is null or empty</exception>
         public static void UnloadAllDLC(bool withAssets = true)
         {
             // Pass in loaded dlc contents - ensure that a copy is passed using ToList otherwise a collection modified error will occur during unload
@@ -1799,7 +2899,6 @@ namespace DLCToolkit
         /// </summary>
         /// <param name="withAssets">Should asset instances also be unloaded</param>
         /// <returns>A <see cref="DLCBatchAsync"/> object that can be awaited and provided additional information about the state of the batch operation</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="dlcContents"/> is null or empty</exception>
         public static DLCBatchAsync UnloadAllDLCAsync(bool withAssets = true)
         {
             // Pass in loaded dlc contents - ensure that a copy is passed using ToList otherwise a collection modified error will occur during unload
@@ -1881,10 +2980,11 @@ namespace DLCToolkit
         /// <summary>
         /// Attempt to fetch the unique key for the DLC with the specified name and optional version.
         /// This method is slow (and available as async only) since all available DLC need to be evaluated at the metadata level in order to find a matching name and version.
-        /// The available DLC that will be scanned is determined from the active DRM provider via <see cref="RemoteDLCUniqueKeysAsync"/>.
+        /// The available DLC that will be scanned is determined from the active DRM provider via <see cref="FetchRemoteDLCUniqueKeys"/>.
         /// </summary>
         /// <param name="dlcName">The name of the dlc to find the unique key for</param>
         /// <param name="version">An optional version if a specific version of the DLC is required</param>
+        /// <param name="installOnDemand">Should the DLC be installed on demand if it is not available locally</param>
         /// <returns>A <see cref="DLCAsync"/> operation that can be awaited and provides access to the unique key of the installed DLC with the specified name and optional version info if a match is found, or a null string if te DLC could not be located</returns>
         /// <exception cref="NotSupportedException">There is no suitable DRM provider for this platform</exception>
         /// <exception cref="DirectoryNotFoundException">Part of the file path could not be found</exception>
@@ -1904,7 +3004,7 @@ namespace DLCToolkit
         private static IEnumerator WaitForGetDLCUniqueKey(DLCAsync<string> async, string dlcName, Version version, bool installOnDemand)
         {
             // Get remote keys
-            DLCAsync<string[]> remoteKeysAsync = RemoteDLCUniqueKeysAsync;
+            DLCAsync<string[]> remoteKeysAsync = FetchRemoteDLCUniqueKeys();
 
             // Wait for completed
             yield return remoteKeysAsync;
@@ -1912,7 +3012,7 @@ namespace DLCToolkit
             // Check for error
             if(remoteKeysAsync.IsSuccessful == false)
             {
-                async.Error("Failed to get all available unique keys from DRM provider");
+                async.Error(remoteKeysAsync.Status);
                 yield break;
             }
 
@@ -1937,7 +3037,7 @@ namespace DLCToolkit
             }
 
             // Failure
-            async.Error("Could not find installed DLC with the specified name and version info specified. The DLC may not be installed or may be of a different version");
+            async.Error("Could not find installed DLC with the specified name and version info specified. The DLC may not be installed or may be of a different version if specified");
         }
 
         /// <summary>
@@ -1948,6 +3048,11 @@ namespace DLCToolkit
         /// <returns>True if the file is a valid DLC format which can be loaded, or false if not</returns>
         public static bool IsDLCFile(string path)
         {
+            // Check platform
+#if UNITY_WEBGL
+            throw new NotSupportedException("Not supported on this platform");
+#else
+
             // Quick load of header only
             DLCContent temp = TempContent;
             try
@@ -1963,6 +3068,7 @@ namespace DLCToolkit
                 temp.Dispose();
             }
             return true;
+#endif
         }
 
         /// <summary>
@@ -1977,6 +3083,39 @@ namespace DLCToolkit
 
             drmServiceProvider = serviceProvider;
             drmProvider = null;
+        }
+
+        /// <summary>
+        /// Register a custom <see cref="IDRMProvider"/> which is responsible for DRM management for the current build configuration.
+        /// </summary>
+        /// <param name="drmProvider">The DRM provider to register</param>
+        /// <exception cref="ArgumentNullException">DRM provider is null</exception>
+        public static void RegisterDRMProvider(IDRMProvider drmProvider)
+        {
+            // Check for null
+            if (drmProvider == null)
+                throw new ArgumentNullException(nameof(drmProvider));
+
+            // Create service wrapper
+            drmServiceProvider = new DirectDRMServiceProvider(drmProvider);
+            drmProvider = null;
+        }
+
+        internal static void RegisterDRMEditorTestMode(IDRMProvider drmProvider)
+        {
+            // Register drm
+            RegisterDRMProvider(drmProvider);
+
+            // Set test mode
+            isTestMode = true;
+
+            // Report an informative message
+            UnityEngine.Debug.Log("[Ultimate DLC Toolkit]: Editor Test Mode is enabled! You will be able to access any DLC that has been built for the current platform. To disable Test Mode: `Tools->DLC Toolkit->Test Mode->Disabled`");
+        }
+
+        internal static void RegisterEditorManifest(DLCManifest newManifest)
+        {
+            cachedManifestRequest = DLCAsync<DLCManifest>.Completed(true, newManifest);
         }
 
         /// <summary>
@@ -2003,7 +3142,7 @@ namespace DLCToolkit
             }
         }
 
-        private static IEnumerator WaitForLoaded(DLCAsync async, Action finished)
+        private static IEnumerator WaitForCompleted(DLCAsync async, Action finished)
         {
             // Wait for operation
             yield return async;

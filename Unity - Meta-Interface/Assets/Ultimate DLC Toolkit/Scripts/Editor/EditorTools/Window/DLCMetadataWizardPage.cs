@@ -34,7 +34,8 @@ namespace DLCToolkit.EditorTools
         private string createPath = defaultCreatePath + "New DLC";
         private bool wasPathEdited = false;
         private bool tableStyle = true;
-        private GUIContent invalid = null;
+        private GUIContent error = null;
+        private GUIContent warning = null;
 
         // Properties
         public override string PageName => "Metadata";
@@ -52,7 +53,8 @@ namespace DLCToolkit.EditorTools
                 ? defaultCreatePath + Profile.DLCName
                 : Path.Combine(specifiedCreateFolder, Profile.DLCName).Replace('\\', '/');
 
-            invalid = EditorGUIUtility.IconContent("console.erroricon.sml");
+            error = EditorGUIUtility.IconContent("console.erroricon.sml");
+            warning = EditorGUIUtility.IconContent("console.warnicon.sml");
         }
 
         // Methods
@@ -63,7 +65,7 @@ namespace DLCToolkit.EditorTools
             // Validate profile
             InvalidReason reason = ValidateDLCProfile();
 
-            // DLC name
+            // DLC path
             GUILayout.BeginHorizontal(GUIStyles.GetActiveTableContentStyle(ref tableStyle));
             {
                 GUILayout.Label(pathLabel, GUILayout.Width(EditorGUIUtility.labelWidth));
@@ -72,18 +74,18 @@ namespace DLCToolkit.EditorTools
                 // Show invalid
                 if ((reason & InvalidReason.EmptyPath) != 0)
                 {
-                    invalid.tooltip = "Path cannot be empty";
-                    GUILayout.Label(invalid, GUILayout.Width(24));
+                    error.tooltip = "Path cannot be empty";
+                    GUILayout.Label(error, GUILayout.Width(24));
                 }
                 else if ((reason & InvalidReason.PathNotAssets) != 0)
                 {
-                    invalid.tooltip = "Path must specify a location in the current project";
-                    GUILayout.Label(invalid, GUILayout.Width(24));
+                    error.tooltip = "Path must specify a location in the current project";
+                    GUILayout.Label(error, GUILayout.Width(24));
                 }
                 else if ((reason & InvalidReason.PathAlreadyExists) != 0)
                 {
-                    invalid.tooltip = "Path already exists";
-                    GUILayout.Label(invalid, GUILayout.Width(24));
+                    warning.tooltip = "Path already exists";
+                    GUILayout.Label(warning, GUILayout.Width(24));
                 }
 
                 // Check for changed
@@ -104,8 +106,8 @@ namespace DLCToolkit.EditorTools
                 // Show invalid
                 if ((reason & InvalidReason.EmptyName) != 0)
                 {
-                    invalid.tooltip = "Name cannot be empty";
-                    GUILayout.Label(invalid, GUILayout.Width(24));
+                    error.tooltip = "Name cannot be empty";
+                    GUILayout.Label(error, GUILayout.Width(24));
                 }
 
                 // Check for changed
@@ -128,13 +130,13 @@ namespace DLCToolkit.EditorTools
                 // Show invalid
                 if ((reason & InvalidReason.EmptyVersion) != 0)
                 {
-                    invalid.tooltip = "Version cannot be empty";
-                    GUILayout.Label(invalid, GUILayout.Width(24));
+                    error.tooltip = "Version cannot be empty";
+                    GUILayout.Label(error, GUILayout.Width(24));
                 }
                 else if ((reason & InvalidReason.InvalidVersion) != 0)
                 {
-                    invalid.tooltip = "Version is invalid. Use format X.X.X";
-                    GUILayout.Label(invalid, GUILayout.Width(24));
+                    error.tooltip = "Version is invalid. Use format X.X.X";
+                    GUILayout.Label(error, GUILayout.Width(24));
                 }
 
                 // Check for changed

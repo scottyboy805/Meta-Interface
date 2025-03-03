@@ -172,7 +172,9 @@ namespace DLCToolkit.Format
             {
                 // Update progress
                 async.UpdateProgress(request.progress);
-                Debug.Log("Unity progress = " + request.progress);
+#if DEBUG
+                Debug.Log("Load progress = " + request.progress);
+#endif
 
                 // Wait a frame
                 yield return null;

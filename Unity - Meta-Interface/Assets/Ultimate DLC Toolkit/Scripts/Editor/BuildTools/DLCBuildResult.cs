@@ -1,7 +1,7 @@
-﻿using Codice.CM.Common.Tree.Partial;
-using DLCToolkit.Profile;
+﻿using DLCToolkit.Profile;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 
@@ -17,6 +17,8 @@ namespace DLCToolkit.BuildTools
         private DLCPlatformProfile platformProfile = null;
         private string outputPath = "";
         private bool success = false;
+        private DateTime buildStartTime = DateTime.MinValue;
+        private TimeSpan elapsedBuildTime = TimeSpan.Zero;
 
         // Properties
         /// <summary>
@@ -51,13 +53,31 @@ namespace DLCToolkit.BuildTools
             get { return success; }
         }
 
+        /// <summary>
+        /// The time that the DLC platform build request started.
+        /// </summary>
+        public DateTime BuildStartTime
+        {
+            get { return buildStartTime; }
+        }
+
+        /// <summary>
+        /// The amount of time that the entire platform build took to complete.
+        /// </summary>
+        public TimeSpan ElapsedBuildTime
+        {
+            get { return elapsedBuildTime; }
+        }
+
         // Constructor
-        internal DLCBuildTask(DLCProfile profile, DLCPlatformProfile platformProfile, string outputPath, bool success)
+        internal DLCBuildTask(DLCProfile profile, DLCPlatformProfile platformProfile, DateTime buildStartTime, string outputPath, bool success)
         {
             this.profile = profile;
             this.platformProfile = platformProfile;
             this.outputPath = outputPath;
             this.success = success;
+            this.buildStartTime = buildStartTime;
+            this.elapsedBuildTime = DateTime.Now - buildStartTime;
         }
     }
 
@@ -68,6 +88,7 @@ namespace DLCToolkit.BuildTools
     {
         // Private
         private List<DLCBuildTask> buildTasks = new List<DLCBuildTask>();
+        private DLCManifest manifest = null;
         private DateTime buildStartTime = DateTime.MinValue;
         private TimeSpan elapsedBuildTime = TimeSpan.Zero;
 
@@ -89,7 +110,7 @@ namespace DLCToolkit.BuildTools
         }
 
         /// <summary>
-        /// The total number of build taks that completed successfully.
+        /// The total number of build tasks that completed successfully.
         /// </summary>
         public int BuildSuccessCount
         {
@@ -114,6 +135,21 @@ namespace DLCToolkit.BuildTools
         }
 
         /// <summary>
+        /// Get the manifest for the build.
+        /// </summary>
+        public DLCManifest Manifest
+        {
+            get 
+            {
+                // Create manifest
+                if (manifest == null)
+                    BuildManifest();
+
+                return manifest; 
+            }
+        }
+
+        /// <summary>
         /// The time that the DLC build request started.
         /// </summary>
         public DateTime BuildStartTime
@@ -132,7 +168,7 @@ namespace DLCToolkit.BuildTools
         // Constructor
         internal DLCBuildResult() 
         {
-            buildStartTime = DateTime.Now;
+            this.buildStartTime = DateTime.Now;
         }
 
         // Methods
@@ -196,19 +232,76 @@ namespace DLCToolkit.BuildTools
                 .Where(t => t.Success == false);
         }
 
-        internal void WithSuccessfulTask(DLCProfile profile, DLCPlatformProfile platformProfile, string outputPath)
+        internal DLCBuildTask WithSuccessfulTask(DLCProfile profile, DLCPlatformProfile platformProfile, DateTime buildStartTime, string outputPath)
         {
-            buildTasks.Add(new DLCBuildTask(profile, platformProfile, outputPath, true));
+            // Create successful
+            DLCBuildTask result;
+            buildTasks.Add(result = new DLCBuildTask(profile, platformProfile, buildStartTime, outputPath, true));
+
+            return result;
         }
 
-        internal void WithFailedTask(DLCProfile profile, DLCPlatformProfile platformProfile)
+        internal DLCBuildTask WithFailedTask(DLCProfile profile, DLCPlatformProfile platformProfile, DateTime buildStartTime)
         {
-            buildTasks.Add(new DLCBuildTask(profile, platformProfile, "", false));
+            // Create failure
+            DLCBuildTask result;
+            buildTasks.Add(result = new DLCBuildTask(profile, platformProfile, buildStartTime, "", false));
+
+            return result;
         }
 
         internal void WithCompleteTime()
         {
             elapsedBuildTime = DateTime.Now - buildStartTime;
+        }
+
+        private void BuildManifest()
+        {
+            // Store manifest entries
+            List<DLCManifestEntry> manifestEntries = new List<DLCManifestEntry>();
+
+            // Setup all entries
+            foreach(DLCBuildTask build in buildTasks)
+            {
+                // Get the path
+                string dlcPath = build.Profile.GetPlatformOutputPath(build.PlatformProfile.Platform);
+
+                // Get file meta
+                long size = 0;
+                DateTime writeTime = default;
+
+                if(File.Exists(build.OutputPath) == true)
+                {
+                    // Create the file info
+                    FileInfo info = new FileInfo(dlcPath);
+
+                    size = info.Length;
+                    writeTime = info.LastWriteTime;
+                }
+
+                // Build manifest entry
+                DLCManifestEntry entry = new DLCManifestEntry
+                {
+                    dlcUniqueKey = build.PlatformProfile.DlcUniqueKey,
+                    dlcName = build.Profile.DLCName,
+                    dlcPath = dlcPath,
+                    dlcIAPName = build.PlatformProfile.DLCIAPName,
+                    shipWithGame = build.PlatformProfile.ShipWithGame,
+                    streamingContent = build.PlatformProfile.ShipWithGameDirectory == ShipWithGameDirectory.StreamingAssets,
+                    sizeOnDisk = size,
+                    lastWriteTime = writeTime,
+                };
+
+                // Add the entry
+                manifestEntries.Add(entry);
+            }
+
+            // Create manifest
+            manifest = new DLCManifest
+            {
+                // Get all entries
+                dlcContents = manifestEntries.ToArray(),
+            };
         }
 
         internal static DLCBuildResult Empty()

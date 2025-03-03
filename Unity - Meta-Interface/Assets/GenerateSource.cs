@@ -32,7 +32,7 @@ public class GenerateSource
 
         AssemblyDefinition def = new AssemblyDefinition(asm);
 
-        def.GenerateSource("GeneratedMeta/Ultimate Replay/Source");
+        def.GenerateSource("../Unity - Meta-Interface Generated/Assets/GeneratedMeta/Ultimate Replay/Source");
     }
 
     [MenuItem("Tools/Generate Meta Source/From Ultimate DLC Code Base")]
@@ -50,6 +50,6 @@ public class GenerateSource
 
         AssemblyDefinition def = new AssemblyDefinition(asm);
 
-        def.GenerateSource("GeneratedMeta/DLC Toolkit/Source");
+        def.GenerateSource("../Unity - Meta-Interface Generated/Assets/GeneratedMeta/DLC Toolkit/Source");
     }
 }

@@ -67,7 +67,7 @@ namespace DLCToolkit.BuildTools.Scripting
 
 
         // Methods
-        public CompilationResult RequestPlayerCompilation(BuildTarget buildTarget, IEnumerable<ScriptAssemblyCompilation> includeCompilations, string[] defines, bool debugMode)
+        public CompilationResult RequestPlayerCompilation(BuildTarget buildTarget, BuildTargetGroup buildTargetGroup, IEnumerable<ScriptAssemblyCompilation> includeCompilations, string[] defines, bool debugMode)
         {
             Debug.Log("Compiling DLC scripts for player runtime...");
 
@@ -81,6 +81,7 @@ namespace DLCToolkit.BuildTools.Scripting
             PlayerBuildInterface.CompilePlayerScripts(new ScriptCompilationSettings
             {
                 target = buildTarget,
+                group = buildTargetGroup,
                 extraScriptingDefines = defines,
                 options = debugMode == true 
                     ? ScriptCompilationOptions.DevelopmentBuild 

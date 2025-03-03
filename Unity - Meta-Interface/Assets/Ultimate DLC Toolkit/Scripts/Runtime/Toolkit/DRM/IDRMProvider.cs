@@ -7,16 +7,15 @@ namespace DLCToolkit.DRM
     /// </summary>
     public interface IDRMProvider
     {
-        // Properties
+        // Methods
         /// <summary>
         /// Get all unique id keys for all DLC published via the DRM platform (Steamworks DLC for example).
         /// It is allowed for this property to return an empty array or only a partial array of the potentially available DLC Contents.
         /// <see cref="IsDLCAvailableAsync(IDLCAsyncProvider, string)"/> will be used to determine truly whether DLC content is valid and available at any given time, even if this property does not list it.
         /// Can throw a <see cref="NotSupportedException"/> if the DRM platform does not support listing contents.
         /// </summary>
-        DLCAsync<string[]> DLCUniqueKeysAsync { get; }
+        DLCAsync<string[]> GetDLCUniqueKeysAsync(IDLCAsyncProvider asyncProvider);
 
-        // Methods
         /// <summary>
         /// Check if the specified DLC is purchased and installed.
         /// Some providers may need to make a web request to check for purchased DLC, so this operations must be async.
@@ -24,14 +23,15 @@ namespace DLCToolkit.DRM
         /// <param name="asyncProvider">The async provider to allow async tasks to be started</param>
         /// <param name="uniqueKey">The unique key of the dlc</param>
         /// <returns>True if the dlc is installed or false if not</returns>
-        DLCAsync<bool> IsDLCAvailableAsync(IDLCAsyncProvider asyncProvider, string uniqueKey);
+        DLCAsync IsDLCAvailableAsync(IDLCAsyncProvider asyncProvider, string uniqueKey);
 
         /// <summary>
         /// Attempt to get the stream provider for the DLC to allow loading.
         /// </summary>
+        /// <param name="asyncProvider">The async provider to allow async tasks to be started</param>
         /// <param name="uniqueKey">The unique key of the dlc</param>
         /// <returns>The stream provider for the dlc if installed or null if it is not available</returns>
-        DLCStreamProvider GetDLCStream(string uniqueKey);
+        DLCAsync<DLCStreamProvider> GetDLCStreamAsync(IDLCAsyncProvider asyncProvider, string uniqueKey);
 
         /// <summary>
         /// Request that the dlc with the provided unique key is installed onto the system if it is available to the user.

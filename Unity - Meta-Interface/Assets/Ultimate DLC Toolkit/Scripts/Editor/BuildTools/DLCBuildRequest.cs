@@ -15,6 +15,7 @@ namespace DLCToolkit.BuildTools
     {
         // Private
         private const string tempBundleCache = "Temp/DLCBundles";
+        private const string androidAssetPackFolder = "src/main/assets";
         private DLCProfile[] profiles = null;
 
         // Constructor
@@ -68,7 +69,8 @@ namespace DLCToolkit.BuildTools
                 // Process all builds
                 foreach (DLCBuildContext context in platformBuild.Value)
                 {
-                    // Trigger start build profile
+                    // Get platform build start time
+                    context.platformBuildStartTime = DateTime.Now;
 
                     try
                     { 
@@ -89,7 +91,8 @@ namespace DLCToolkit.BuildTools
                         if (context.ValidateBuildProfile() == false)
                         {
                             Debug.LogError("DLC will not be built because the DLC profile is incomplete or contains invalid data: " + context.Profile.DLCProfileName);
-                            result.WithFailedTask(context.Profile, context.PlatformProfile);
+                            result.WithFailedTask(context.Profile, context.PlatformProfile, context.platformBuildStartTime);
+                            MarkAsFailed(context);
                             continue;
                         }
 
@@ -97,7 +100,8 @@ namespace DLCToolkit.BuildTools
                         if (context.CollectBuildAssets(bundleBuilds, scriptingSupported) == false)
                         {
                             Debug.LogError("DLC will not be built because it does not have any associated assets: " + context.Profile.DLCProfileName);
-                            result.WithFailedTask(context.Profile, context.PlatformProfile);
+                            result.WithFailedTask(context.Profile, context.PlatformProfile, context.platformBuildStartTime);
+                            MarkAsFailed(context);
                             continue;
                         }
 
@@ -107,9 +111,13 @@ namespace DLCToolkit.BuildTools
                             // Get the compilation batch
                             ScriptAssemblyBatch compilationBatch = context.ScriptCollection.CompilationBatch;
 
+                            // Get platform group
+                            BuildTargetGroup platformGroup = BuildPipeline.GetBuildTargetGroup(context.PlatformProfile.Platform);
+
                             // Request compilation of scripts for player
                             CompilationResult compileResult = compilationBatch.RequestPlayerCompilation(
-                                context.PlatformProfile.Platform, context.ScriptCollection.IncludeOrderedCompilations,
+                                context.PlatformProfile.Platform, platformGroup,
+                                context.ScriptCollection.IncludeOrderedCompilations,
                                 context.PlatformProfile.PlatformDefines,
                                 (buildOptions & DLCBuildOptions.DebugScripting) != 0);
 
@@ -117,7 +125,8 @@ namespace DLCToolkit.BuildTools
                             if (compileResult == CompilationResult.Failed)
                             {
                                 Fail(context, "DLC build failed! There were script compilation errors");
-                                result.WithFailedTask(context.Profile, context.PlatformProfile);
+                                result.WithFailedTask(context.Profile, context.PlatformProfile, context.platformBuildStartTime);
+                                MarkAsFailed(context);
                                 continue;
                             }
                             else if(compileResult == CompilationResult.CompiledWithoutSymbols)
@@ -141,12 +150,15 @@ namespace DLCToolkit.BuildTools
                         // Create bundle options
                         BuildAssetBundleOptions options = 0;
 
+                        // WebGL platform must use uncompressed bundles for loading purposes - so we can enforce that here
+#if !UNITY_WEBGL
                         // Compression
                         if (platformProfile.UseCompression == true)
                         {
                             options |= BuildAssetBundleOptions.ChunkBasedCompression;
                         }
                         else
+#endif
                         {
                             options |= BuildAssetBundleOptions.UncompressedAssetBundle;
                         }
@@ -168,6 +180,12 @@ namespace DLCToolkit.BuildTools
                             options,
                             platformBuild.Key);
 
+                        // Reload profile asset
+                        // ### Nasty workaround - Building asset bundles can cause the DLC Profile asset to be destroyed from memory (profile == "null" in Unity check) in some versions - We need to check if that is the case and reload from disk in those situations, since the profile asset is needed to report back build information
+                        // Note that while the profile asset is considered `null` by Unity, it is still possible to access all managed information and fields with no issue, but will cause an exception if passed to a Unity method like `SetDirty()`
+                        if (context.Profile == null)
+                            context.ReloadProfileFromAssetDatabase();
+
                         // Check manifest to see if the requested bundles were created
                         if (context.ValidateBundleContent(manifest) == true)
                             outputBuilds.Add(context);
@@ -177,7 +195,7 @@ namespace DLCToolkit.BuildTools
                     {
                         Debug.LogError("An unhandled exception occurred during the main build stage: " + e.ToString());
                         Fail(context, "DLC Build Failed! See previous errors!");
-                        result.WithFailedTask(context.Profile, context.PlatformProfile);
+                        result.WithFailedTask(context.Profile, context.PlatformProfile, context.platformBuildStartTime);
                         continue;
                     }
                 }
@@ -211,6 +229,12 @@ namespace DLCToolkit.BuildTools
 
                     // Build the DLC content bundle
                     DLCBuildBundle bundle = context.BuildDLCContent(tempBundleCache, scriptingSupported, scriptingDebug);
+
+                    // Reload profile asset after build
+                    // ### Nasty workaround - Building asset bundles can cause the DLC Profile asset to be destroyed from memory (profile == "null" in Unity check) in some versions - We need to check if that is the case and reload from disk in those situations, since the profile asset is needed to report back build information
+                    // Note that while the profile asset is considered `null` by Unity, it is still possible to access all managed information and fields with no issue, but will cause an exception if passed to a Unity method like `SetDirty()`
+                    if (context.Profile == null)
+                        context.ReloadProfileFromAssetDatabase();
 
                     // Get output path
                     string platformOutputPath = context.Profile.GetPlatformOutputFolder(context.PlatformProfile.Platform);
@@ -249,6 +273,10 @@ namespace DLCToolkit.BuildTools
                         // Create build directory
                         string androidCustomAssetPackDirectory = androidPlatform.GetDLCCustomAssetPackPath(androidPlatform.DlcUniqueKey);
 
+                        // Append android path
+                        androidCustomAssetPackDirectory = Path.Combine(androidCustomAssetPackDirectory, androidAssetPackFolder);
+
+                        // Create folder
                         if (Directory.Exists(androidCustomAssetPackDirectory) == false)
                             Directory.CreateDirectory(androidCustomAssetPackDirectory);
 
@@ -258,14 +286,8 @@ namespace DLCToolkit.BuildTools
                         Debug.Log("Writing Android custom asset pack to disk...");
 
                         // Create android custom asset pack content file
-                        using (Stream outputStream = File.Create(androidCustomAssetPackContentFile))
-                        {
-                            // Read previously built dlc bundle
-                            using (Stream dlcStream = File.OpenRead(dlcOutputPath))
-                            {
-                                dlcStream.CopyTo(outputStream);
-                            }
-                        }
+                        File.Copy(dlcOutputPath, androidCustomAssetPackContentFile, true);
+
 
                         Debug.Log("Generating build.gradle for Android DLC...");
 
@@ -279,13 +301,14 @@ namespace DLCToolkit.BuildTools
                     }
 
                     // Report successful
+                    DLCBuildTask platformBuildTask;
                     if(context.isFaulted == true)
                     {
                         // Update result
                         context.Profile.lastBuildSuccess = false;
                         context.PlatformProfile.lastBuildSuccess = false;
 
-                        result.WithFailedTask(context.Profile, context.PlatformProfile);
+                        platformBuildTask = result.WithFailedTask(context.Profile, context.PlatformProfile, context.platformBuildStartTime);
                     }
                     else
                     {
@@ -293,22 +316,18 @@ namespace DLCToolkit.BuildTools
                         context.Profile.lastBuildSuccess = true;
                         context.PlatformProfile.lastBuildSuccess = true;
 
-                        result.WithSuccessfulTask(context.Profile, context.PlatformProfile, dlcOutputPath);
+                        platformBuildTask = result.WithSuccessfulTask(context.Profile, context.PlatformProfile, context.platformBuildStartTime, dlcOutputPath);
                     }
 
                     // Trigger build finished event
                     DLCBuildEventHooks.SafeInvokeBuildEventHookImplementations<DLCPostBuildPlatformProfileAttribute, DLCBuildPlatformProfileResultEvent>
-                        ((DLCBuildPlatformProfileResultEvent e) => e.OnBuildProfileEvent(context.Profile, context.PlatformProfile, context.isFaulted == false, dlcOutputPath));
+                        ((DLCBuildPlatformProfileResultEvent e) => e.OnBuildProfileEvent(context.Profile, context.PlatformProfile, platformBuildTask));
                 }
                 catch (Exception e)
                 {
-                    // Update result
-                    context.Profile.lastBuildSuccess = false;
-                    context.PlatformProfile.lastBuildSuccess = false;
-
                     Debug.LogError("An unhandled exception occurred during the final build stage: " + e.ToString());
                     Fail(context, "DLC Build Failed! See previous errors!");
-                    result.WithFailedTask(context.Profile, context.PlatformProfile);
+                    result.WithFailedTask(context.Profile, context.PlatformProfile, context.platformBuildStartTime);
                     continue;
                 }
             }
@@ -392,8 +411,21 @@ namespace DLCToolkit.BuildTools
             Debug.LogError(reason);
 
             // Set failed state
-            if(context != null)
+            if (context != null)
+            {
                 context.isFaulted = true;
+                MarkAsFailed(context);
+            }
+        }
+
+        private void MarkAsFailed(DLCBuildContext context)
+        {
+            // Set failed state
+            if (context != null)
+            {
+                context.Profile.lastBuildSuccess = false;
+                context.PlatformProfile.lastBuildSuccess = false;
+            }
         }
 
         private void Cleanup()

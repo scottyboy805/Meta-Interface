@@ -7,9 +7,10 @@ namespace DLCToolkit.BuildTools.Format
     internal sealed class DLCBuildMetadata : DLCMetadata, IDLCBuildBundleEntry
     {
         // Constructor
-        internal DLCBuildMetadata(DLCNameInfo nameInfo, string guid, string description, string developer, string publisher, Version toolkitVersion, string unityVersion, DLCContentFlags contentFlags)
-            : base(nameInfo, guid, description, developer, publisher, toolkitVersion, unityVersion, contentFlags)
+        internal DLCBuildMetadata(DLCNameInfo nameInfo, string guid, string description, string developer, string publisher, Version toolkitVersion, string unityVersion, DLCContentFlags contentFlags, bool shippedWithGame, DLCCustomMetadata customMetadata)
+            : base(nameInfo, guid, description, developer, publisher, toolkitVersion, unityVersion, contentFlags, shippedWithGame)
         {
+            this.customMetadata = customMetadata;
         }
 
         // Methods
@@ -35,6 +36,19 @@ namespace DLCToolkit.BuildTools.Format
             writer.Write(unityVersion);
             writer.Write((uint)contentFlags);
             writer.Write(buildTime.ToFileTime());
+            writer.Write(shippedWithGame);
+
+            // Write custom metadata
+            writer.Write((bool)(customMetadata != null));
+
+            if(customMetadata != null)
+            {
+                // Write custom metadata string
+                DLCFormatUtils.WriteString(writer, customMetadata.GetType().AssemblyQualifiedName);
+
+                // Write custom metadata serialized data
+                DLCFormatUtils.WriteString(writer, customMetadata.ToSerializeString());
+            }
         }
     }
 }

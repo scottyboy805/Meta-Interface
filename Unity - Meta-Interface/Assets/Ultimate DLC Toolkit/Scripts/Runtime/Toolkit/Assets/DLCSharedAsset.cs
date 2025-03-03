@@ -181,7 +181,7 @@ namespace DLCToolkit.Assets
         }
 
 
-        private IEnumerator LoadAssetFromBundleAsync<T>(IDLCAsyncProvider asyncProvider, DLCAsync<T> async)
+        private IEnumerator LoadAssetFromBundleAsync<T>(IDLCAsyncProvider asyncProvider, DLCAsync<T> async) where T : Object
         {
             bool didLoadBundle = false;
 
@@ -238,8 +238,11 @@ namespace DLCToolkit.Assets
             // Update status
             async.UpdateStatus("Loading complete");
 
+            // Get result T
+            T result = request.asset as T;
+
             // Complete operation
-            async.Complete(request.asset != null, request.asset);
+            async.Complete(result != null, result);
         }
 
         private IEnumerator LoadWithSubAssetsFromBundleAsync<T>(IDLCAsyncProvider asyncProvider, DLCAsync<T[]> async) where T : Object

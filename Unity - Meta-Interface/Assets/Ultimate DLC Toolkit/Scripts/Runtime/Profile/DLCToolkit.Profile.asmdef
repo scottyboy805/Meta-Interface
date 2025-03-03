@@ -1,7 +1,9 @@
 {
     "name": "DLCToolkit.Profile",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:7372aa72a36b18645bf57e537045000b"
+    ],
     "includePlatforms": [
         "Editor"
     ],

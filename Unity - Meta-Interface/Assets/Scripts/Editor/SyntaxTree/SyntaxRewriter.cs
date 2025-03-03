@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MetaInterface.Syntax
@@ -9,6 +10,7 @@ namespace MetaInterface.Syntax
     {
         // Private
         private MetaConfig config = null;
+        private Stack<SyntaxNode> removeKeepLeadingTrivia = new Stack<SyntaxNode>();
 
         // Constructor
         public SyntaxRewriter(MetaConfig config)
@@ -17,6 +19,15 @@ namespace MetaInterface.Syntax
         }
 
         // Methods
+        public SyntaxNode VisitTree(SyntaxTree tree)
+        {
+            // Perform visit
+            SyntaxNode result = Visit(tree.GetRoot());
+
+            
+            return result;
+        }
+
         public override SyntaxNode Visit(SyntaxNode node)
         {
             if (node != null)
@@ -29,11 +40,26 @@ namespace MetaInterface.Syntax
 
         public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
         {
+            // Check for region
             if (trivia.IsKind(SyntaxKind.RegionDirectiveTrivia) || trivia.IsKind(SyntaxKind.EndRegionDirectiveTrivia))
             {
                 // Return an empty trivia to remove the directive
                 return default;
             }
+
+            // Check for disabled text - pre-processor directive that is disabled
+            if(trivia.IsKind(SyntaxKind.DisabledTextTrivia) == true)
+            {
+                // Need to parse the trivia manually
+                SyntaxTree disabledTree = CSharpSyntaxTree.ParseText(trivia.ToFullString());
+
+                // Manually patch the syntax tree
+                SyntaxNode patchedDisabledRoot = VisitTree(disabledTree);
+
+                // Get the full string
+                return SyntaxFactory.DisabledText(patchedDisabledRoot.ToFullString());
+            }
+                       
 
             return base.VisitTrivia(trivia);
         }
@@ -62,7 +88,16 @@ namespace MetaInterface.Syntax
             //var a = directive.DescendantNodes().OfType<MemberDeclarationSyntax>().ToArray();
 
             // Class should remain in the syntax tree
-            return base.VisitClassDeclaration(node);
+            SyntaxNode result = base.VisitClassDeclaration(node);
+
+            // Remove requested nodes
+            while (removeKeepLeadingTrivia.Count > 0)
+            {
+                // Remove but keep trivia
+                result = result.RemoveNode(removeKeepLeadingTrivia.Pop(), SyntaxRemoveOptions.KeepLeadingTrivia);
+            }
+
+            return result;
         }
 
         public override SyntaxNode VisitStructDeclaration(StructDeclarationSyntax node)
@@ -156,9 +191,20 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
             // Check if method is exposed
-            if (SyntaxPatcher.IsMethodDeclarationExposed(node) == false
-                && HasLeadingPreprocessorDirectives(node) == false)
-                return null;
+            if (SyntaxPatcher.IsMethodDeclarationExposed(node) == false)
+            {
+                if (IsExplicitInterfaceDeclaration(node) == true ||
+                    HasLeadingPreprocessorDirectives(node) == false)
+                {
+                    return null;
+                }
+                else
+                {
+                    //// Mark for removal
+                    //removeKeepLeadingTrivia.Push(node);
+                    //return node;
+                }
+            }
 
             // Method should remain in the syntax tree
             return SyntaxPatcher.PatchMethodBodyLambda(node);
@@ -194,6 +240,11 @@ namespace MetaInterface.Syntax
                 trivia.IsKind(SyntaxKind.ErrorDirectiveTrivia) ||
                 trivia.IsKind(SyntaxKind.WarningDirectiveTrivia) ||
                 trivia.IsKind(SyntaxKind.PragmaWarningDirectiveTrivia));
+        }
+
+        private bool IsExplicitInterfaceDeclaration(MethodDeclarationSyntax methodNode)
+        {
+            return methodNode.Identifier.Text.Contains('.');
         }
     }
 }
