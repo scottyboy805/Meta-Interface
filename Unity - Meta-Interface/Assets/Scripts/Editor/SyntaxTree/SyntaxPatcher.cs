@@ -136,7 +136,7 @@ namespace MetaInterface.Syntax
         public static FieldDeclarationSyntax PatchFieldInitializer(FieldDeclarationSyntax syntax)
         {
             VariableDeclarationSyntax declaration = syntax.Declaration;
-            
+
             // Check for constant
             bool isConst = syntax.Modifiers.Any(SyntaxKind.ConstKeyword);
 
@@ -160,7 +160,7 @@ namespace MetaInterface.Syntax
 
             // Variable will be replaced as needed
             VariableDeclarationSyntax newSyntax = syntax;
-            
+
             // Remove all assignments
             for (int i = 0; i < variables.Count; i++)
             {
@@ -226,7 +226,7 @@ namespace MetaInterface.Syntax
         public static PropertyDeclarationSyntax PatchPropertyAccessorsLambda(PropertyDeclarationSyntax syntax)
         {
             // Check for abstract
-            if(syntax.Modifiers.Any(SyntaxKind.AbstractKeyword) == true)
+            if (syntax.Modifiers.Any(SyntaxKind.AbstractKeyword) == true)
                 return syntax;
 
             // Check for expression body
@@ -236,7 +236,7 @@ namespace MetaInterface.Syntax
             // Get all accessors
             SyntaxList<AccessorDeclarationSyntax> accessors = syntax.AccessorList.Accessors;
 
-            for(int i = 0; i < accessors.Count; i++)
+            for (int i = 0; i < accessors.Count; i++)
             {
                 // Patch accessor body
                 syntax = syntax.ReplaceNode(accessors[i], PatchPropertyAccessorBodyLambda(accessors[i]));
@@ -267,7 +267,7 @@ namespace MetaInterface.Syntax
                 syntax = syntax.RemoveNode(syntax.Body, SyntaxRemoveOptions.KeepNoTrivia);
 
             // Remove expression body
-            if(syntax.ExpressionBody != null)
+            if (syntax.ExpressionBody != null)
                 syntax = syntax.RemoveNode(syntax.ExpressionBody, SyntaxRemoveOptions.KeepNoTrivia);
 
             // Build patched body
@@ -315,7 +315,7 @@ namespace MetaInterface.Syntax
                 return syntax;
 
             // Patch the syntax
-            for(int i = 0; i < syntax.Arguments.Count; i++)
+            for (int i = 0; i < syntax.Arguments.Count; i++)
             {
                 syntax = syntax.ReplaceNode(syntax.Arguments[i], SyntaxFactory.Argument(
                     SyntaxFactory.ParseExpression("default")));

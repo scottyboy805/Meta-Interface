@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace MetaInterface.Syntax
@@ -23,7 +22,7 @@ namespace MetaInterface.Syntax
             // Perform visit
             SyntaxNode result = Visit(tree.GetRoot());
 
-            
+
             return result;
         }
 
@@ -47,7 +46,7 @@ namespace MetaInterface.Syntax
             }
 
             // Check for disabled text - pre-processor directive that is disabled
-            if(trivia.IsKind(SyntaxKind.DisabledTextTrivia) == true)
+            if (trivia.IsKind(SyntaxKind.DisabledTextTrivia) == true)
             {
                 // Need to parse the trivia manually
                 SyntaxTree disabledTree = CSharpSyntaxTree.ParseText(trivia.ToFullString());
@@ -58,7 +57,7 @@ namespace MetaInterface.Syntax
                 // Get the full string
                 return SyntaxFactory.DisabledText(patchedDisabledRoot.ToFullString());
             }
-                       
+
 
             return base.VisitTrivia(trivia);
         }
@@ -90,7 +89,7 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
         {
             // Check if interface is exposed
-            if (SyntaxPatcher.IsInterfaceDeclarationExposed(node) == false 
+            if (SyntaxPatcher.IsInterfaceDeclarationExposed(node) == false
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
@@ -123,7 +122,7 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitFieldDeclaration(FieldDeclarationSyntax node)
         {
             // Check if field is exposed
-            if (SyntaxPatcher.IsFieldDeclarationExposed(node) == false 
+            if (SyntaxPatcher.IsFieldDeclarationExposed(node) == false
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 

@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 namespace Meta_Interface_UnitTest
 {
     [TestClass]
@@ -44,7 +42,7 @@ public class Test
 @"public class Test
 {
     public string Method() => throw new System.NotImplementedException();
-}", 
+}",
 @"
 public class Test
 {

@@ -46,7 +46,7 @@ namespace MetaInterface
 
                     // Rewrite and patch declarations
                     SyntaxNode patchedRoot = sourceFile.ParseAndGenerateMeta(config);
-                    
+
 
                     // Insert a comment about the changes made to this source file
                     patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
@@ -83,7 +83,7 @@ namespace MetaInterface
                     // Make sure parent directory exists
                     string parentPath = Directory.GetParent(sourceOutputPath).FullName;
 
-                    if(Directory.Exists(parentPath) == false)
+                    if (Directory.Exists(parentPath) == false)
                         Directory.CreateDirectory(parentPath);
 
                     // Create source
@@ -96,7 +96,7 @@ namespace MetaInterface
                     patchedRoot = SyntaxPatcher.InsertGeneratedComment(patchedRoot, asm.name + ".dll", source);
 
 #if DEBUG
-                    UnityEngine.Debug.Log("Generate meta source: " +  sourceOutputPath);
+                    UnityEngine.Debug.Log("Generate meta source: " + sourceOutputPath);
 #endif
 
                     // Write new source
@@ -106,7 +106,7 @@ namespace MetaInterface
                     modifiedSourceFileGuids.Add(sourceFile.Guid);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
 #if DEBUG
                 UnityEngine.Debug.LogException(e);

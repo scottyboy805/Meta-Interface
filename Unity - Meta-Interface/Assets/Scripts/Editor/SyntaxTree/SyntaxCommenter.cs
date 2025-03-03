@@ -11,7 +11,7 @@ namespace MetaInterface.Syntax
         public override SyntaxNode VisitNamespaceDeclaration(NamespaceDeclarationSyntax node)
         {
             // Check for any declarations
-            if(node.Members
+            if (node.Members
                 .OfType<MemberDeclarationSyntax>()
                 .Any(declaration =>
                     declaration is ClassDeclarationSyntax ||
