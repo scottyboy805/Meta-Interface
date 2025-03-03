@@ -23,11 +23,6 @@ namespace MetaInterface.Syntax
 ", assemblyDefinition, cSharpSource)));
         }
 
-        public static bool IsNamespaceDeclarationExposed(NamespaceDeclarationSyntax syntax)
-        {
-            return true;
-        }
-
         public static bool IsClassDeclarationExposed(ClassDeclarationSyntax syntax, MetaConfig config)
         {
             return IsModifierListExposed(syntax.Modifiers);
@@ -211,18 +206,6 @@ namespace MetaInterface.Syntax
             return syntax.Initializer.Value is LiteralExpressionSyntax;
         }
 
-        public static PropertyDeclarationSyntax PatchPropertyAccessors(PropertyDeclarationSyntax syntax)
-        {
-            AccessorListSyntax accessors = syntax.AccessorList;
-
-            foreach (AccessorDeclarationSyntax accessor in accessors.Accessors)
-            {
-                syntax = syntax.ReplaceNode(accessor, PatchPropertyAccessorBody(accessor));
-            }
-
-            return syntax;
-        }
-
         public static PropertyDeclarationSyntax PatchPropertyAccessorsLambda(PropertyDeclarationSyntax syntax)
         {
             // Check for abstract
@@ -248,16 +231,6 @@ namespace MetaInterface.Syntax
                 syntax = syntax.RemoveNode(syntax.Initializer, SyntaxRemoveOptions.KeepNoTrivia);
 
             return syntax;
-        }
-
-        public static AccessorDeclarationSyntax PatchPropertyAccessorBody(AccessorDeclarationSyntax syntax)
-        {
-            // Strip accessor body - check for no body provided too
-            if (StripPropertyBody(ref syntax) == false)
-                return syntax;
-
-            // Replace the accessor body
-            return syntax.WithBody(GetMethodBodyReplacementSyntax());
         }
 
         public static AccessorDeclarationSyntax PatchPropertyAccessorBodyLambda(AccessorDeclarationSyntax syntax)
@@ -341,36 +314,6 @@ namespace MetaInterface.Syntax
                 .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
         }
 
-        private static bool StripPropertyBody(ref AccessorDeclarationSyntax syntax)
-        {
-            // Check for trailing semicolon
-            if (syntax.SemicolonToken != null)
-                syntax = syntax.ReplaceToken(syntax.SemicolonToken, SyntaxFactory.Token(SyntaxKind.None));
-
-            bool hasBody = false;
-
-            // Remove current accessor body
-            if (syntax.Body != null)
-            {
-                syntax = syntax.RemoveNode(syntax.Body, SyntaxRemoveOptions.KeepUnbalancedDirectives);
-                hasBody = true;
-            }
-
-            // Remove current expression
-            if (syntax.ExpressionBody != null)
-            {
-                syntax = syntax.RemoveNode(syntax.ExpressionBody, SyntaxRemoveOptions.KeepUnbalancedDirectives);
-                hasBody = true;
-            }
-
-            // Check for no body (abstract)
-            if (hasBody == false)
-                return false;
-
-            // Strip was successful
-            return true;
-        }
-
         private static bool StripPropertyExpressionBody(ref PropertyDeclarationSyntax syntax)
         {
             // Check for trailing semicolon
@@ -451,13 +394,6 @@ namespace MetaInterface.Syntax
 
             // Strip was successful
             return true;
-        }
-
-        public static BlockSyntax GetMethodBodyReplacementSyntax()
-        {
-            return SyntaxFactory.Block(
-                SyntaxFactory.ParseStatement(
-                    methodImplementationString));
         }
 
         public static ArrowExpressionClauseSyntax GetMethodBodyLambdaReplacementSyntax()
