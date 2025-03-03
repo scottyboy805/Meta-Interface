@@ -10,7 +10,6 @@ namespace MetaInterface.Syntax
     {
         // Private
         private MetaConfig config = null;
-        private Stack<SyntaxNode> removeKeepLeadingTrivia = new Stack<SyntaxNode>();
 
         // Constructor
         public SyntaxRewriter(MetaConfig config)
@@ -64,19 +63,6 @@ namespace MetaInterface.Syntax
             return base.VisitTrivia(trivia);
         }
 
-        public override SyntaxNode VisitEndRegionDirectiveTrivia(EndRegionDirectiveTriviaSyntax node)
-        {
-            return null;
-        }
-
-        public override SyntaxNode VisitNamespaceDeclaration(NamespaceDeclarationSyntax node)
-        {
-
-
-            // Namespace should remain in the syntax tree
-            return base.VisitNamespaceDeclaration(node);
-        }
-
         public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax node)
         {
             // Check if class is exposed
@@ -84,18 +70,8 @@ namespace MetaInterface.Syntax
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
-            //var directive = node.GetFirstDirective();
-            //var a = directive.DescendantNodes().OfType<MemberDeclarationSyntax>().ToArray();
-
             // Class should remain in the syntax tree
             SyntaxNode result = base.VisitClassDeclaration(node);
-
-            // Remove requested nodes
-            while (removeKeepLeadingTrivia.Count > 0)
-            {
-                // Remove but keep trivia
-                result = result.RemoveNode(removeKeepLeadingTrivia.Pop(), SyntaxRemoveOptions.KeepLeadingTrivia);
-            }
 
             return result;
         }
@@ -197,12 +173,6 @@ namespace MetaInterface.Syntax
                     HasLeadingPreprocessorDirectives(node) == false)
                 {
                     return null;
-                }
-                else
-                {
-                    //// Mark for removal
-                    //removeKeepLeadingTrivia.Push(node);
-                    //return node;
                 }
             }
 

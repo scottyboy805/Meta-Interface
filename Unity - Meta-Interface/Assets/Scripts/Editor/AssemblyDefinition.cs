@@ -1,4 +1,4 @@
-﻿#if UNITY
+﻿#if UNITY_EDITOR
 using MetaInterface.Syntax;
 using Microsoft.CodeAnalysis;
 using System;
