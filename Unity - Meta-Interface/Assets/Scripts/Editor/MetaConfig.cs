@@ -7,6 +7,7 @@ namespace MetaInterface
         // Private
         private string ignoreMembersWithAttribute = null;
         private readonly List<string> preprocessorDefineSymbols = new List<string>();
+        private readonly List<string> suppressWarnings = new List<string>();
 
         // Public
         public static readonly MetaConfig Default = new MetaConfig();
@@ -26,9 +27,21 @@ namespace MetaInterface
             set { ignoreMembersWithAttribute = value; }
         }
 
-        public IList<string> PreprocessorDefineSymbols
+        public IReadOnlyList<string> SuppressWarnings
+        {
+            get { return suppressWarnings; }
+        }
+
+        public IReadOnlyList<string> PreprocessorDefineSymbols
         {
             get { return preprocessorDefineSymbols; }
+        }
+
+        // Constructor
+        public MetaConfig()
+        {
+            this.suppressWarnings.Add("0067");          // Member is never used
+            this.suppressWarnings.Add("0414");          // Value is assigned but never used
         }
     }
 }

@@ -396,6 +396,24 @@ namespace MetaInterface.Syntax
             return true;
         }
 
+        public static T StripDisabledTrivia<T>(T node) where T : SyntaxNode
+        {
+            // Strip leading trivia
+            foreach(SyntaxTrivia leadingTrivia in node.GetLeadingTrivia())
+            {
+                if (leadingTrivia.IsKind(SyntaxKind.DisabledTextTrivia) == true)
+                    node = node.ReplaceTrivia(leadingTrivia, (SyntaxTrivia)default);
+            }
+
+            // Strip trailing trivia
+            foreach(SyntaxTrivia trailingTrivia in node.GetTrailingTrivia())
+            {
+                if(trailingTrivia.IsKind(SyntaxKind.DisabledTextTrivia) == true)
+                    node = node.ReplaceTrivia(trailingTrivia, (SyntaxTrivia)default);
+            }
+            return node;
+        }
+
         public static ArrowExpressionClauseSyntax GetMethodBodyLambdaReplacementSyntax()
         {
             return SyntaxFactory.ArrowExpressionClause(

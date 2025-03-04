@@ -48,14 +48,15 @@ namespace MetaInterface.Syntax
             // Check for disabled text - pre-processor directive that is disabled
             if (trivia.IsKind(SyntaxKind.DisabledTextTrivia) == true)
             {
-                // Need to parse the trivia manually
-                SyntaxTree disabledTree = CSharpSyntaxTree.ParseText(trivia.ToFullString());
+                return default;
+                //// Need to parse the trivia manually                
+                //SyntaxNode disableRoot = SyntaxFactory.parse // CSharpSyntaxTree.ParseText(trivia.ToFullString());
 
-                // Manually patch the syntax tree
-                SyntaxNode patchedDisabledRoot = VisitTree(disabledTree);
+                //// Manually patch the syntax tree
+                //SyntaxNode patchedDisabledRoot = Visit(disableRoot);
 
-                // Get the full string
-                return SyntaxFactory.DisabledText(patchedDisabledRoot.ToFullString());
+                //// Get the full string
+                //return SyntaxFactory.DisabledText(patchedDisabledRoot.ToFullString());
             }
 
 
@@ -105,7 +106,7 @@ namespace MetaInterface.Syntax
                 return null;
 
             // Enum should remain in the syntax tree
-            return base.VisitEnumDeclaration(node);
+            return node;
         }
 
         public override SyntaxNode VisitEventDeclaration(EventDeclarationSyntax node)
@@ -116,7 +117,7 @@ namespace MetaInterface.Syntax
                 return null;
 
             // Event should remain in the syntax tree
-            return base.VisitEventDeclaration(node);
+            return node;
         }
 
         public override SyntaxNode VisitFieldDeclaration(FieldDeclarationSyntax node)
@@ -138,7 +139,12 @@ namespace MetaInterface.Syntax
                 return null;
 
             // Property should remain in the syntax tree
-            return base.VisitPropertyDeclaration(SyntaxPatcher.PatchPropertyAccessorsLambda(node));
+            SyntaxNode result = SyntaxPatcher.PatchPropertyAccessorsLambda(node);
+
+            foreach (SyntaxTrivia trivia in result.GetTrailingTrivia())
+                VisitTrivia(trivia);
+
+            return result;
         }
 
         public override SyntaxNode VisitAccessorDeclaration(AccessorDeclarationSyntax node)
@@ -149,7 +155,7 @@ namespace MetaInterface.Syntax
                 return null;
 
             // Accessor should remain in the syntax tree
-            return base.VisitAccessorDeclaration(node);
+            return node; //base.VisitAccessorDeclaration(node);
         }
 
         public override SyntaxNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
@@ -173,6 +179,8 @@ namespace MetaInterface.Syntax
                     return null;
                 }
             }
+
+            node = SyntaxPatcher.StripDisabledTrivia(node);
 
             // Method should remain in the syntax tree
             return SyntaxPatcher.PatchMethodBodyLambda(node);
