@@ -9,11 +9,7 @@ namespace Meta_Interface_UnitTest
         [DataRow(
 @"public class Test
 {
-    public int Property
-    {
-        get => throw new System.NotImplementedException();
-        set => throw new System.NotImplementedException();
-    }
+    public int Property { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
 }", @"
 public class Test
 {
@@ -24,11 +20,7 @@ public class Test
         [DataRow(
 @"public class Test
 {
-    public int Property
-    {
-        get => throw new System.NotImplementedException();
-        set => throw new System.NotImplementedException();
-    }
+    public int Property { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
 }", @"
 public class Test
 {
@@ -50,10 +42,7 @@ public class Test
         [DataRow(
 @"public class Test
 {
-    public int Property
-    {
-        get => throw new System.NotImplementedException();
-    }
+    public int Property { get => throw new System.NotImplementedException(); }
 }", @"
 public class Test
 {
@@ -64,10 +53,7 @@ public class Test
         [DataRow(
 @"public class Test
 {
-    public int Property
-    {
-        set => throw new System.NotImplementedException();
-    }
+    public int Property { set => throw new System.NotImplementedException(); }
 }", @"
 public class Test
 {
@@ -78,11 +64,7 @@ public class Test
         [DataRow(
 @"public class Test
 {
-    public int Property
-    {
-        get => throw new System.NotImplementedException();
-        set => throw new System.NotImplementedException();
-    }
+    public int Property { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
 }", @"
 public class Test
 {
