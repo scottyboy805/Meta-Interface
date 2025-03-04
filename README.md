@@ -51,6 +51,15 @@ else
 ```
 Note that the calling code will need to add a dependency to `Microsoft.CodeAnalysis` as `ParseAndGenerateMeta` method returns a `Microsoft.CodeAnalysis.SyntaxNode`.
 
+## Features
+- Generate meta interface from static analysis only. No need to resolve symbols or use pre-compiled metadata to generate the output, and as a result can also work for code that has compilation errors.
+- Retain relevant xml and inline comments surrounding public API code so that the generated code can use the same API docs.
+- Support pre-preocessor directives so that code segments disabled by pre-processor directives can be stripped.
+- Generated code is auto-formatted to correct C# standard for whitespace and trivia.
+- The API returns a `SyntaxNode` representing the generated code, so you can perform further transformations if required.
+- Support suppressing common warnings that can show up as a result of code stripping (For example: 'X' is assigned but is never used - because the implementaion was stripped).
+- Quick code generation and simple to use.
+
 ## Contributions
 Any and all contributons are welcome!
 
