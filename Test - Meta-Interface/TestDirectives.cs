@@ -9,7 +9,7 @@ namespace Meta_Interface_UnitTest
         [DataRow(
 @"#define Test
 #define Other
-public class Test
+public sealed class Test
 {
 #if Test && Other
     private int field;
@@ -17,7 +17,7 @@ public class Test
 }", @"
 #define Test
 #define Other
-public class Test
+public sealed class Test
 {         
 #if Test && Other
     private int field = expr;
@@ -26,11 +26,11 @@ public class Test
 
         // Condition false directive
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
 #if Test && Other
 #endif
-}", @"public class Test
+}", @"public sealed class Test
 {         
 #if Test && Other
     private int field = expr;
@@ -50,13 +50,13 @@ public class Test
         [DataTestMethod]
         [DataRow(
 @"#define Test
-public class Test
+public sealed class Test
 {
 #if Test
     private void TestPrivateMethod() => throw new System.NotImplementedException();
 #endif
 }", @"#define Test
-public class Test
+public sealed class Test
 {         
 #if Test
     private void TestPrivateMethod()
@@ -66,11 +66,11 @@ public class Test
 #endif  
 }", DisplayName = "Condition true method Directive")]
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
 #if Test
 #endif
-}", @"public class Test
+}", @"public sealed class Test
 {         
 #if Test
     private void TestPrivateMethod()
@@ -81,14 +81,14 @@ public class Test
 }", DisplayName = "Condition false method Directive")]
         [DataRow(
 @"#define UNITY_EDITOR
-public class Test
+public sealed class Test
 {
     // Methods
 #if UNITY_EDITOR
     private void OnValidate() => throw new System.NotImplementedException();
 #endif
 }", @"#define UNITY_EDITOR
-public class Test
+public sealed class Test
 {         
 // Methods
 #if UNITY_EDITOR

@@ -65,6 +65,26 @@ namespace MetaInterface.Syntax
             // Remove any disabled trivia that might remain
             node = SyntaxPatcher.StripDisabledTrivia(node);
 
+            // For non-sealed classes we need to make sure there is either a public or protected parameterless constructor so that we can strip away `base` calls safely
+            if(node.Modifiers.Any(m => m.IsKind(SyntaxKind.SealedKeyword)) == false && node.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)) == false)
+            {
+                // Get constructors
+                bool hasCtor = node.DescendantNodes()
+                    .OfType<ConstructorDeclarationSyntax>()
+                    .Any(c => c.Modifiers.Any(m => m.IsKind(SyntaxKind.PublicKeyword) || m.IsKind(SyntaxKind.ProtectedKeyword)) 
+                        && (c.ParameterList.Parameters.Count == 0 || c.ParameterList.Parameters[0].Default != null));
+
+                // We need to add a default ctor
+                if(hasCtor == false)
+                {
+                    // Insert new constructor
+                    node = node.AddMembers(SyntaxFactory.ConstructorDeclaration(node.Identifier)
+                            .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ProtectedKeyword)))
+                            .WithExpressionBody(SyntaxPatcher.GetMethodBodyLambdaReplacementSyntax())
+                            .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken)));
+                }
+            }
+
             // Class should remain in the syntax tree
             return base.VisitClassDeclaration(node);
         }

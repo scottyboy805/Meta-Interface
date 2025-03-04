@@ -6,56 +6,56 @@ namespace Meta_Interface_UnitTest
         // Empty method
         [DataTestMethod]
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     public void Method() => throw new System.NotImplementedException();
 }", @"
-public class Test
+public sealed class Test
 {
     public void Method(){}
 }", DisplayName = "Empty Method")]
 
         // Lambda method
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     public int Method() => throw new System.NotImplementedException();
 }", @"
-public class Test
+public sealed class Test
 {
     public int Method() => 5;
 }", DisplayName = "Lambda Method")]
 
         // Argument method
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     public void Method(int a, string b, ref float c) => throw new System.NotImplementedException();
 }", @"
-public class Test
+public sealed class Test
 {
     public void Method(int a, string b, ref float c){}
 }", DisplayName = "Argument Method")]
 
         // Return method
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     public string Method() => throw new System.NotImplementedException();
 }",
 @"
-public class Test
+public sealed class Test
 {
     public string Method(){ return null; }
 }", DisplayName = "Return Method")]
 
         // Random spaced method
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     public void Method() => throw new System.NotImplementedException();
 }", @"
-public    class         Test
+public sealed    class         Test
 
 
           {         
@@ -67,11 +67,11 @@ public    class         Test
 
         // Explicit interface method
         [DataRow(
-@"public class Test : ITest
+@"public sealed class Test : ITest
 {
     void ITest.Method() => throw new System.NotImplementedException();
 }", @"
-public class Test : ITest
+public sealed class Test : ITest
 {         
     void ITest      . Method() {   }   
 }", DisplayName = "Explicit Interface Method")]
@@ -89,42 +89,42 @@ public class Test : ITest
         // Private method
         [DataTestMethod]
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
 }",
-@"public class Test
+@"public sealed class Test
 {
     private void Method(){}
 }", DisplayName = "Private Method")]
 
         // Internal method
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
 }",
-@"public class Test
+@"public sealed class Test
 {
     internal void Method(){}
 }", DisplayName = "Internal Method")]
 
         // Protected method
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     protected void Method() => throw new System.NotImplementedException();
 }",
-@"public class Test
+@"public sealed class Test
 {
     protected void Method(){}
 }", DisplayName = "Protected Method")]
 
         // Protected internal method
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     protected internal void Method() => throw new System.NotImplementedException();
 }",
-@"public class Test
+@"public sealed class Test
 {
     protected internal void Method(){}
 }", DisplayName = "Protected Internal Method")]

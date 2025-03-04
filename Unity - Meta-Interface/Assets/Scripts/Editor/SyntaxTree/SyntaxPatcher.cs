@@ -72,9 +72,9 @@ namespace MetaInterface.Syntax
             if (IsModifierListExposed(syntax.Modifiers) == true)
                 return true;
 
-            // Check for internally available ctor
-            if (syntax.Modifiers.Any(SyntaxKind.InternalKeyword) == true)
-                return true;
+            //// Check for internally available ctor
+            //if (syntax.Modifiers.Any(SyntaxKind.InternalKeyword) == true)
+            //    return true;
 
             return false;
         }

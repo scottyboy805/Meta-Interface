@@ -8,12 +8,12 @@ namespace Meta_Interface_UnitTest
         // Region methods
         [DataTestMethod]
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     public void MethodA() => throw new System.NotImplementedException();
     public void MethodB() => throw new System.NotImplementedException();
 }", @"
-public class Test
+public sealed class Test
 {
 #region Test
     public void MethodA(){}

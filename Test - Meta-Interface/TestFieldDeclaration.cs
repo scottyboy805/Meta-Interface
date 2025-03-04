@@ -8,33 +8,33 @@ namespace Meta_Interface_UnitTest
         // Empty field
         [DataTestMethod]
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     public int field;
 }", @"
-public class Test
+public sealed class Test
 {
     public int field;
 }", DisplayName = "Empty Field")]
 
         // Assigned field
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     public int field = 123;
 }", @"
-public class Test
+public sealed class Test
 {
     public int field = 123;
 }", DisplayName = "Assigned Field")]
 
         // Const referenced field
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     public int field;
 }", @"
-public class Test
+public sealed class Test
 {
     const int number = 5;
     public int field = number;
@@ -42,11 +42,11 @@ public class Test
 
         // Method referenced field
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     public int field;
 }", @"
-public class Test
+public sealed class Test
 {
     static int Method() => 5;
     public int field = Method();
@@ -65,42 +65,42 @@ public class Test
         // Private field
         [DataTestMethod]
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
 }",
-@"public class Test
+@"public sealed class Test
 {
     private int field;
 }", DisplayName = "Private Field")]
 
         // Internal field
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
 }",
-@"public class Test
+@"public sealed class Test
 {
     internal string field = 123;
 }", DisplayName = "Internal Field")]
 
         // Protected field
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     protected bool field = true;
 }",
-@"public class Test
+@"public sealed class Test
 {
     protected bool field = true;
 }", DisplayName = "Protected Field")]
 
         // Protected internal field
         [DataRow(
-@"public class Test
+@"public sealed class Test
 {
     protected internal bool field = true;
 }",
-@"public class Test
+@"public sealed class Test
 {
     protected internal bool field = true;
 }", DisplayName = "Protected Internal Field")]
