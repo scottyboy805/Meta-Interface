@@ -48,17 +48,9 @@ namespace MetaInterface.Syntax
             // Check for disabled text - pre-processor directive that is disabled
             if (trivia.IsKind(SyntaxKind.DisabledTextTrivia) == true)
             {
+                // Remove disabled text - gets compiled out
                 return default;
-                //// Need to parse the trivia manually                
-                //SyntaxNode disableRoot = SyntaxFactory.parse // CSharpSyntaxTree.ParseText(trivia.ToFullString());
-
-                //// Manually patch the syntax tree
-                //SyntaxNode patchedDisabledRoot = Visit(disableRoot);
-
-                //// Get the full string
-                //return SyntaxFactory.DisabledText(patchedDisabledRoot.ToFullString());
             }
-
 
             return base.VisitTrivia(trivia);
         }
@@ -70,10 +62,11 @@ namespace MetaInterface.Syntax
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
-            // Class should remain in the syntax tree
-            SyntaxNode result = base.VisitClassDeclaration(node);
+            // Remove any disabled trivia that might remain
+            node = SyntaxPatcher.StripDisabledTrivia(node);
 
-            return result;
+            // Class should remain in the syntax tree
+            return base.VisitClassDeclaration(node);
         }
 
         public override SyntaxNode VisitStructDeclaration(StructDeclarationSyntax node)
@@ -82,6 +75,9 @@ namespace MetaInterface.Syntax
             if (SyntaxPatcher.IsStructDeclarationExposed(node) == false
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
+
+            // Remove any disabled trivia that might remain
+            node = SyntaxPatcher.StripDisabledTrivia(node);
 
             // Struct should remain in the syntax tree
             return base.VisitStructDeclaration(node);
@@ -94,6 +90,9 @@ namespace MetaInterface.Syntax
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
+            // Remove any disabled trivia that might remain
+            node = SyntaxPatcher.StripDisabledTrivia(node);
+
             // Interface should remain in the syntax tree
             return node;
         }
@@ -104,6 +103,9 @@ namespace MetaInterface.Syntax
             if (SyntaxPatcher.IsEnumDeclarationExposed(node) == false
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
+
+            // Remove any disabled trivia that might remain
+            node = SyntaxPatcher.StripDisabledTrivia(node);
 
             // Enum should remain in the syntax tree
             return node;
@@ -116,6 +118,9 @@ namespace MetaInterface.Syntax
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
+            // Remove any disabled trivia that might remain
+            node = SyntaxPatcher.StripDisabledTrivia(node);
+
             // Event should remain in the syntax tree
             return node;
         }
@@ -126,6 +131,9 @@ namespace MetaInterface.Syntax
             if (SyntaxPatcher.IsFieldDeclarationExposed(node) == false
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
+
+            // Remove any disabled trivia that might remain
+            node = SyntaxPatcher.StripDisabledTrivia(node);
 
             // Field should remain in the syntax tree
             return SyntaxPatcher.PatchFieldInitializer(node);
@@ -138,13 +146,11 @@ namespace MetaInterface.Syntax
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
 
+            // Remove any disabled trivia that might remain
+            node = SyntaxPatcher.StripDisabledTrivia(node);
+
             // Property should remain in the syntax tree
-            SyntaxNode result = SyntaxPatcher.PatchPropertyAccessorsLambda(node);
-
-            foreach (SyntaxTrivia trivia in result.GetTrailingTrivia())
-                VisitTrivia(trivia);
-
-            return result;
+            return SyntaxPatcher.PatchPropertyAccessorsLambda(node);
         }
 
         public override SyntaxNode VisitAccessorDeclaration(AccessorDeclarationSyntax node)
@@ -155,7 +161,7 @@ namespace MetaInterface.Syntax
                 return null;
 
             // Accessor should remain in the syntax tree
-            return node; //base.VisitAccessorDeclaration(node);
+            return node;
         }
 
         public override SyntaxNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
@@ -164,6 +170,9 @@ namespace MetaInterface.Syntax
             if (SyntaxPatcher.IsConstructorDeclarationExposed(node) == false
                 && HasLeadingPreprocessorDirectives(node) == false)
                 return null;
+
+            // Remove any disabled trivia that might remain
+            node = SyntaxPatcher.StripDisabledTrivia(node);
 
             // Constructor should remain in the syntax tree
             return SyntaxPatcher.PatchConstructorBodyLambda(node);
@@ -180,6 +189,7 @@ namespace MetaInterface.Syntax
                 }
             }
 
+            // Remove any disabled trivia that might remain
             node = SyntaxPatcher.StripDisabledTrivia(node);
 
             // Method should remain in the syntax tree
