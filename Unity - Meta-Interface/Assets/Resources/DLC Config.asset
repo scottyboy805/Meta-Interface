@@ -16,8 +16,8 @@ MonoBehaviour:
   buildLogLevel: 1
   enableScripting: 1
   scriptingDebug: 0
+  enabledEditorTestMode: 1
   forceRebuild: 0
   clearConsoleOnBuild: 1
-  productHash: "F\u0468=\0\x04X\0\u054C\0\0\u0524Q\0%\u07A4Z\x15F\0\u3AF6"
-  versionHash: "\x14\0KE\U0004E34Cg\0\U001D9D54N\uE209~A7\t\u045D\0\0\0\u06224c\x10"
-  platformContent: []
+  productHash: 
+  versionHash: 
