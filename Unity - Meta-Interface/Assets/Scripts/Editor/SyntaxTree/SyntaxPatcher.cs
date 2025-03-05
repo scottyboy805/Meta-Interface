@@ -1,6 +1,8 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MetaInterface.Syntax
@@ -21,6 +23,19 @@ namespace MetaInterface.Syntax
 /// From source file: {1}
 /// </summary>
 ", assemblyDefinition, cSharpSource)));
+        }
+
+        public static CompilationUnitSyntax InsertSuppressWarnings(CompilationUnitSyntax syntax, IEnumerable<string> suppressWarnings)
+        {
+            // Create warning directive
+            PragmaWarningDirectiveTriviaSyntax warningDirective = SyntaxFactory.PragmaWarningDirectiveTrivia(
+                SyntaxFactory.Token(SyntaxKind.DisableKeyword),
+                SyntaxFactory.SeparatedList<ExpressionSyntax>(nodes:
+                    suppressWarnings.Select(w => SyntaxFactory.IdentifierName(w))),
+                    true);
+
+            // Add as leading trivia
+            return syntax.WithLeadingTrivia(SyntaxFactory.Trivia(warningDirective));
         }
 
         public static bool IsClassDeclarationExposed(ClassDeclarationSyntax syntax, MetaConfig config)

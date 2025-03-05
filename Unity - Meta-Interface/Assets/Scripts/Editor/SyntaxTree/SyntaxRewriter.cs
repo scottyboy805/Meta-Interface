@@ -36,6 +36,18 @@ namespace MetaInterface.Syntax
             return base.Visit(node);
         }
 
+        public override SyntaxNode VisitCompilationUnit(CompilationUnitSyntax node)
+        {
+            // Check for suppress warnings
+            if(config.SuppressWarnings.Count > 0)
+            {
+                // Insert suppress warnings
+                node = SyntaxPatcher.InsertSuppressWarnings(node, config.SuppressWarnings);
+            }
+
+            return base.VisitCompilationUnit(node);
+        }
+
         public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
         {
             // Check for region

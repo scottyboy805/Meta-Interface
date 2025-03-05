@@ -10,10 +10,11 @@ namespace MetaInterface
         private readonly List<string> suppressWarnings = new List<string>();
 
         // Public
-        public static readonly MetaConfig Default = new MetaConfig();
-
-        public bool DiscardTypeComments = false;
-        public bool DiscardMemberComments = false;
+        public static readonly MetaConfig Default = new MetaConfig(suppressWarnings: new string[]
+        {
+            //"CS0067",          // Member is never used
+            //"CS0414",          // Value is assigned but never used
+        });
 
         // Properties
         public bool HasIgnoreAttribute
@@ -27,21 +28,28 @@ namespace MetaInterface
             set { ignoreMembersWithAttribute = value; }
         }
 
-        public IReadOnlyList<string> SuppressWarnings
+        public IList<string> SuppressWarnings
         {
             get { return suppressWarnings; }
         }
 
-        public IReadOnlyList<string> PreprocessorDefineSymbols
+        public IList<string> PreprocessorDefineSymbols
         {
             get { return preprocessorDefineSymbols; }
         }
 
         // Constructor
-        public MetaConfig()
+        public MetaConfig(string ignoreMembersWithAttribute = null, IEnumerable<string> preprocessorDefineSymbols = null, IEnumerable<string> suppressWarnings = null)
         {
-            this.suppressWarnings.Add("0067");          // Member is never used
-            this.suppressWarnings.Add("0414");          // Value is assigned but never used
+            this.ignoreMembersWithAttribute = ignoreMembersWithAttribute;
+
+            // Add defines
+            if(preprocessorDefineSymbols != null)
+                this.preprocessorDefineSymbols.AddRange(preprocessorDefineSymbols);
+
+            // Add suppress warnings
+            if(suppressWarnings != null)
+                this.suppressWarnings.AddRange(suppressWarnings);
         }
     }
 }
