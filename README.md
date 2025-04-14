@@ -25,7 +25,7 @@ It means that the input code could in theory be code that fails to compile, and 
 ## Getting Started
 - To get started first clone or download the repo  
 - For Unity users `Unity - Meta-Interface` contains a Unity project targeting version `2021.3.43 LTS`
-- For standalone usage use `Build/BuildStandaloneDebug.bat` or `/BuildStandaloneRelease.bat` on windows to generate the assembly in `Build/Debug/` or `Build/Release` respectivley
+- For standalone usage use `Build/BuildStandaloneDebug.bat` or `/BuildStandaloneRelease.bat` on windows (Requires msbuild) to generate the assembly in `Build/Debug/` or `Build/Release` respectivley
 
 ## Usage
 Meta Interface works on a per source file basis and processes files individually rather than as a .csproj or batch. It keeps things simple and means there is no need to read .csproj files manualy for example.
